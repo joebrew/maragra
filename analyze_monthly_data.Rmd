@@ -1,0 +1,272 @@
+---
+title: "Maragra-CISM status report"
+date: ""
+output:
+  prettydoc::html_pretty:
+    theme: cayman
+    highlight: github
+---
+
+
+
+```{r setOptions, message=FALSE, echo = FALSE}
+library(googleVis)
+op <- options(gvis.plot.tag='chart')
+```
+
+```{r knitr_init, echo=FALSE, cache=FALSE}
+library(knitr)
+library(brew)
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+**Joe Brew, Laia Cirera, Kizito Gondo, Elton Dorkin, Elisa Sicuri**
+
+`r format(Sys.Date(), '%B %d, %Y')`
+
+```{r}
+# Packages
+library(dplyr)
+library(readr)
+library(ggplot2)
+library(tidyr)
+library(ggthemes)
+library(RColorBrewer)
+library(pander)
+
+# Read data
+df <- read_csv(file = 'data/maragra_monthly_data.csv')
+
+# Create date column
+df$date <- as.Date(paste0(df$year, '-', df$month, '-', 15))
+
+# Create a percent postiive column
+df$percent_positive <- df$positive / df$tested * 100
+
+# Arrange by date
+df <- df %>% arrange(date)
+
+# Get rid of any unknowns
+df <- df %>% filter(!is.na(tested))
+```
+
+# Status
+
+The formalities and agreements pertaining to the transfer of data from Ilovo Maragra to CISM are more or less finished. With Dr. Gondo's help, Joe Brew has retrieved aggregated monthly summarical data pertaining to malaria cases among workers. More time will be needed to record person-specific data, since it is all handwritten and will need to be digitized.
+
+# Next steps
+
+Beginning next week (November 28, 2016), the digitization of all positive cases will be carried out. For this, the following needs to take place.
+
+- Joe Brew will request RRHH named from Ilovo-Maragra.
+- Joe Brew will build a name-searcher app, so as to identify the worker ID number at the moment of data entry.
+- Laia Cirera will request the enlistment of several data entry technicians.
+
+Full data collection will be carried out over the coming weeks. All digitized data, in addition to being stored by the CISM for this project, will also be given to Ilovo-Maragra as an "in-kind" service for their willingness to have their data examined.
+
+
+# Data overview
+
+## Cases over time
+
+### All workers 
+
+If we combine all workers, we can examine the total incidence of malaria since 2011.
+
+```{r}
+x <- 
+  df %>%
+  group_by(date) %>%
+  summarise(p = sum(positive),
+            pp = sum(positive) / sum(tested) * 100,
+            tested = sum(tested))
+
+# Gather into long format
+y <- 
+  rbind(x %>% dplyr::select(date, p) %>%
+          rename(val = p) %>%
+          mutate(key = 'positive'),
+        x %>% dplyr::select(date, tested) %>%
+          rename(val = tested) %>%
+          mutate(key = 'tested')) %>%
+  mutate(key = factor(key, levels = c('tested', 'positive')))
+
+ggplot(data = x,
+       aes(x = date,
+           y = p)) +
+  geom_bar(stat = 'identity') +
+  xlab('Date') +
+  ylab('Number of positive cases') +
+    theme_wsj() +
+  ggtitle('Malaria miscroscopy positive results',
+          'All workers') +
+  theme(title = element_text(size = 12))
+```
+
+### By nationality
+
+
+The below charts show the total number of tests and postive cases, by month, for Mozambican and foreign workers, respectively, at Ilovo-Maragra.
+
+```{r, results = 'asis'}
+gg <- gvisLineChart(data = df %>% filter(group == 'nacionais'),
+                    xvar = 'date',
+                    yvar = c('tested', 'positive'),
+                    options = list(curveType='function',
+                                  title="Malaria among Mozambican employees",
+                                  titleTextStyle="{color:'black',fontName:'Courier',fontSize:16}"))
+plot(gg)
+
+gg <- gvisLineChart(data = df %>% filter(group == 'expatriados'),
+                    xvar = 'date',
+                    yvar = c('tested', 'positive'),
+                    options = list(curveType='function',
+                                  title="Malaria among expatriated employees",
+                                  titleTextStyle="{color:'black',fontName:'Courier',fontSize:16}"))
+plot(gg)
+# 
+# # Heat calendar chart
+# gvisCalendar
+
+# # # Motion chart
+# x <- gvisMotionChart(df,
+#    idvar="group",
+#    timevar="date")
+```
+
+## Cases and tests
+
+### Absolute numbers
+
+The below chart shows both the number of positive cases (all workers, in red) and the number of tests, by month.
+
+```{r}
+ggplot(data = y,
+       aes(x = date,
+           y = val,
+           group = key,
+           fill = key)) +
+  geom_area(stat = 'identity', position = 'stack', alpha = 0.5) +
+  xlab('Date') +
+  ylab('Number of positive cases') +
+  theme_wsj() +
+  scale_fill_manual(name = '',
+                    values = c('darkgreen', 'darkred')) +
+  ggtitle('Malaria miscroscopy tests and positive results',
+          'All workers, absolute') +
+    theme(title = element_text(size = 12))
+
+```
+
+### Relative numbers
+
+The below chart shows the same data as above, but convers the number of positive cases to a percentage of all tests, rather than an absolute number.
+
+```{r}
+ggplot(data = x,
+       aes(x = date,
+           y = pp)) +
+  geom_area(stat = 'identity', fill = 'darkblue', alpha = 0.5) +
+  xlab('Date') +
+  ylab('Number of positive cases') +
+  theme_wsj() +
+  ggtitle('Malaria miscroscopy tests and positive results',
+          'All workers, relative') +
+    theme(title = element_text(size = 12))
+
+```
+
+# Seasonality analysis
+
+We can examine the annual seasonality of positive cases by overlaying all years' data onto one axis.
+
+```{r}
+make_month_name <- function(number){
+  format(as.Date(paste0('2015-', number, '-01')), '%B')
+}
+x <- df %>%
+  # mutate(day_number = as.numeric(format(date, '%j'))) %>%
+  # mutate(day_number = round(day_number, -1) + 5)
+  mutate(month_number = as.numeric(format(date, '%m'))) %>%
+  group_by(month_number, year) %>%
+  summarise(p = sum(positive),
+            pp = sum(positive) / sum(tested) * 100) %>%
+  mutate(year = factor(year,
+                       levels = as.character(2011:2016))) %>%
+  ungroup %>%
+  mutate(month_number = factor(make_month_name(month_number),
+                               levels = make_month_name(1:12)))
+
+cols <- colorRampPalette(brewer.pal(n = 9,  'Spectral'))(length(unique(x$year)))
+
+ggplot(data = x,
+       aes(x = month_number,
+           y = p,
+           group = year,
+           color = year)) +
+  geom_line() +
+  scale_color_manual(name = 'Year',
+                     values = cols) +
+  theme_wsj() +
+  ggtitle('Malaria miscroscopy positive results',
+          'Absolute cases, year overlapping') +
+    theme(title = element_text(size = 12)) +
+  xlab('Month') +
+  ylab('Positive results') +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+The below chart uses the same data as above, but instead of positive cases, it shows the percent of tests which were positive.
+
+```{r}
+ggplot(data = x,
+       aes(x = month_number,
+           y = p,
+           group = year,
+           color = year)) +
+  geom_line() +
+  scale_color_manual(name = 'Year',
+                     values = cols) +
+  theme_wsj() +
+  ggtitle('Malaria miscroscopy positive results',
+          'Percent positive, year overlapping') +
+    theme(title = element_text(size = 12)) +
+  xlab('Month') +
+  ylab('Positive results') +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+If we aggregate and view distributions (via "violin" charts) at the level of the month, seasonality is more apparent.
+
+```{r}
+ggplot(data = x,
+       aes(x = month_number,
+           y = p)) +
+  geom_violin(alpha = 0.6, fill = 'darkorange') +
+    theme_wsj() +
+  ggtitle('Malaria miscroscopy positive results',
+          'Percent positive, year overlapping') +
+    theme(title = element_text(size = 12)) +
+  xlab('Month') +
+  ylab('Positive results') +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+# Data
+
+The raw data collected so far appear as such.
+
+```{r}
+df %>%
+  dplyr::select(year, month, group, tested, positive, negative) %>%
+  pander
+```
