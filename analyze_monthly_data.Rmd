@@ -106,7 +106,7 @@ ggplot(data = x,
   geom_bar(stat = 'identity') +
   xlab('Date') +
   ylab('Number of positive cases') +
-    theme_wsj() +
+    theme_fivethirtyeight() +
   ggtitle('Malaria miscroscopy positive results',
           'All workers') +
   theme(title = element_text(size = 12))
