@@ -1,0 +1,22 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, echo = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.path = "README-"
+)
+```
+
+# Maragra and malaria
+
+_Joe Brew, Elisa Sicuri, Laia Cirera, Kizito Gondo, Elton Dorkin_
+
+
+# Details
+
+- This paper-as-a-package concept was inspired by https://github.com/Pakillo/template

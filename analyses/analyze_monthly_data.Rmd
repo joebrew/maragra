@@ -17,6 +17,7 @@ op <- options(gvis.plot.tag='chart')
 ```{r knitr_init, echo=FALSE, cache=FALSE}
 library(knitr)
 library(brew)
+library(maragra)
 ## Global options
 options(max.print="75")
 opts_chunk$set(echo=FALSE,
@@ -42,21 +43,22 @@ library(tidyr)
 library(ggthemes)
 library(RColorBrewer)
 library(pander)
+library(cism)
 
 # Read data
-df <- read_csv(file = 'data/maragra_monthly_data.csv')
+clinic_agg <- maragra::clinic_agg
 
 # Create date column
-df$date <- as.Date(paste0(df$year, '-', df$month, '-', 15))
+clinic_agg$date <- as.Date(paste0(clinic_agg$year, '-', clinic_agg$month, '-', 15))
 
 # Create a percent postiive column
-df$percent_positive <- df$positive / df$tested * 100
+clinic_agg$percent_positive <- clinic_agg$positive / clinic_agg$tested * 100
 
 # Arrange by date
-df <- df %>% arrange(date)
+clinic_agg <- clinic_agg %>% arrange(date)
 
 # Get rid of any unknowns
-df <- df %>% filter(!is.na(tested))
+clinic_agg <- clinic_agg %>% filter(!is.na(tested))
 ```
 
 # Status
@@ -84,7 +86,7 @@ If we combine all workers, we can examine the total incidence of malaria since 2
 
 ```{r}
 x <- 
-  df %>%
+  clinic_agg %>%
   group_by(date) %>%
   summarise(p = sum(positive),
             pp = sum(positive) / sum(tested) * 100,
@@ -118,7 +120,7 @@ ggplot(data = x,
 The below charts show the total number of tests and postive cases, by month, for Mozambican and foreign workers, respectively, at Ilovo-Maragra.
 
 ```{r, results = 'asis'}
-gg <- gvisLineChart(data = df %>% filter(group == 'nacionais'),
+gg <- gvisLineChart(data = clinic_agg %>% filter(group == 'nacionais'),
                     xvar = 'date',
                     yvar = c('tested', 'positive'),
                     options = list(curveType='function',
@@ -126,7 +128,7 @@ gg <- gvisLineChart(data = df %>% filter(group == 'nacionais'),
                                   titleTextStyle="{color:'black',fontName:'Courier',fontSize:16}"))
 plot(gg)
 
-gg <- gvisLineChart(data = df %>% filter(group == 'expatriados'),
+gg <- gvisLineChart(data = clinic_agg %>% filter(group == 'expatriados'),
                     xvar = 'date',
                     yvar = c('tested', 'positive'),
                     options = list(curveType='function',
@@ -138,7 +140,7 @@ plot(gg)
 # gvisCalendar
 
 # # # Motion chart
-# x <- gvisMotionChart(df,
+# x <- gvisMotionChart(clinic_agg,
 #    idvar="group",
 #    timevar="date")
 ```
@@ -158,7 +160,7 @@ ggplot(data = y,
   geom_area(stat = 'identity', position = 'stack', alpha = 0.5) +
   xlab('Date') +
   ylab('Number of positive cases') +
-  theme_wsj() +
+  theme_cism() +
   scale_fill_manual(name = '',
                     values = c('darkgreen', 'darkred')) +
   ggtitle('Malaria miscroscopy tests and positive results',
@@ -178,7 +180,7 @@ ggplot(data = x,
   geom_area(stat = 'identity', fill = 'darkblue', alpha = 0.5) +
   xlab('Date') +
   ylab('Number of positive cases') +
-  theme_wsj() +
+  theme_cism() +
   ggtitle('Malaria miscroscopy tests and positive results',
           'All workers, relative') +
     theme(title = element_text(size = 12))
@@ -193,7 +195,7 @@ We can examine the annual seasonality of positive cases by overlaying all years'
 make_month_name <- function(number){
   format(as.Date(paste0('2015-', number, '-01')), '%B')
 }
-x <- df %>%
+x <- clinic_agg %>%
   # mutate(day_number = as.numeric(format(date, '%j'))) %>%
   # mutate(day_number = round(day_number, -1) + 5)
   mutate(month_number = as.numeric(format(date, '%m'))) %>%
@@ -266,7 +268,7 @@ ggplot(data = x,
 The raw data collected so far appear as such.
 
 ```{r}
-df %>%
+clinic_agg %>%
   dplyr::select(year, month, group, tested, positive, negative) %>%
-  pander
+  kable
 ```

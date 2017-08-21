@@ -1,0 +1,11 @@
+Package: maragra
+Title: An analysis of malaria at the Maragra sugar company, Mozambique
+Version: 0.0.0.9000
+Authors@R: person("Joe", "Brew", email = "joebrew@gmail.com", role = c("aut", "cre"))
+Description: This package handles the entire data pipeline for the reading, processing, analysis and writing of papers related to Maragra and malaria.
+Depends: R (>= 3.4.1)
+License: What license is it under?
+Encoding: UTF-8
+LazyData: true
+Suggests: testthat
+RoxygenNote: 6.0.1
