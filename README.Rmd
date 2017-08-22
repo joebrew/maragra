@@ -12,10 +12,35 @@ knitr::opts_chunk$set(
 )
 ```
 
-# Maragra and malaria
+# Malaria and sugar
+_An in-depth examination of the effect of malaria control activities on the health and productivity of Maragra sugarcane factory workers_
 
-_Joe Brew, Elisa Sicuri, Laia Cirera, Kizito Gondo, Elton Dorkin_
 
+# Purpose
+
+This code repository serves as the "research compendium" for the analysis of Maragra malaria incidence, malaria control, and worker absenteeism and productivity data. The purpose of this repository - which takes the form of a fully documented R package - is "to integrate the computations and code used in data analyses, methodological descriptions, simulations, etc. with the documents that describe and rely on them" ([Gentleman and Lang, 2004](http://biostats.bepress.com/bioconductor/paper2/)). By using this package, anyone (with access to the original data in its original form) will be able to reproduce every step of the analysis and mansucript writing.
+
+# Instructions
+
+1. Clone this repository (using the following code in bash).
+
+```
+$ git clone https://github.com/joebrew/maragra
+```
+
+2. Install the code in the repository as an R package.
+
+```
+# !/usr/bin/R
+devtools::install('maragra')
+devtools::document('maragra')
+```
+
+3. 
+
+```
+
+```
 
 # Details
 

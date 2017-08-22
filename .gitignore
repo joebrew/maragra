@@ -7,6 +7,4 @@
 *.csv
 *.xlsx
 *.xls
-backups/
-credentials/
-data/
+credentials/credentials.yaml
