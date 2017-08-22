@@ -19,9 +19,9 @@ Instructions
 
     $ git clone https://github.com/joebrew/maragra
 
-#### 2. Populate your `data-raw` folder
+#### 2. Prepare data
 
-This is where you should place those files which are not publicly available. These are:
+First, youĺl need to populate your `data-raw` folder. This is where you should place those files which are not publicly available. These are:
 
     ├── HRS - Leave Applications.csv
     ├── HRS - Leave Applications - Sheet 2.csv
