@@ -4,7 +4,9 @@
 *.Rhistory
 *.RData
 *.rda
+*.csv
+*.xlsx
+*.xls
 backups/
 credentials/
 data/
-data-raw/

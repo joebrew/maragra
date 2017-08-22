@@ -47,18 +47,6 @@ library(cism)
 
 # Read data
 clinic_agg <- maragra::clinic_agg
-
-# Create date column
-clinic_agg$date <- as.Date(paste0(clinic_agg$year, '-', clinic_agg$month, '-', 15))
-
-# Create a percent postiive column
-clinic_agg$percent_positive <- clinic_agg$positive / clinic_agg$tested * 100
-
-# Arrange by date
-clinic_agg <- clinic_agg %>% arrange(date)
-
-# Get rid of any unknowns
-clinic_agg <- clinic_agg %>% filter(!is.na(tested))
 ```
 
 # Status
