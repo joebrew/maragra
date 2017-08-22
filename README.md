@@ -56,6 +56,15 @@ Alternatively, you can run this directly from bash:
     $ cd data-raw
     $ Rscript create_data_files.R
 
+Having run this, you'll now have the following datasets for analysis:
+
+-   ab
+-   ab\_panel
+-   clinic
+-   clinic\_agg
+-   mc
+-   workers
+
 #### 5. Install the code in the repository and build the R package.
 
     # !/usr/bin/R

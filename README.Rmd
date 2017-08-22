@@ -77,6 +77,15 @@ $ cd data-raw
 $ Rscript create_data_files.R
 ```
 
+Having run this, you'll now have the following datasets for analysis:
+
+
+```{r, echo = FALSE, results = 'asis'}
+d <- data(package = "maragra")
+d <- paste0('- ', d$results[,'Item'], '   \n')
+cat(d)
+```
+
 #### 5. Install the code in the repository and build the R package.
 
 ```
