@@ -235,53 +235,72 @@ expandify <- function(oracle_number = 'abc',
 }
 
 # Go through each worker and get the eligible working days
-eligible_working_days <- list()
-nrw <- nrow(workers)
-for(i in 1:nrw){
-  message(i, ' of ', nrw)
-  worker_type <- workers$employee_indicator_type[i]
-  if(worker_type == 'C'){
-    start_date <- workers$contract_start_date[i]
-    end_date <- workers$contract_end_date[i]
-  } else {
-    start_date <- workers$company_entry_date[i]
-    end_date <- as.Date('2017-03-31')
+if('eligible_working_days.RData' %in% dir()){
+  load('eligible_working_days.RData')
+} else {
+  eligible_working_days <- list()
+  nrw <- nrow(workers)
+  for(i in 1:nrw){
+    message(i, ' of ', nrw)
+    worker_type <- workers$employee_indicator_type[i]
+    if(worker_type == 'C'){
+      start_date <- workers$contract_start_date[i]
+      end_date <- workers$contract_end_date[i]
+    } else {
+      start_date <- workers$company_entry_date[i]
+      end_date <- as.Date('2017-03-31')
+    }
+    eligible_working_days[[i]] <- 
+      expandify(oracle_number = workers$oracle_number[i],
+                start = start_date,
+                end = end_date)
   }
-  eligible_working_days[[i]] <- 
-    expandify(oracle_number = workers$oracle_number[i],
-              start = start_date,
-              end = end_date)
+  
+  # Bind all together
+  eligible_working_days <- bind_rows(eligible_working_days)
+  save(eligible_working_days,
+       file = 'eligible_working_days.RData')
 }
-
-# Bind all together
-eligible_working_days <- bind_rows(eligible_working_days)
 
 # Expand absences
-ab_expanded <- list()
-nra <- nrow(ab)
-for (i in 1:nra){
-  message(i, ' of ', nra)
-  this_oracle_number <- ab$oracle_number[i]
-  sub_data <- ab[i,]
-  x <- expandify(oracle_number = this_oracle_number,
-                 start = sub_data$leave_from_date,
-                 end = sub_data$leave_to_date)
-  x <- left_join(x,
-                 y = sub_data %>%
-                   dplyr::select(oracle_number,
-                                 leave_type,
-                                 leave_taken),
-                 by = 'oracle_number')
-  ab_expanded[[i]] <- x
+if('ab_expanded.RData' %in% dir()){
+  load('ab_expanded.RData')
+} else {
+  ab_expanded <- list()
+  nra <- nrow(ab)
+  for (i in 1:nra){
+    message(i, ' of ', nra)
+    this_oracle_number <- ab$oracle_number[i]
+    sub_data <- ab[i,]
+    x <- expandify(oracle_number = this_oracle_number,
+                   start = sub_data$leave_from_date,
+                   end = sub_data$leave_to_date)
+    x <- left_join(x,
+                   y = sub_data %>%
+                     dplyr::select(oracle_number,
+                                   leave_type,
+                                   leave_taken),
+                   by = 'oracle_number')
+    ab_expanded[[i]] <- x
+  }
+  ab_expanded <- bind_rows(ab_expanded)
+  ab_expanded$absent <- TRUE
+  save(ab_expanded,
+       file = 'ab_expanded.RData')
 }
-ab_expanded <- bind_rows(ab_expanded)
-ab_expanded$absent <- TRUE
 
 # Join with absences
 ab_panel <- left_join(x = eligible_working_days,
                     y = ab_expanded,
                     by = c('oracle_number', 'date')) %>%
   mutate(absent = ifelse(is.na(absent), FALSE, absent))
+
+# Define whether sick or not
+ab_panel$absent_sick <-
+  ifelse(ab_panel$absent &
+           ab_panel$leave_type == 'SIC', TRUE,
+         ifelse(!ab_panel$absent, NA,
+                FALSE))
 
 devtools::use_data(ab_panel,
                    overwrite = TRUE)
