@@ -1,0 +1,134 @@
+---
+date: ""
+fig_height: 2.6
+fig_width: 4
+output:
+  html_document:
+    css: resources/style.css
+    pandoc_args: [
+      "+RTS", "-K16000m",
+      "-RTS"
+    ]
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# Packages
+library(tidyverse)
+library(knitr)
+library(brew)
+library(maragra)
+library(knitr)
+library(googleVis)
+op <- options(gvis.plot.tag='chart')
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+<p style="text-align:left;">
+[www.economicsofmalaria.com](www.economicsofmalaria.com)
+<span style="float:right;">joebrew@gmail.com</span>
+</p>
+
+```{r}
+# Read in data
+ab <- maragra::ab
+ab_panel <- maragra::ab_panel
+clinic <- maragra::clinic
+clinic_agg <- maragra::clinic_agg
+mc <- maragra::mc
+workers <- maragra::workers
+```
+
+# Maragra and Malaria: preliminary analysis {.tabset}
+
+This document contains some basic preliminary analysis of data relating to malaria, IRS, and absenteeism at Maragra Açucar, in Maragra, Mozambique. To explore a specific section, click any of the below tabs.
+
+## Description of data
+
+
+```{r}
+d <- data(package = "maragra")
+## assign it to use later
+nm <- d$results[, "Item"]
+```
+
+The "Maragra database" consists of the following `r length(nm)` tables:
+
+```{r}
+## call the promised data
+data(list = nm, package = "maragra")
+## get the dimensions of each data set
+x <- lapply(mget(nm), dim)
+results <- list()
+for (i in 1:length(x)){
+  z <- x[[i]]
+  results[[i]] <- data_frame(`Table name` = names(x)[i],
+             `Number or rows` = z[1],
+             `Number of columns` = z[2])
+}
+results <- bind_rows(results)
+
+kable(results)
+```
+
+These datasets are all readily available in the (private) `maragra` R package (access credentials given to collaborators upon [joebrew@gmail.com](request)). All datasets except for `ab_panel` are _as is_ (ie, in their original raw format), except for 4 kinds of changes:
+
+1. Removal of unecessary information (columns deemed irrelevant to the study have been removed).  
+2. Modification of column names (all data now employ underscores instead of spaces, and are all lowercase).    
+3. Standardization of data formats (all dates are now in a YYYY-MM-DD format, all names use similar capitalization, irrelevant tablet-created timestamps, etc. have been removed).  
+4. "Feature generation": certain columns were created in order to ease grouped analysis and merging of datasets (for example, `year_month`, `day_number`, etc.).  
+
+The `ab_panel` dataset is _not_ raw data; rather, it is an amolgamation of the `ab` and `workers` datasets, using absence data from the former with worker elibility dates from the latter, so as to create a "panel" style dataset (ie, one row for each day in which a worker was _supposed_ to work).
+
+The `clinic` and `clinic_agg` are similar, but not identical, in form. The former has individual-level data (useful for pairing with absences and demographic census data), whereas the latter is simply the raw counts of cases by nationality over time. Though `clinic` is much richer and more detailed than `clinic_agg`, is only covers the period from 2014 through 2016, whereas the latter covers a larger time period (2010-2016).
+
+For a "deep dive" into each kind of data, click the tabs at the top of this page.
+
+In order to reproduce this analysis (and others related to these datasets), follow the instructions on this project's [research compendium page](https://github.com/joebrew/maragra#purpose).
+
+## IRS analysis
+
+
+
+
+Here is a chart.
+
+```{r}
+ggplot(data = data.frame(a = 1:10,
+                         b = 1:10)) +
+  geom_point(aes(x = a, y = b))
+```
+
+## Absenteeism analysis
+
+Here is a chart.
+
+```{r}
+ggplot(data = data.frame(a = 1:10,
+                         b = 1:10)) +
+  geom_point(aes(x = a, y = b))
+```
+
+## Clinic analysis
+
+
+Here is a chart.
+
+```{r}
+ggplot(data = data.frame(a = 1:10,
+                         b = 1:10)) +
+  geom_point(aes(x = a, y = b))
+```
+
+## Next steps
