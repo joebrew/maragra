@@ -16,10 +16,12 @@ output:
 # Packages
 library(tidyverse)
 library(knitr)
+library(Hmisc)
 library(brew)
 library(maragra)
 library(knitr)
 library(googleVis)
+library(RColorBrewer)
 op <- options(gvis.plot.tag='chart')
 
 ## Global options
@@ -82,6 +84,8 @@ results <- bind_rows(results)
 kable(results)
 ```
 
+These tables all constitute three kinds of data: those pertaining to medical outcomes (generally referred to as "clinic" data), those pertaining to worker information (demographic and absenteeism-related), and those pertaining to malaria control activities.
+
 These datasets are all readily available in the (private) `maragra` R package (access credentials given to collaborators upon [joebrew@gmail.com](request)). All datasets except for `ab_panel` are _as is_ (ie, in their original raw format), except for 4 kinds of changes:
 
 1. Removal of unecessary information (columns deemed irrelevant to the study have been removed).  
@@ -99,36 +103,590 @@ In order to reproduce this analysis (and others related to these datasets), foll
 
 ## IRS analysis
 
+### Data structure
 
-
-
-Here is a chart.
+Data about "fumigações" (indoor residual spraying or "IRS") dates from `r min(mc$date)` through `r max(mc$date)`. The dataset consists of the following fields:
 
 ```{r}
-ggplot(data = data.frame(a = 1:10,
-                         b = 1:10)) +
-  geom_point(aes(x = a, y = b))
+cat(paste0(names(mc), collapse = '\n'))
+```
+
+Each row is one fumigation activity. The location/residence key is the `unidade` column. The `casas_cobertas` column indicates the number of houses in that `unidade` that were sprayed, wereas the `pulverizados` column indicates the number of rooms.  
+
+### Insecticide type
+
+The insecticide used is either DDT or ACT. The below is a breakdown of their respective use.
+
+```{r}
+ggplot(data = mc,
+       aes(x = insecticida)) +
+  geom_bar(fill = '#159957',
+           alpha = 0.6) +
+  theme_maragra() +
+  labs(x = 'Insecticide',
+       y = 'IRS activities',
+       title = 'Maragra IRS activity by insecticide type')
+```
+
+The respective use over time is as follows:
+
+```{r}
+x <- mc %>%
+  group_by(date = as.Date(paste0(format(date, '%Y-%m'), '-01')),
+           insecticida) %>%
+  summarise(houses = sum(casas_cobertas)) %>%
+  ungroup
+# Get a left side for filling in the 0s
+left <- expand.grid(date = seq(min(x$date),
+                               max(x$date),
+                               by = 'month'),
+                    insecticida = sort(unique(x$insecticida)))
+# Join together
+x <- left_join(x = left,
+               y = x,
+               by = c('date', 
+                      'insecticida'))
+# Replace NAs with 0
+x <- x %>%
+  mutate(houses = ifelse(is.na(houses), 0, houses))
+# Define a color vector
+cols <- colorRampPalette(brewer.pal(n = 9, 'Spectral'))(length(unique(x$insecticida)))
+
+ggplot(data = x,
+       aes(x = date,
+           y = houses,
+           group = insecticida,
+           color = insecticida)) +
+  geom_point(alpha = 0.6) +
+  geom_line(alpha = 0.6) +
+  theme_maragra() +
+  labs(x = 'Month',
+       y = 'Houses fumigated',
+       title = 'Maragra IRS activity by insecticide type over time') +
+  scale_color_manual(name = 'Chemical',
+                     values = cols)
+```
+
+Below is a table of the same data.
+
+```{r}
+names(x) <- Hmisc::capitalize(names(x))
+DT::datatable(x)
+```
+
+### IRS seasonality
+
+We can examine the date of fumigations to see if they are seasonal vs. randomly/uniformly distributed throughout the year.
+
+```{r}
+x <- mc %>%
+  group_by(year, day_number) %>%
+  summarise(houses = sum(casas_cobertas)) %>%
+  ungroup %>%
+  mutate(fake_date = as.Date('1990-01-01') + day_number) %>%
+  mutate(fake_month = as.Date(paste0(format(fake_date, '%Y-%m'), '-01'))) %>%
+  group_by(year, fake_month) %>%
+  summarise(houses = sum(houses)) %>%
+  ungroup %>%
+  mutate(year = factor(year))
+
+# Fill the nas with 0s
+left <- expand.grid(year = sort(unique(x$year)),
+                    fake_month = sort(unique(x$fake_month)))
+
+x <- left_join(x = left,
+               y = x)
+x$houses[is.na(x$houses)] <- 0
+cols <- colorRampPalette(brewer.pal(n = 9, 'Spectral'))(length(unique(x$year)))
+ggplot(data = x %>% 
+         filter(!year %in% c(2011:2012, 2017)),
+       aes(x = fake_month,
+           y = houses)) +#,
+           # group = year,
+           # color = year)) +
+  geom_line(alpha = 0.8) +
+  # scale_color_manual(name = 'Year',
+  #                    values = cols) +
+  scale_x_date(labels = scales::date_format("%b")) +
+  theme_maragra() +
+  labs(x = 'Month',
+       y = 'Houses covered',
+       title = 'Seasonality of IRS operations') +
+  facet_wrap(~year)
 ```
 
 ## Absenteeism analysis
 
-Here is a chart.
+### Data structure
+
+The analysis of absenteeism data will rely on a panel-style dataset in which one row exists for each worker-day (for which the worker is estimated to have _supposed to work_), with columns indicating the outcome (absent or not, sick or not, etc.). The Maragra CRM does not natively store panel style data, so we construct it from a combination of the `workers` dataset (from the Human Resources department) and the `absenteeism` dataset. Certain features pertaining to illness are merged from the `clinic` dataset.
+
+The `ab_panel` dataset has the following column names:
 
 ```{r}
-ggplot(data = data.frame(a = 1:10,
-                         b = 1:10)) +
-  geom_point(aes(x = a, y = b))
+cat(paste0(names(ab_panel), collapse = '\n'))
+```
+
+### Data magnitude
+
+Overall, we have observed `r nrow(ab_panel)` eligible worker days (the equivalent of `r round(nrow(ab_panel) / 365.25, digits = 0)` years of human activity!), from the period of `r min(ab_panel$date)` through `r max(ab_panel$date)`. 
+
+### Absenteeism
+
+Our dataset includes `r length(which(ab_panel$absent))` absences and `r length(which(!ab_panel$absent))` presences, which can be broken down below in percentage terms.
+
+```{r}
+x <- ab_panel %>%
+  group_by(absent = ifelse(absent, 'Absent', 'Present')) %>%
+  tally %>%
+  ungroup %>%
+  mutate(p = n / sum(n) * 100) %>%
+  mutate(p = round(p, digits = 2))
+
+ggplot(data = x,
+       aes(x = absent,
+           y = p)) +
+    geom_bar(fill = '#159957',
+           alpha = 0.6,
+           stat = 'identity') +
+  theme_maragra() +
+  labs(x = 'Status',
+       y = 'Percent',
+       title = 'Absence/presence breakdown of all workers') +
+  geom_label(aes(label = paste0(p, '%')))
+```
+
+Among absences, the breakdown of absence "type" is as follows.
+
+```{r}
+ggplot(data = ab_panel %>% filter(absent) %>%
+         mutate(sick_leave = ifelse(leave_type == 'SIC',
+                                    'Sick leave',
+                                    'Other leave')),
+       aes(x = leave_type,
+           fill = sick_leave)) +
+  geom_bar(alpha = 0.8) +
+  labs(x = 'Leave type',
+       y = 'Absences',
+       title = 'Breakdown of absences by type') +
+  theme_maragra() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_fill_manual(name = '',
+                    values = c('black', 'red'))
+
+```
+
+### Absenteeism rate
+
+We calculate an absenteeism rate for any given time period (day, month, etc.) as the number of days not worked divided by the number of days which _should have_ been worked, and multiplied by 100. The below shows the absenteeism rate, by day, for the entire observation period. The size of each dot is a reflection of the number of workers observed at that time.
+
+```{r}
+x <- 
+  ab_panel %>%
+  group_by(date) %>%
+  summarise(absences = length(which(absent)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(Workers = eligibles)
+
+ggplot(data = x,
+       aes(x = date,
+           y = absenteeism_rate)) +
+  geom_point(alpha = 0.1,
+             color = '#159957',
+             aes(size = Workers)) +
+  geom_smooth() +
+  theme_maragra() +
+  labs(x = 'Date',
+       y = 'Absenteeism rate',
+       title = 'Absenteeism rate over time') 
+  
+```
+
+### Sick absenteeism rate
+
+We again calculate the absenteeism rate, but only for those who absences which are classified as "sick leave".
+
+```{r}
+x <- 
+  ab_panel %>%
+  group_by(date) %>%
+  summarise(absences = length(which(absent_sick)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(Workers = eligibles)
+
+ggplot(data = x,
+       aes(x = date,
+           y = absenteeism_rate)) +
+  geom_point(alpha = 0.1,
+             color = '#159957',
+             aes(size = Workers)) +
+  geom_smooth() +
+  theme_maragra() +
+  labs(x = 'Date',
+       y = 'Absenteeism rate',
+       title = 'Sick absenteeism rate over time') 
+```
+
+### Monthly absenteeism
+
+Daily absenteeism is problematic in that it introduces a great deal of noise. So, we examine monthly absenteeism rates for both all and sick absences. The below chart shows these metrics, as well as the percentage of monthly absences due to sickness, and the number of worker-days observed. A local regression smoothed line is overlaid to see overall trends.
+
+```{r}
+x <- 
+  ab_panel %>%
+  group_by(date = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  summarise(absences = length(which(absent)),
+            sick_absences = length(which(absent_sick)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(sick_absenteeism_rate = sick_absences / eligibles * 100) %>%
+  mutate(Workers = eligibles) %>%
+  mutate(sick_absence_p = sick_absenteeism_rate / absenteeism_rate * 100)
+
+# Gather
+x <- x %>%
+  gather(key, value, absenteeism_rate:sick_absence_p) %>%
+  mutate(key = ifelse(key == 'absenteeism_rate', 'Absenteeism rate',
+                      ifelse(key == 'sick_absenteeism_rate', 'Sick absenteeism rate',
+                             ifelse(key == 'sick_absence_p', '% of absences due to sickness',
+                                    key))))
+
+ggplot(data = x,
+       aes(x = date,
+           y = value)) +
+  geom_point(alpha = 0.7,
+             color = '#159957') +
+  geom_line(alpha = 0.4,
+            color = '#159957') +
+  geom_smooth() +
+  theme_maragra() +
+  labs(x = 'Date',
+       y = 'Absenteeism rate',
+       title = 'Sick absenteeism rate over time') +
+  facet_wrap(~key, scales = 'free_y')
+```
+
+### Absenteeism by worker type
+
+The below chart is a paneling of (a) type of absenteeism metric (columns) and (b) type of worker (rows).
+
+```{r, fig.height = 7, fig.width = 10}
+x <- 
+  ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number, department_name)) %>%
+  mutate(department = ifelse(department_name %in% c('ADMIN AND FINANCE',
+                                                    'CIVILS SERVICES',
+                                                    'HUMAN RESOURCES SERVICES',
+                                                    'RISK CONTROL'),
+                             'Administrative',
+                             ifelse(department_name == 'CANE GROWING', 'Field',
+                                    ifelse(department_name == 'SUGAR MILLING', 'Factory', 'Other')))) %>%
+  group_by(department, 
+           date = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  summarise(absences = length(which(absent)),
+            sick_absences = length(which(absent_sick)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(sick_absenteeism_rate = sick_absences / eligibles * 100) %>%
+  mutate(Workers = eligibles) %>%
+  mutate(sick_absence_p = sick_absenteeism_rate / absenteeism_rate * 100)
+
+# Gather
+x <- x %>%
+  gather(key, value, absenteeism_rate:sick_absence_p) %>%
+  mutate(key = ifelse(key == 'absenteeism_rate', 'Absenteeism rate',
+                      ifelse(key == 'sick_absenteeism_rate', 'Sick absenteeism rate',
+                             ifelse(key == 'sick_absence_p', '% of absences due to sickness',
+                                    key)))) 
+
+# Keep just relevant metrics
+x <- x %>%
+  filter(key != 'Workers')
+
+ggplot(data = x,
+       aes(x = date,
+           y = value)) +
+  geom_point(alpha = 0.7,
+             color = '#159957') +
+  geom_line(alpha = 0.4,
+            color = '#159957') +
+  geom_smooth() +
+  theme_maragra() +
+  labs(x = 'Date',
+       y = 'Absenteeism rate',
+       title = 'Sick absenteeism rate over time') +
+  facet_grid(department~key, scales = 'free')
 ```
 
 ## Clinic analysis
 
+### Data structure
 
-Here is a chart.
+There are two clinical datasets: `clinic` and `clinic_agg`. The former is detailed at the individual level, but the latter covers a slightly wider timespan.
+
+The `clinic` dataset has the following fields:
 
 ```{r}
-ggplot(data = data.frame(a = 1:10,
-                         b = 1:10)) +
-  geom_point(aes(x = a, y = b))
+cat(paste0(names(clinic), collapse = '\n'))
 ```
 
+The `clinic_agg` dataset has the following fields:
+
+```{r}
+cat(paste0(names(clinic_agg), collapse = '\n'))
+```
+
+
+
+### Cases over time - from `clinic_agg`
+
+#### All workers 
+
+If we combine all workers, we can examine the total incidence of malaria since 2011.
+
+```{r}
+x <- 
+  clinic_agg %>%
+  group_by(date) %>%
+  summarise(p = sum(positive),
+            pp = sum(positive) / sum(tested) * 100,
+            tested = sum(tested))
+
+# Gather into long format
+y <- 
+  rbind(x %>% dplyr::select(date, p) %>%
+          rename(val = p) %>%
+          mutate(key = 'positive'),
+        x %>% dplyr::select(date, tested) %>%
+          rename(val = tested) %>%
+          mutate(key = 'tested')) %>%
+  mutate(key = factor(key, levels = c('tested', 'positive')))
+
+ggplot(data = x,
+       aes(x = date,
+           y = p)) +
+  geom_bar(stat = 'identity') +
+  xlab('Date') +
+  ylab('Number of positive cases') +
+    theme_maragra() +
+  ggtitle('Malaria miscroscopy positive results',
+          'All workers')
+```
+
+#### By nationality
+
+
+The below charts show the total number of tests and postive cases, by month, for Mozambican and foreign workers, respectively, at Ilovo-Maragra.
+
+```{r, results = 'asis'}
+gg <- gvisLineChart(data = clinic_agg %>% filter(group == 'nacionais'),
+                    xvar = 'date',
+                    yvar = c('tested', 'positive'),
+                    options = list(curveType='function',
+                                  title="Malaria among Mozambican employees",
+                                  titleTextStyle="{color:'black',fontName:'Courier',fontSize:16}"))
+plot(gg)
+
+gg <- gvisLineChart(data = clinic_agg %>% filter(group == 'expatriados'),
+                    xvar = 'date',
+                    yvar = c('tested', 'positive'),
+                    options = list(curveType='function',
+                                  title="Malaria among expatriated employees",
+                                  titleTextStyle="{color:'black',fontName:'Courier',fontSize:16}"))
+plot(gg)
+
+```
+
+### Cases and tests from `clinic_agg`
+
+#### Absolute numbers
+
+The below chart shows both the number of positive cases (all workers, in red) and the number of tests, by month.
+
+```{r}
+ggplot(data = y,
+       aes(x = date,
+           y = val,
+           group = key,
+           fill = key)) +
+  geom_area(stat = 'identity', position = 'stack', alpha = 0.5) +
+  xlab('Date') +
+  ylab('Number of positive cases') +
+  theme_maragra() +
+  scale_fill_manual(name = '',
+                    values = c('black', 'darkred')) +
+  ggtitle('Malaria miscroscopy tests and positive results',
+          'All workers, absolute') +
+    theme(title = element_text(size = 12))
+```
+
+#### Relative numbers
+
+The below chart shows the same data as above, but convers the number of positive cases to a percentage of all tests, rather than an absolute number.
+
+```{r}
+ggplot(data = x,
+       aes(x = date,
+           y = pp)) +
+  geom_area(stat = 'identity', fill = 'darkblue', alpha = 0.5) +
+  xlab('Date') +
+  ylab('Number of positive cases') +
+  theme_maragra() +
+  ggtitle('Malaria miscroscopy tests and positive results',
+          'All workers, relative') +
+    theme(title = element_text(size = 12))
+
+```
+
+### Seasonality analysis from `clinic_agg`
+
+We can examine the annual seasonality of positive cases by overlaying all years' data onto one axis.
+
+```{r}
+make_month_name <- function(number){
+  format(as.Date(paste0('2015-', number, '-01')), '%B')
+}
+x <- clinic_agg %>%
+  # mutate(day_number = as.numeric(format(date, '%j'))) %>%
+  # mutate(day_number = round(day_number, -1) + 5)
+  mutate(month_number = as.numeric(format(date, '%m'))) %>%
+  group_by(month_number, year) %>%
+  summarise(p = sum(positive),
+            pp = sum(positive) / sum(tested) * 100) %>%
+  mutate(year = factor(year,
+                       levels = as.character(2011:2016))) %>%
+  ungroup %>%
+  mutate(month_number = factor(make_month_name(month_number),
+                               levels = make_month_name(1:12)))
+
+cols <- colorRampPalette(brewer.pal(n = 9,  'Spectral'))(length(unique(x$year)))
+
+ggplot(data = x,
+       aes(x = month_number,
+           y = p,
+           group = year,
+           color = year)) +
+  geom_line() +
+  scale_color_manual(name = 'Year',
+                     values = cols) +
+  theme_maragra() +
+  ggtitle('Malaria miscroscopy positive results',
+          'Absolute cases, year overlapping') +
+    theme(title = element_text(size = 12)) +
+  xlab('Month') +
+  ylab('Positive results') +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+The below chart uses the same data as above, but instead of positive cases, it shows the percent of tests which were positive.
+
+```{r}
+ggplot(data = x,
+       aes(x = month_number,
+           y = p,
+           group = year,
+           color = year)) +
+  geom_line() +
+  scale_color_manual(name = 'Year',
+                     values = cols) +
+  theme_maragra() +
+  ggtitle('Malaria miscroscopy positive results',
+          'Percent positive, year overlapping') +
+    theme(title = element_text(size = 12)) +
+  xlab('Month') +
+  ylab('Positive results') +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+If we aggregate and view distributions (via "violin" charts) at the level of the month, seasonality is more apparent.
+
+```{r}
+ggplot(data = x,
+       aes(x = month_number,
+           y = p)) +
+  geom_violin(alpha = 0.6, fill = 'darkorange') +
+    theme_maragra() +
+  ggtitle('Malaria miscroscopy positive results',
+          'Percent positive, year overlapping') +
+    theme(title = element_text(size = 12)) +
+  xlab('Month') +
+  ylab('Positive results') +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+
+### Malaria severity distribution from `clinic`
+
+The below chart shows the severity of all clinical malaria cases in the Maragra clinic.
+
+```{r}
+ggplot(data = clinic,
+       aes(x = severity)) +
+  geom_bar(alpha = 0.6,
+           fill = 'darkorange') +
+  theme_maragra() +
+  labs(x = 'Severity',
+       y = 'Cases',
+       title = 'Severity of all malaria cases: Maragra clinic')
+```
+
+The below chart shows severity, but over time.
+
+```{r}
+x <- 
+  clinic %>%
+  group_by(severity,
+           date = as.Date(paste0(year_month, '-01'))) %>%
+  tally %>%
+  ungroup %>%
+  group_by(date) %>%
+  mutate(p = n / sum(n) * 100) %>%
+  ungroup %>%
+  mutate(severity = factor(severity,
+                           levels = as.character(rev(sort(unique(severity))))))
+cols <- (colorRampPalette(brewer.pal(9, 'Spectral'))(length(unique(x$severity))))
+
+ggplot(data = x,
+       aes(x = date,
+           y = n)) +
+  geom_line(aes(color = severity)) +
+  scale_color_manual(name = 'Severity',
+                     values = cols) +
+  theme_maragra() +
+  labs(x = 'Date',
+       y = 'Cases',
+       title = 'Severity over time')
+```
+
+```{r}
+ggplot(data = x,
+       aes(x = date,
+           y = p,
+           fill = severity)) +
+  geom_area(stat = 'identity',
+           position = 'stack',
+           alpha = 0.6) +
+  scale_fill_manual(name = 'Severity',
+                    values = cols) +
+  theme_maragra() +
+  labs(x = 'Date',
+       y = 'Percentage of all cases',
+       title = 'Distribution of severity of cases over time')
+```
+
+
 ## Next steps
+
+A lot of work remains to be done:
+
+- Figure out how to transform the `unidade` codes from the IRS data to specific workers's residences (or at least geographical area).  
+- Perform some name standardization so as to better link individual level clinical data with workers demographic and absenteeism data.  
+- Join data with census data for more demographic analysis, particularly in terms of absenteeism and health.  
+- Estimate a model for absenteeism, adjusting for relevant factors, particularly the IRS status and time since IRS.  
+- A cost-effectiveness framework for estimating the return on investment for IRS activities.  

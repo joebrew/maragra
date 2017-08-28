@@ -13,7 +13,7 @@
 
 generate_preliminary_analysis <- function(date = NULL,
                                                      output_dir = NULL,
-                                                     output_file = 'generate_preliminary_analysis.html'){
+                                                     output_file = 'maragra_preliminary_analysis.html'){
   
   # If no output directory, make current wd
   if(is.null(output_dir)){

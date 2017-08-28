@@ -177,6 +177,14 @@ mc <- mc %>%
 mc <- mc %>%
   make_date_columns()
 
+# Clean up the insecticide column
+mc <-
+  mc %>%
+  mutate(insecticida = toupper(insecticida)) %>%
+  mutate(insecticida = ifelse(grepl('DDT', insecticida),
+                              'DDT',
+                              ifelse(grepl('ACT|ACY|AVT', insecticida), 'ACT', NA)))
+
 # Save for use in package
 devtools::use_data(mc,
                    overwrite = TRUE)
@@ -301,6 +309,18 @@ ab_panel$absent_sick <-
            ab_panel$leave_type == 'SIC', TRUE,
          ifelse(!ab_panel$absent, NA,
                 FALSE))
+
+# Get rid of the period before which we had any absences
+ab_panel <- ab_panel %>%
+  dplyr::filter(date >= min(ab$leave_from_date),
+                date <= max(ab$leave_to_date))
+
+# Get rid of everything before 2013, since it appears unreliable
+ab_panel <-
+  ab_panel %>%
+  dplyr::filter(date >= '2013-01-01') %>%
+  # and anything in 2017, which also appears untrustable
+  dplyr::filter(date <= '2016-12-31')
 
 devtools::use_data(ab_panel,
                    overwrite = TRUE)
