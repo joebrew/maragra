@@ -299,8 +299,8 @@ if('ab_expanded.RData' %in% dir()){
 
 # Join with absences
 ab_panel <- left_join(x = eligible_working_days,
-                    y = ab_expanded,
-                    by = c('oracle_number', 'date')) %>%
+                      y = ab_expanded,
+                      by = c('oracle_number', 'date')) %>%
   mutate(absent = ifelse(is.na(absent), FALSE, absent))
 
 # Define whether sick or not
@@ -323,6 +323,465 @@ ab_panel <-
   dplyr::filter(date <= '2016-12-31')
 
 devtools::use_data(ab_panel,
+                   overwrite = TRUE)
+
+# Census data ###############################
+if(!'census_done.RData' %in% dir('census_data')){
+  #### MANHICA CENSUS
+  # Get data from dssodk
+  if('manhica_census_data.RData' %in% dir('census_data')){
+    load('census_data/manhica_census_data.RData')
+  } else {
+    # Get manhica census data
+    HOUSEHOLD_ECONOMICS_CORE <-
+      cism::get_data(tab = 'HOUSEHOLD_ECONOMICS_CORE',
+                     dbname = 'dssodk')
+    INDIVIDUAL_DETAILS_CORE <-
+      cism::get_data(tab = 'INDIVIDUAL_DETAILS_CORE',
+                     dbname = 'dssodk')
+    LOCATION_DETAILS_CORE <-
+      cism::get_data(tab = 'LOCATION_DETAILS_CORE',
+                     dbname = 'dssodk')
+    location <-
+      cism::get_data(tab = 'location',
+                     dbname = 'openhds')
+    save(HOUSEHOLD_ECONOMICS_CORE,
+         INDIVIDUAL_DETAILS_CORE,
+         LOCATION_DETAILS_CORE,
+         location,
+         file = 'census_data/manhica_census_data.RData')
+  }
+  
+  # Clean up manhica data ---------------
+  
+  # Remove weirdness from column names
+  names(LOCATION_DETAILS_CORE) <- 
+    gsub('SEC1_|SEC2_|SEC3_|SEC4_|SEC5_', 
+         '', 
+         names(LOCATION_DETAILS_CORE))
+  
+  # Get smaller data
+  LOCATION_DETAILS_CORE <- 
+    LOCATION_DETAILS_CORE %>%
+    dplyr::select(LOCATION_ID,
+                  COVERAGE_MATERIAL,
+                  FLOOR_MATERIAL,
+                  HAS_KITCHEN,
+                  ILUMINATION_FUEL,
+                  IS_KITCHEN_INSIDE,
+                  KITCHEN_FUEL,
+                  KITCHEN_HAS_COVERAGE,
+                  LATRINE_TYPE,
+                  NR_CONSTRUCTIONS,
+                  NR_HOUSE_DIVISIONS,
+                  WALL_MATERIAL,
+                  WATER_SOURCE) %>%
+    filter(!duplicated(LOCATION_ID))
+  INDIVIDUAL_DETAILS_CORE <-
+    INDIVIDUAL_DETAILS_CORE %>%
+    dplyr::select(LOCATION_ID,
+                  PERM_ID,
+                  DOB,
+                  NAME,
+                  GENDER,
+                  EDUCATION,
+                  OCUPATION)
+  HOUSEHOLD_ECONOMICS_CORE <-
+    HOUSEHOLD_ECONOMICS_CORE %>%
+    dplyr::select(LOCATION_ID,
+                  HAS_FREEZER,
+                  HAS_GLACIER,
+                  HAS_TV,
+                  NR_OF_BIKE,
+                  NR_OF_CAR,
+                  NR_OF_CATTLE,
+                  NR_OF_CHICKENS,
+                  NR_OF_DUCK,
+                  NR_OF_GOAT,
+                  NR_OF_MOTO,
+                  NR_OF_PIGS,
+                  NR_OF_TRACTOR,
+                  HAS_TRACTOR) %>%
+    filter(!duplicated(LOCATION_ID))
+  
+  
+  # Get dictionary for dssodk
+  dictionary <- 
+    cism::get_dssodk_dictionary()
+  # Remove anything with "nr_of"
+  dictionary <-
+    dictionary %>%
+    filter(!grepl('nr_of', tolower(variable)))
+  
+  # Apply dictionary to LOCATION_DETAILS_CORE
+  LOCATION_DETAILS_CORE <- data.frame(LOCATION_DETAILS_CORE)
+  small_dictionary <- dictionary %>%
+    filter(table == 'LOCATION_DETAILS_CORE',
+           db == 'dssodk')
+  for(j in 1:ncol(LOCATION_DETAILS_CORE)){
+    message(j)
+    this_column <- names(LOCATION_DETAILS_CORE)[j]
+    if(grepl('nr_of', tolower(this_column))){
+      LOCATION_DETAILS_CORE[,this_column] <- 
+        ifelse(as.character(LOCATION_DETAILS_CORE[,this_column]) %in% c('88', '99'),
+               NA,
+               LOCATION_DETAILS_CORE[,this_column])
+    }
+    if(this_column %in% small_dictionary$variable){
+      # Get the dictionary just for the variable in question
+      sub_dictionary <- small_dictionary %>%
+        filter(variable == this_column) %>%
+        dplyr::select(old, answer_eng)
+      # Replace the variable
+      LOCATION_DETAILS_CORE$old <- LOCATION_DETAILS_CORE[,this_column]
+      # If not the same type, coerce to character before join
+      if(class(sub_dictionary$old) != 
+         class(LOCATION_DETAILS_CORE$old)){
+        sub_dictionary$old <- as.character(sub_dictionary$old)
+        LOCATION_DETAILS_CORE$old <- as.character(LOCATION_DETAILS_CORE$old)
+      }
+      LOCATION_DETAILS_CORE <-
+        LOCATION_DETAILS_CORE %>%
+        left_join(sub_dictionary,
+                  by = 'old')
+      LOCATION_DETAILS_CORE[,this_column] <-
+        LOCATION_DETAILS_CORE$answer_eng
+      LOCATION_DETAILS_CORE$old <- NULL
+      LOCATION_DETAILS_CORE$answer_eng <- NULL
+    }
+  }
+  
+  # Apply dictionary to INDIVIDUAL_DETAILS_CORE
+  INDIVIDUAL_DETAILS_CORE <- data.frame(INDIVIDUAL_DETAILS_CORE)
+  small_dictionary <- dictionary %>%
+    filter(table == 'INDIVIDUAL_DETAILS_CORE',
+           db == 'dssodk')
+  for(j in 1:ncol(INDIVIDUAL_DETAILS_CORE)){
+    message(j)
+    this_column <- names(INDIVIDUAL_DETAILS_CORE)[j]
+    if(grepl('nr_of', tolower(this_column))){
+      INDIVIDUAL_DETAILS_CORE[,this_column] <- 
+        ifelse(as.character(INDIVIDUAL_DETAILS_CORE[,this_column]) %in% c('88', '99'),
+               NA,
+               INDIVIDUAL_DETAILS_CORE[,this_column])
+    }
+    if(this_column %in% small_dictionary$variable){
+      # Get the dictionary just for the variable in question
+      sub_dictionary <- small_dictionary %>%
+        filter(variable == this_column) %>%
+        dplyr::select(old, answer_eng)
+      # Replace the variable
+      INDIVIDUAL_DETAILS_CORE$old <- INDIVIDUAL_DETAILS_CORE[,this_column]
+      # If not the same type, coerce to character before join
+      if(class(sub_dictionary$old) != 
+         class(INDIVIDUAL_DETAILS_CORE$old)){
+        sub_dictionary$old <- as.character(sub_dictionary$old)
+        INDIVIDUAL_DETAILS_CORE$old <- as.character(INDIVIDUAL_DETAILS_CORE$old)
+      }
+      INDIVIDUAL_DETAILS_CORE <-
+        INDIVIDUAL_DETAILS_CORE %>%
+        left_join(sub_dictionary,
+                  by = 'old')
+      INDIVIDUAL_DETAILS_CORE[,this_column] <-
+        INDIVIDUAL_DETAILS_CORE$answer_eng
+      INDIVIDUAL_DETAILS_CORE$old <- NULL
+      INDIVIDUAL_DETAILS_CORE$answer_eng <- NULL
+    }
+  }
+  
+  # Apply dictionary to HOUSEHOLD_ECONOMICS_CORE
+  HOUSEHOLD_ECONOMICS_CORE <- data.frame(HOUSEHOLD_ECONOMICS_CORE)
+  small_dictionary <- dictionary %>%
+    filter(table == 'HOUSEHOLD_ECONOMICS_CORE',
+           db == 'dssodk')
+  for(j in 1:ncol(HOUSEHOLD_ECONOMICS_CORE)){
+    message(j)
+    this_column <- names(HOUSEHOLD_ECONOMICS_CORE)[j]
+    if(grepl('nr_of', tolower(this_column))){
+      HOUSEHOLD_ECONOMICS_CORE[,this_column] <- 
+        ifelse(as.character(HOUSEHOLD_ECONOMICS_CORE[,this_column]) %in% c('88', '99'),
+               NA,
+               HOUSEHOLD_ECONOMICS_CORE[,this_column])
+    }
+    if(this_column %in% small_dictionary$variable){
+      # Get the dictionary just for the variable in question
+      sub_dictionary <- small_dictionary %>%
+        filter(variable == this_column) %>%
+        dplyr::select(old, answer_eng)
+      # Replace the variable
+      HOUSEHOLD_ECONOMICS_CORE$old <- HOUSEHOLD_ECONOMICS_CORE[,this_column]
+      # If not the same type, coerce to character before join
+      if(class(sub_dictionary$old) != 
+         class(HOUSEHOLD_ECONOMICS_CORE$old)){
+        sub_dictionary$old <- as.character(sub_dictionary$old)
+        HOUSEHOLD_ECONOMICS_CORE$old <- as.character(HOUSEHOLD_ECONOMICS_CORE$old)
+      }
+      HOUSEHOLD_ECONOMICS_CORE <-
+        HOUSEHOLD_ECONOMICS_CORE %>%
+        left_join(sub_dictionary,
+                  by = 'old')
+      HOUSEHOLD_ECONOMICS_CORE[,this_column] <-
+        HOUSEHOLD_ECONOMICS_CORE$answer_eng
+      HOUSEHOLD_ECONOMICS_CORE$old <- NULL
+      HOUSEHOLD_ECONOMICS_CORE$answer_eng <- NULL
+    }
+  }
+  
+  # Join individual with location
+  manhica_people <-
+    left_join(x = INDIVIDUAL_DETAILS_CORE,
+              y = location %>%
+                dplyr::select(extId,
+                              longitude,
+                              latitude),
+              by = c('LOCATION_ID' = 'extId'))
+  # Bring in information from the location_details
+  manhica_people <-
+    left_join(x = manhica_people,
+              y = LOCATION_DETAILS_CORE,
+              by = 'LOCATION_ID')
+  # Bring in information form household economics
+  manhica_people <-
+    left_join(x = manhica_people,
+              y = HOUSEHOLD_ECONOMICS_CORE,
+              by = 'LOCATION_ID')
+  # Specify the source
+  manhica_people$district <- 'Manhiça'
+  
+  # remove some extra objects
+  rm(HOUSEHOLD_ECONOMICS_CORE,
+     INDIVIDUAL_DETAILS_CORE,
+     location,
+     LOCATION_DETAILS_CORE,
+     small_dictionary,
+     sub_dictionary,
+     j,
+     this_column,
+     dictionary)
+  
+  # Magude census #################
+  if('2016-12-07_HOUSEHOLD.RData' %in% dir('census_data')){
+    load('census_data/2016-12-07_HOUSEHOLD.RData')
+  } else {
+    HOUSEHOLD <- get_data(dbname = 'MALTEM',
+                          tab = 'HOUSEHOLD')
+    save(HOUSEHOLD,
+         file = 'census_data/2016-12-07_HOUSEHOLD.RData')
+  }
+  if('2016-12-07_MEMBER.RData' %in% dir('census_data')){
+    load('census_data/2016-12-07_MEMBER.RData')
+  } else {
+    MEMBER <- get_data(dbname = 'MALTEM',
+                       tab = 'MEMBER')
+    save(MEMBER,
+         file = 'census_data/2016-12-07_MEMBER.RData')
+  }
+  
+  # Join member and household
+  magude <- left_join(x = MEMBER,
+                      y = HOUSEHOLD,
+                      by = c('_PARENT_AURI'='_URI'))
+  
+  # Get a dictionary for translating responses
+  dictionary <- cism::get_maltem_dictionary()
+  
+  # Apply the dictionary to magude
+  magude <- data.frame(magude)
+  small_dictionary <- dictionary %>%
+    filter(db == 'MALTEM')
+  for(j in 1:ncol(magude)){
+    message(j)
+    this_column <- names(magude)[j]
+    if(grepl('nr_of', tolower(this_column))){
+      magude[,this_column] <- 
+        ifelse(as.character(magude[,this_column]) %in% c('88', '90', '99'),
+               NA,
+               magude[,this_column])
+    }
+    if(this_column %in% small_dictionary$variable){
+      # Get the dictionary just for the variable in question
+      sub_dictionary <- small_dictionary %>%
+        filter(variable == this_column) %>%
+        dplyr::select(old, answer_eng)
+      # Replace the variable
+      magude$old <- magude[,this_column]
+      
+      # If not the same type, coerce to character before join
+      if(class(sub_dictionary$old) != 
+         class(magude$old)){
+        sub_dictionary$old <- as.character(sub_dictionary$old)
+        magude$old <- as.character(magude$old)
+      }
+      
+      magude <-
+        magude %>%
+        left_join(sub_dictionary,
+                  by = 'old')
+      magude[,this_column] <-
+        magude$answer_eng
+      magude$old <- NULL
+      magude$answer_eng <- NULL
+    }
+  }
+  
+  # Get geographic coordinates
+  magude <-
+    magude %>%
+    mutate(latitude = as.numeric(as.character(HOUSEHOLD_HEAD_GPS_LAT)),
+           longitude = as.numeric(as.character(HOUSEHOLD_HEAD_GPS_LNG)))
+  
+  # Define the source
+  magude$district <- 'Magude'
+  
+  # Rename perm id
+  magude <-
+    magude %>%
+    rename(PERM_ID = PERM_ID_MEMBER)
+  
+  # Rename those columns to match the ones in manhica census
+  
+  url_of_matcher <- 
+    'https://docs.google.com/spreadsheets/d/1bOBq0scJv-id656YUIZAtlWaqObcHFoH6Kmz3gQpj5E/edit#gid=1923569214'
+  matcher <- gsheet::gsheet2tbl(url_of_matcher)
+  
+  # Loop through each name in magude and manhica census and standardize
+  for (j in 1:ncol(manhica_people)){
+    this_column <- names(manhica_people)[j]
+    if(this_column %in% matcher$manhica){
+      new_name <- matcher$final[matcher$manhica == this_column]
+      names(manhica_people)[j] <- new_name
+    }
+  }
+  for (j in 1:ncol(magude)){
+    this_column <- names(magude)[j]
+    if(this_column %in% matcher$magude){
+      new_name <- matcher$final[matcher$magude == this_column]
+      names(magude)[j] <- new_name
+    }
+  }
+  
+  # Get birth day
+  magude$dob <- as.Date(magude$BIRTH_MEMBER)
+  
+  # Rename a few colunns in magude
+  magude <-
+    magude %>%
+    rename(name = MEMBER_NAME,
+           sex = MEMBER_GENDER) %>%
+    mutate(sex = ifelse(sex == 1, 'M', 
+                        ifelse(sex == 2, 'F',
+                               NA))) 
+  
+  # rename a few more columns
+  manhica_people <- manhica_people %>%
+    mutate(dob = as.Date(DOB)) %>%
+    mutate(sex = ifelse(GENDER == 'male', 'M',
+                        ifelse(GENDER == 'female', 'F', NA))) %>%
+    rename(name = NAME) %>%
+    mutate(latitude = as.numeric(as.character(latitude)),
+           longitude = as.numeric(as.character(longitude)))
+  
+  # Lowercase permid in both places
+  manhica_people$perm_id <- manhica_people$PERM_ID
+  magude$perm_id <- magude$PERM_ID
+  # Define which columns to keep
+  keep <- c('name',
+            'perm_id',
+            'sex',
+            'dob',
+            'district',
+            'longitude',
+            'latitude',
+            matcher$final)
+  
+  # Keep only those columns
+  manhica_people <-
+    manhica_people[,keep]
+  magude <- magude[,keep]
+  
+  # Make sure types match
+  for (j in 1:ncol(magude)){
+    if(class(magude[,j]) != 
+       class(manhica_people[,j])){
+      magude[,j] <- as.character(magude[,j])
+      manhica_people[,j] <- as.character(manhica_people[,j])
+    }
+  }
+  
+  
+  # Combine manhica and magude into one
+  census <- bind_rows(manhica_people, magude)
+  census <- 
+    census %>%
+    filter(!duplicated(name, dob))
+  
+  # Fix classes
+  census <- census %>%
+    mutate(n_bikes = as.numeric(n_bikes),
+           n_cars = as.numeric(n_cars),
+           n_chickens = as.numeric(n_chickens),
+           n_cows = as.numeric(n_cows),
+           n_ducks = as.numeric(n_ducks),
+           n_goats = as.numeric(n_goats),
+           n_moto = as.numeric(n_moto),
+           n_house_divisions = as.numeric(n_house_divisions),
+           n_constructions = as.numeric(n_constructions),
+           n_pigs = as.numeric(n_pigs))
+  
+  # Fix some more oddities
+  census <-
+    census %>%
+    mutate(n_bikes = ifelse(n_bikes >= 10, NA, n_bikes),
+           n_cars = ifelse(n_cars >= 10, NA, n_cars),
+           n_chickens = ifelse(n_chickens >= 87, NA, n_chickens),
+           n_cows = ifelse(n_cows >= 87, NA, n_cows),
+           n_ducks = ifelse(n_ducks >= 87, NA, n_ducks),
+           n_goats = ifelse(n_goats >= 87, NA, n_goats),
+           n_moto = ifelse(n_moto >= 10, NA, n_moto),
+           n_house_divisions = ifelse(n_house_divisions >= 20,
+                                      NA,
+                                      n_house_divisions),
+           n_constructions = ifelse(n_constructions >= 30, 
+                                    NA,
+                                    n_constructions),
+           n_pigs = ifelse(n_pigs >= 87,
+                           NA,
+                           n_pigs))
+  
+  # Make a spatial version too
+  census_sp <- 
+    census %>%
+    filter(!is.na(longitude),
+           !is.na(latitude)) %>%
+    mutate(x = longitude,
+           y = latitude)
+  library(sp)
+  sp::coordinates(census_sp) <- ~x+y
+  proj4string(census_sp) <- proj4string(cism::man3)
+  
+  # Remove unecessary objects
+  rm(dictionary,
+     HOUSEHOLD,
+     magude,
+     manhica_people,
+     matcher,
+     MEMBER,
+     small_dictionary,
+     sub_dictionary,
+     keep,
+     url_of_matcher)
+  
+  save(census,
+       census_sp, 
+       file = 'census_data/census_done.RData')
+} else {
+  load('census_data/census_done.RData')
+}
+
+# Save for use in package
+devtools::use_data(census,
+                   overwrite = TRUE)
+devtools::use_data(census_sp,
                    overwrite = TRUE)
 
 ##################################################

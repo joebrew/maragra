@@ -46,6 +46,8 @@ opts_knit$set(width=75)
 # Read in data
 ab <- maragra::ab
 ab_panel <- maragra::ab_panel
+census <- maragra::census
+census_sp <- maragra::census_sp
 clinic <- maragra::clinic
 clinic_agg <- maragra::clinic_agg
 mc <- maragra::mc
