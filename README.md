@@ -60,8 +60,8 @@ Having run this, you'll now have the following datasets for analysis:
 
 -   ab
 -   ab\_panel
+-   bairros
 -   census
--   census\_sp
 -   clinic
 -   clinic\_agg
 -   mc

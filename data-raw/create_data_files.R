@@ -6,6 +6,8 @@ library(cism)
 library(dplyr)
 library(ggplot2)
 library(readxl)
+library(rgdal)
+library(sp)
 
 # Initiate the raw-data into package session
 devtools::use_data_raw()
@@ -58,6 +60,10 @@ ab <- ab %>%
          date_captured = format_date(date_captured),
          date_signed_leave_form_rec = format_date(date_signed_leave_form_rec))
 
+# Keep only post 2013
+ab <- ab %>%
+  filter(leave_from_date >= '2013-01-01')
+
 # Keep only relevant columns
 ab <-
   ab %>%
@@ -79,9 +85,7 @@ ab <-
                 -captured_by_hospital_indicator,
                 -reason_denied)
 
-# Save for use in package
-devtools::use_data(ab,
-                   overwrite = TRUE)
+
 
 # clinic ##################################################
 
@@ -118,9 +122,6 @@ clinic <-
 clinic <- clinic %>%
   make_date_columns()
 
-# Save for use in package
-devtools::use_data(clinic,
-                   overwrite = TRUE)
 
 # clinic_agg ##################################################
 
@@ -138,12 +139,6 @@ clinic_agg <- clinic_agg %>% arrange(date)
 
 # Get rid of any unknowns
 clinic_agg <- clinic_agg %>% filter(!is.na(tested))
-
-# Save for use in package
-devtools::use_data(clinic_agg,
-                   overwrite = TRUE)
-
-
 
 # mc ###################################################
 
@@ -185,9 +180,8 @@ mc <-
                               'DDT',
                               ifelse(grepl('ACT|ACY|AVT', insecticida), 'ACT', NA)))
 
-# Save for use in package
-devtools::use_data(mc,
-                   overwrite = TRUE)
+# Add a 0 to the unidade (since they should all be in maciana)
+mc$unidade <- paste0('0', mc$unidade)
 
 
 # workers ##################################################
@@ -216,11 +210,9 @@ workers <-
          contract_end_date = as.Date(contract_end_date),
          company_entry_date = as.Date(company_entry_date))
 
-# Need to clean job_title and address through standardization !!!
+# Need to clean job_title through standardization !!!
 
-# Save for use in package
-devtools::use_data(workers,
-                   overwrite = TRUE)
+
 
 
 ##### COMBINED
@@ -322,10 +314,16 @@ ab_panel <-
   # and anything in 2017, which also appears untrustable
   dplyr::filter(date <= '2016-12-31')
 
-devtools::use_data(ab_panel,
-                   overwrite = TRUE)
+
+
+# DSS bairros data
+library(rgdal)
+bairros <- readOGR('bairros_spatial', 'DSS_MANHICA')
+
+
 
 # Census data ###############################
+# The below uses the same approach we used for maltem schools
 if(!'census_done.RData' %in% dir('census_data')){
   #### MANHICA CENSUS
   # Get data from dssodk
@@ -351,17 +349,17 @@ if(!'census_done.RData' %in% dir('census_data')){
          location,
          file = 'census_data/manhica_census_data.RData')
   }
-  
+
   # Clean up manhica data ---------------
-  
+
   # Remove weirdness from column names
-  names(LOCATION_DETAILS_CORE) <- 
-    gsub('SEC1_|SEC2_|SEC3_|SEC4_|SEC5_', 
-         '', 
+  names(LOCATION_DETAILS_CORE) <-
+    gsub('SEC1_|SEC2_|SEC3_|SEC4_|SEC5_',
+         '',
          names(LOCATION_DETAILS_CORE))
-  
+
   # Get smaller data
-  LOCATION_DETAILS_CORE <- 
+  LOCATION_DETAILS_CORE <-
     LOCATION_DETAILS_CORE %>%
     dplyr::select(LOCATION_ID,
                   COVERAGE_MATERIAL,
@@ -403,16 +401,16 @@ if(!'census_done.RData' %in% dir('census_data')){
                   NR_OF_TRACTOR,
                   HAS_TRACTOR) %>%
     filter(!duplicated(LOCATION_ID))
-  
-  
+
+
   # Get dictionary for dssodk
-  dictionary <- 
+  dictionary <-
     cism::get_dssodk_dictionary()
   # Remove anything with "nr_of"
   dictionary <-
     dictionary %>%
     filter(!grepl('nr_of', tolower(variable)))
-  
+
   # Apply dictionary to LOCATION_DETAILS_CORE
   LOCATION_DETAILS_CORE <- data.frame(LOCATION_DETAILS_CORE)
   small_dictionary <- dictionary %>%
@@ -422,7 +420,7 @@ if(!'census_done.RData' %in% dir('census_data')){
     message(j)
     this_column <- names(LOCATION_DETAILS_CORE)[j]
     if(grepl('nr_of', tolower(this_column))){
-      LOCATION_DETAILS_CORE[,this_column] <- 
+      LOCATION_DETAILS_CORE[,this_column] <-
         ifelse(as.character(LOCATION_DETAILS_CORE[,this_column]) %in% c('88', '99'),
                NA,
                LOCATION_DETAILS_CORE[,this_column])
@@ -435,7 +433,7 @@ if(!'census_done.RData' %in% dir('census_data')){
       # Replace the variable
       LOCATION_DETAILS_CORE$old <- LOCATION_DETAILS_CORE[,this_column]
       # If not the same type, coerce to character before join
-      if(class(sub_dictionary$old) != 
+      if(class(sub_dictionary$old) !=
          class(LOCATION_DETAILS_CORE$old)){
         sub_dictionary$old <- as.character(sub_dictionary$old)
         LOCATION_DETAILS_CORE$old <- as.character(LOCATION_DETAILS_CORE$old)
@@ -450,7 +448,7 @@ if(!'census_done.RData' %in% dir('census_data')){
       LOCATION_DETAILS_CORE$answer_eng <- NULL
     }
   }
-  
+
   # Apply dictionary to INDIVIDUAL_DETAILS_CORE
   INDIVIDUAL_DETAILS_CORE <- data.frame(INDIVIDUAL_DETAILS_CORE)
   small_dictionary <- dictionary %>%
@@ -460,7 +458,7 @@ if(!'census_done.RData' %in% dir('census_data')){
     message(j)
     this_column <- names(INDIVIDUAL_DETAILS_CORE)[j]
     if(grepl('nr_of', tolower(this_column))){
-      INDIVIDUAL_DETAILS_CORE[,this_column] <- 
+      INDIVIDUAL_DETAILS_CORE[,this_column] <-
         ifelse(as.character(INDIVIDUAL_DETAILS_CORE[,this_column]) %in% c('88', '99'),
                NA,
                INDIVIDUAL_DETAILS_CORE[,this_column])
@@ -473,7 +471,7 @@ if(!'census_done.RData' %in% dir('census_data')){
       # Replace the variable
       INDIVIDUAL_DETAILS_CORE$old <- INDIVIDUAL_DETAILS_CORE[,this_column]
       # If not the same type, coerce to character before join
-      if(class(sub_dictionary$old) != 
+      if(class(sub_dictionary$old) !=
          class(INDIVIDUAL_DETAILS_CORE$old)){
         sub_dictionary$old <- as.character(sub_dictionary$old)
         INDIVIDUAL_DETAILS_CORE$old <- as.character(INDIVIDUAL_DETAILS_CORE$old)
@@ -488,7 +486,7 @@ if(!'census_done.RData' %in% dir('census_data')){
       INDIVIDUAL_DETAILS_CORE$answer_eng <- NULL
     }
   }
-  
+
   # Apply dictionary to HOUSEHOLD_ECONOMICS_CORE
   HOUSEHOLD_ECONOMICS_CORE <- data.frame(HOUSEHOLD_ECONOMICS_CORE)
   small_dictionary <- dictionary %>%
@@ -498,7 +496,7 @@ if(!'census_done.RData' %in% dir('census_data')){
     message(j)
     this_column <- names(HOUSEHOLD_ECONOMICS_CORE)[j]
     if(grepl('nr_of', tolower(this_column))){
-      HOUSEHOLD_ECONOMICS_CORE[,this_column] <- 
+      HOUSEHOLD_ECONOMICS_CORE[,this_column] <-
         ifelse(as.character(HOUSEHOLD_ECONOMICS_CORE[,this_column]) %in% c('88', '99'),
                NA,
                HOUSEHOLD_ECONOMICS_CORE[,this_column])
@@ -511,7 +509,7 @@ if(!'census_done.RData' %in% dir('census_data')){
       # Replace the variable
       HOUSEHOLD_ECONOMICS_CORE$old <- HOUSEHOLD_ECONOMICS_CORE[,this_column]
       # If not the same type, coerce to character before join
-      if(class(sub_dictionary$old) != 
+      if(class(sub_dictionary$old) !=
          class(HOUSEHOLD_ECONOMICS_CORE$old)){
         sub_dictionary$old <- as.character(sub_dictionary$old)
         HOUSEHOLD_ECONOMICS_CORE$old <- as.character(HOUSEHOLD_ECONOMICS_CORE$old)
@@ -526,7 +524,7 @@ if(!'census_done.RData' %in% dir('census_data')){
       HOUSEHOLD_ECONOMICS_CORE$answer_eng <- NULL
     }
   }
-  
+
   # Join individual with location
   manhica_people <-
     left_join(x = INDIVIDUAL_DETAILS_CORE,
@@ -547,7 +545,7 @@ if(!'census_done.RData' %in% dir('census_data')){
               by = 'LOCATION_ID')
   # Specify the source
   manhica_people$district <- 'Manhiça'
-  
+
   # remove some extra objects
   rm(HOUSEHOLD_ECONOMICS_CORE,
      INDIVIDUAL_DETAILS_CORE,
@@ -558,7 +556,7 @@ if(!'census_done.RData' %in% dir('census_data')){
      j,
      this_column,
      dictionary)
-  
+
   # Magude census #################
   if('2016-12-07_HOUSEHOLD.RData' %in% dir('census_data')){
     load('census_data/2016-12-07_HOUSEHOLD.RData')
@@ -576,15 +574,15 @@ if(!'census_done.RData' %in% dir('census_data')){
     save(MEMBER,
          file = 'census_data/2016-12-07_MEMBER.RData')
   }
-  
+
   # Join member and household
   magude <- left_join(x = MEMBER,
                       y = HOUSEHOLD,
                       by = c('_PARENT_AURI'='_URI'))
-  
+
   # Get a dictionary for translating responses
   dictionary <- cism::get_maltem_dictionary()
-  
+
   # Apply the dictionary to magude
   magude <- data.frame(magude)
   small_dictionary <- dictionary %>%
@@ -593,7 +591,7 @@ if(!'census_done.RData' %in% dir('census_data')){
     message(j)
     this_column <- names(magude)[j]
     if(grepl('nr_of', tolower(this_column))){
-      magude[,this_column] <- 
+      magude[,this_column] <-
         ifelse(as.character(magude[,this_column]) %in% c('88', '90', '99'),
                NA,
                magude[,this_column])
@@ -605,14 +603,14 @@ if(!'census_done.RData' %in% dir('census_data')){
         dplyr::select(old, answer_eng)
       # Replace the variable
       magude$old <- magude[,this_column]
-      
+
       # If not the same type, coerce to character before join
-      if(class(sub_dictionary$old) != 
+      if(class(sub_dictionary$old) !=
          class(magude$old)){
         sub_dictionary$old <- as.character(sub_dictionary$old)
         magude$old <- as.character(magude$old)
       }
-      
+
       magude <-
         magude %>%
         left_join(sub_dictionary,
@@ -623,27 +621,27 @@ if(!'census_done.RData' %in% dir('census_data')){
       magude$answer_eng <- NULL
     }
   }
-  
+
   # Get geographic coordinates
   magude <-
     magude %>%
     mutate(latitude = as.numeric(as.character(HOUSEHOLD_HEAD_GPS_LAT)),
            longitude = as.numeric(as.character(HOUSEHOLD_HEAD_GPS_LNG)))
-  
+
   # Define the source
   magude$district <- 'Magude'
-  
+
   # Rename perm id
   magude <-
     magude %>%
     rename(PERM_ID = PERM_ID_MEMBER)
-  
+
   # Rename those columns to match the ones in manhica census
-  
-  url_of_matcher <- 
+
+  url_of_matcher <-
     'https://docs.google.com/spreadsheets/d/1bOBq0scJv-id656YUIZAtlWaqObcHFoH6Kmz3gQpj5E/edit#gid=1923569214'
   matcher <- gsheet::gsheet2tbl(url_of_matcher)
-  
+
   # Loop through each name in magude and manhica census and standardize
   for (j in 1:ncol(manhica_people)){
     this_column <- names(manhica_people)[j]
@@ -659,19 +657,19 @@ if(!'census_done.RData' %in% dir('census_data')){
       names(magude)[j] <- new_name
     }
   }
-  
+
   # Get birth day
   magude$dob <- as.Date(magude$BIRTH_MEMBER)
-  
+
   # Rename a few colunns in magude
   magude <-
     magude %>%
     rename(name = MEMBER_NAME,
            sex = MEMBER_GENDER) %>%
-    mutate(sex = ifelse(sex == 1, 'M', 
+    mutate(sex = ifelse(sex == 1, 'M',
                         ifelse(sex == 2, 'F',
-                               NA))) 
-  
+                               NA)))
+
   # rename a few more columns
   manhica_people <- manhica_people %>%
     mutate(dob = as.Date(DOB)) %>%
@@ -680,7 +678,7 @@ if(!'census_done.RData' %in% dir('census_data')){
     rename(name = NAME) %>%
     mutate(latitude = as.numeric(as.character(latitude)),
            longitude = as.numeric(as.character(longitude)))
-  
+
   # Lowercase permid in both places
   manhica_people$perm_id <- manhica_people$PERM_ID
   magude$perm_id <- magude$PERM_ID
@@ -693,28 +691,28 @@ if(!'census_done.RData' %in% dir('census_data')){
             'longitude',
             'latitude',
             matcher$final)
-  
+
   # Keep only those columns
   manhica_people <-
     manhica_people[,keep]
   magude <- magude[,keep]
-  
+
   # Make sure types match
   for (j in 1:ncol(magude)){
-    if(class(magude[,j]) != 
+    if(class(magude[,j]) !=
        class(manhica_people[,j])){
       magude[,j] <- as.character(magude[,j])
       manhica_people[,j] <- as.character(manhica_people[,j])
     }
   }
-  
-  
+
+
   # Combine manhica and magude into one
   census <- bind_rows(manhica_people, magude)
-  census <- 
+  census <-
     census %>%
     filter(!duplicated(name, dob))
-  
+
   # Fix classes
   census <- census %>%
     mutate(n_bikes = as.numeric(n_bikes),
@@ -727,7 +725,7 @@ if(!'census_done.RData' %in% dir('census_data')){
            n_house_divisions = as.numeric(n_house_divisions),
            n_constructions = as.numeric(n_constructions),
            n_pigs = as.numeric(n_pigs))
-  
+
   # Fix some more oddities
   census <-
     census %>%
@@ -741,24 +739,13 @@ if(!'census_done.RData' %in% dir('census_data')){
            n_house_divisions = ifelse(n_house_divisions >= 20,
                                       NA,
                                       n_house_divisions),
-           n_constructions = ifelse(n_constructions >= 30, 
+           n_constructions = ifelse(n_constructions >= 30,
                                     NA,
                                     n_constructions),
            n_pigs = ifelse(n_pigs >= 87,
                            NA,
                            n_pigs))
-  
-  # Make a spatial version too
-  census_sp <- 
-    census %>%
-    filter(!is.na(longitude),
-           !is.na(latitude)) %>%
-    mutate(x = longitude,
-           y = latitude)
-  library(sp)
-  sp::coordinates(census_sp) <- ~x+y
-  proj4string(census_sp) <- proj4string(cism::man3)
-  
+
   # Remove unecessary objects
   rm(dictionary,
      HOUSEHOLD,
@@ -770,25 +757,311 @@ if(!'census_done.RData' %in% dir('census_data')){
      sub_dictionary,
      keep,
      url_of_matcher)
-  
+
   save(census,
-       census_sp, 
        file = 'census_data/census_done.RData')
 } else {
   load('census_data/census_done.RData')
 }
 
+# Keep only relevant columns (since most census info we'll get from openhds only)
+demografia <- census %>% 
+  dplyr::select(-unidade,
+                -name)
+
+
+# Here we get census data per the approach in ilha josina
+# (more accurate)
+
+# Get data from openhds
+if('open_hds_data.RData' %in% dir('census_data')){
+  load('census_data/open_hds_data.RData')
+} else {
+  membership <- 
+    cism::get_data(tab = 'membership',
+                   dbname = 'openhds')
+  individual <- 
+    cism::get_data(tab = 'individual',
+                   dbname = 'openhds')
+  location <- 
+    cism::get_data(tab = 'location',
+                   dbname = 'openhds')
+  residency <-
+    cism::get_data(tab = 'residency',
+                   dbname = 'openhds')
+  VISIT_REGISTRATION_CORE <-
+    cism::get_data(tab = 'VISIT_REGISTRATION_CORE',
+                   dbname = 'dssodk')
+  
+  save(membership,
+       individual,
+       location,
+       residency,
+       VISIT_REGISTRATION_CORE,
+       file = '../data/open_hds_data.RData')
+}
+# Clean up -----------------------------------
+
+# Remove the extra characters in invdividual.extId
+individual$extId <- substr(individual$extId,
+                           start = 1,
+                           stop = 9)
+
+# Remove those with hh in permid, and by permid we mean lastname
+individual <- individual %>%
+  filter(!grepl('hh', tolower(lastName)))
+
+# Make data objects
+residency <- residency %>%
+  mutate(startDate = as.Date(startDate),
+         endDate = as.Date(endDate, origin = '1970-01-01'))
+individual$dob <- as.Date(individual$dob)
+
+# We're going to snapshot on. So, remove
+# those observations that come before/after, etc.
+snap_shot <- as.Date('2016-01-01')
+residency <- residency %>%
+  mutate(endDate = ifelse(is.na(endDate), snap_shot, endDate)) %>%
+  filter(startDate <= snap_shot,
+         endDate >= snap_shot)
+
+# Keep only those people as of the snap_shot date
+people <- residency %>%
+  dplyr::select(individual_uuid,
+                location_uuid) %>%
+  left_join(individual %>%
+              dplyr::select(#extId,
+                uuid,
+                dob,
+                firstName,
+                gender,
+                lastName,
+                middleName,
+                gender),
+            by = c('individual_uuid' = 'uuid')) %>%
+  left_join(location %>%
+              dplyr::select(extId,
+                            uuid,
+                            latitude,
+                            locationName,
+                            longitude),
+            by = c('location_uuid' = 'uuid'))
+
+people$longitude <- as.numeric(as.character(people$longitude))
+people$latitude <- as.numeric(as.character(people$latitude))
+
+# Join to visit registration core from dssodk
+people <- people %>%
+  left_join(VISIT_REGISTRATION_CORE %>%
+              dplyr::select(LOCATION_NAME,
+                            COORDINATES_LAT,
+                            COORDINATES_LNG) %>%
+              filter(!is.na(LOCATION_NAME),
+                     !is.na(COORDINATES_LAT),
+                     !is.na(COORDINATES_LNG)) %>%
+              filter(!duplicated(LOCATION_NAME)),
+            by = c('locationName' = 'LOCATION_NAME'))
+people$latitude <- 
+  ifelse(is.na(people$latitude), people$COORDINATES_LAT, people$latitude)
+people$longitude <- 
+  ifelse(is.na(people$longitude), people$COORDINATES_LNG, people$longitude)
+
+# Get an age
+people <- people %>%
+  mutate(age_years = as.numeric(snap_shot - dob) / 365.25) 
+
+# Fix the last name / permid naming issue
+people <- people %>%
+  rename(perm_id = lastName)
+
+# Get a household id
+people <- people %>%
+  mutate(household_id = substr(x = perm_id, 
+                               start = 1, 
+                               stop = 8))
+
+# Get a maragra-ready unidade
+people$unidade <- gsub('-', '', people$household_id)
+
+# Remove duplicates
+people <- people %>%
+  filter(!duplicated(perm_id))
+
+# Fix the name
+people$name <- people$firstName
+
+# Get a copy of the full census
+census <- people
+
+# Clean up encoding
+census$name <- iconv(census$name,"WINDOWS-1252","UTF-8")
+
+# Keep only relevant columns
+census <- census %>% 
+  rename(sex = gender) %>%
+  dplyr::select(dob, 
+                name,
+                perm_id,
+                longitude,
+                latitude,
+                age_years,
+                unidade,
+                sex)
+
+# Join to demographic info
+# first changing lat/lon to not cause merge problems
+demografia <-
+  demografia %>%
+  rename(x = longitude,
+         y = latitude)
+demografia <- demografia %>%
+  dplyr::filter(!duplicated(perm_id))
+census <- census %>%
+  dplyr::filter(!duplicated(perm_id))
+census <- full_join(x = census,
+                    y = demografia)
+rm(demografia)
+# Clean up lat /long
+census <- census %>%
+  mutate(longitude = ifelse(is.na(longitude), x, longitude),
+         latitude = ifelse(is.na(latitude), y, latitude)) %>%
+  dplyr::select(-x, -y, -district)
+
+# Define which are in maragra bairro and fabrica
+census <-
+  census %>%
+  mutate(maragra_bairro = substr(perm_id, 1, 4) %in%
+           c(paste0('0', 601:609),
+             paste0('0', 701:709),
+             1001:1003)) %>%
+  mutate(maragra_fabrica = substr(perm_id, 1, 4) %in%
+           as.character(1001:1003))
+
+
+# Correct the unidades when incorrectly digitized
+for (i in 1:nrow(mc)){
+  old_unidade <- mc$unidade[i]
+  new_unidade <- maragra::correct_unidade(unidade = old_unidade,
+                                          unidades = sort(unique(census$unidade)))
+  mc$unidade[i] <- new_unidade
+  if(old_unidade != new_unidade){
+    message(i)
+  }
+}
+
+
+
+# Match workers to census
+# Define a function for getting similar dates of birth
+dob_vary <- function(date){
+  require(lubridate)
+  date <- as.Date(date)
+  c(date + years(1),
+    date - years(1),
+    date + years(10),
+    date - years(10),
+    date + months(1),
+    date - months(1),
+    date + days(1),
+    date - days(1),
+    date)
+}
+
+# Try to get the workers census identity
+workers$census_name <- workers$census_name_match_score <- workers$perm_id <- workers$census_dob <- NA
+for (i in 1:nrow(workers)){
+  # Identify the worker
+  this_worker_name <- workers$first_name_and_surname[i]
+  this_dob <- workers$date_of_birth[i]
+  # Define some potential dob variants
+  dob_variants <- dob_vary(date = this_dob)
+  # Get potential matches based on birthday
+  same_birthday <- census %>%
+    filter(dob %in% dob_variants) 
+  # Also keep only those of the same sex
+  if(!is.na(workers$sex[i])){
+    same_birthday <- 
+      same_birthday %>%
+      filter(sex == workers$sex[i])
+  }
+  if(nrow(same_birthday) > 0){
+    # Fuzzy match the names
+    fuzzy_results <- cism::fuzzy_match(x = this_worker_name,
+                                       y = same_birthday$name)
+    if(!all(is.na(fuzzy_results[1,]))){
+      # Get best match
+      best_match_indices <- 
+        apply(fuzzy_results, 1, function(x){
+          which.min(x)
+        })
+      best_match_scores <- 
+        apply(fuzzy_results, 1, function(x){
+          min(x, na.rm = TRUE)
+        })
+      # Subset to just keep best matches
+      sub_same_birthday <- same_birthday[best_match_indices,]
+      # If ties, break with birthday
+      if(nrow(sub_same_birthday) > 1){
+        sub_match_index <- which.min(abs(as.numeric(this_dob - sub_same_birthday$dob)))[1]
+        sub_same_birthday <- sub_same_birthday[sub_match_index,]
+        best_match_scores <- best_match_scores[sub_match_index]
+      }
+      # Extract the info
+      workers$census_name[i] <- sub_same_birthday$name
+      workers$census_name_match_score[i] <- best_match_scores
+      workers$perm_id[i] <- sub_same_birthday$perm_id
+      message(i, ': Matched ', this_worker_name, ' with ', sub_same_birthday$name, '(score: ',
+              best_match_scores, ').')
+    }
+  }
+}
+
+# Get the fixed coordinates (emailed by aura)
+coordenadas <- read_csv('Coordenadas.csv')
+# convert to lat lon
+ll <- cism::ll_from_utm(coordenadas$LongUTM, coordenadas$LatUTM)
+# Join
+coordenadas <- bind_cols(coordenadas, ll)
+# Get an unidade
+coordenadas$unidade <- gsub('-', '', coordenadas$Family_id)
+# Clean up
+coordenadas <-
+  coordenadas %>%
+  rename(longitude_aura = x,
+         latitude_aura = y) %>%
+  dplyr::select(unidade,
+                longitude_aura,
+                latitude_aura)
+  
+# Join to census
+census <-
+  left_join(census,
+            coordenadas)
+
+# Join to mc
+mc <-
+  left_join(mc,
+            coordenadas)
+
+# Save again for use in package
 # Save for use in package
+devtools::use_data(ab,
+                   overwrite = TRUE)
+devtools::use_data(clinic,
+                   overwrite = TRUE)
+devtools::use_data(clinic_agg,
+                   overwrite = TRUE)
+devtools::use_data(workers,
+                   overwrite = TRUE)
+devtools::use_data(ab_panel,
+                   overwrite = TRUE)
+devtools::use_data(bairros,
+                   overwrite = TRUE)
 devtools::use_data(census,
                    overwrite = TRUE)
-devtools::use_data(census_sp,
+devtools::use_data(mc,
                    overwrite = TRUE)
 
 ##################################################
 # Save a backup
 save.image(paste0('../backups/', Sys.Date(), '.RData'))
-
-
-
-
-

@@ -1,9 +1,11 @@
 ---
+title: "Maragra and Malaria: preliminary analysis"
 date: ""
 fig_height: 2.6
 fig_width: 4
 output:
   html_document:
+    toc: True
     css: resources/style.css
     pandoc_args: [
       "+RTS", "-K16000m",
@@ -37,24 +39,25 @@ opts_knit$set(width=75)
 ```
 
 
+<hr>
 <p style="text-align:left;">
-[www.economicsofmalaria.com](www.economicsofmalaria.com)
+[http://economicsofmalaria.com](http://economicsofmalaria.com)
 <span style="float:right;">joebrew@gmail.com</span>
 </p>
+<hr>
 
 ```{r}
 # Read in data
 ab <- maragra::ab
 ab_panel <- maragra::ab_panel
+bairros <- maragra::bairros
 census <- maragra::census
-census_sp <- maragra::census_sp
 clinic <- maragra::clinic
 clinic_agg <- maragra::clinic_agg
 mc <- maragra::mc
 workers <- maragra::workers
 ```
 
-# Maragra and Malaria: preliminary analysis {.tabset}
 
 This document contains some basic preliminary analysis of data relating to malaria, IRS, and absenteeism at Maragra Açucar, in Maragra, Mozambique. To explore a specific section, click any of the below tabs.
 
@@ -517,7 +520,7 @@ ggplot(data = y,
            y = val,
            group = key,
            fill = key)) +
-  geom_area(stat = 'identity', position = 'stack', alpha = 0.5) +
+  geom_bar(stat = 'identity', position = 'stack', alpha = 0.5) +
   xlab('Date') +
   ylab('Number of positive cases') +
   theme_maragra() +
@@ -536,7 +539,7 @@ The below chart shows the same data as above, but convers the number of positive
 ggplot(data = x,
        aes(x = date,
            y = pp)) +
-  geom_area(stat = 'identity', fill = 'darkblue', alpha = 0.5) +
+  geom_bar(stat = 'identity', fill = 'darkblue', alpha = 0.5) +
   xlab('Date') +
   ylab('Number of positive cases') +
   theme_maragra() +
@@ -671,7 +674,7 @@ ggplot(data = x,
        aes(x = date,
            y = p,
            fill = severity)) +
-  geom_area(stat = 'identity',
+  geom_bar(stat = 'identity',
            position = 'stack',
            alpha = 0.6) +
   scale_fill_manual(name = 'Severity',
