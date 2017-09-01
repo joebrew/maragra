@@ -9,10 +9,6 @@ output:
 
 
 
-```{r setOptions, message=FALSE, echo = FALSE}
-library(googleVis)
-op <- options(gvis.plot.tag='chart')
-```
 
 ```{r knitr_init, echo=FALSE, cache=FALSE}
 library(knitr)
@@ -107,30 +103,26 @@ ggplot(data = x,
 
 The below charts show the total number of tests and postive cases, by month, for Mozambican and foreign workers, respectively, at Ilovo-Maragra.
 
-```{r, results = 'asis'}
-gg <- gvisLineChart(data = clinic_agg %>% filter(group == 'nacionais'),
-                    xvar = 'date',
-                    yvar = c('tested', 'positive'),
-                    options = list(curveType='function',
-                                  title="Malaria among Mozambican employees",
-                                  titleTextStyle="{color:'black',fontName:'Courier',fontSize:16}"))
-plot(gg)
 
-gg <- gvisLineChart(data = clinic_agg %>% filter(group == 'expatriados'),
-                    xvar = 'date',
-                    yvar = c('tested', 'positive'),
-                    options = list(curveType='function',
-                                  title="Malaria among expatriated employees",
-                                  titleTextStyle="{color:'black',fontName:'Courier',fontSize:16}"))
-plot(gg)
-# 
-# # Heat calendar chart
-# gvisCalendar
-
-# # # Motion chart
-# x <- gvisMotionChart(clinic_agg,
-#    idvar="group",
-#    timevar="date")
+```{r}
+ggplot(data = clinic_agg %>% filter(group == 'nacionais'),
+            aes(x = date,
+                y = tested)) +
+  geom_line() +
+  geom_line(aes(y = positive)) +
+  theme_maragra() +
+  labs(x = 'Date',
+       y = 'People (tested and positive)',
+       title = 'Mozambicans')
+ggplot(data = clinic_agg %>% filter(group != 'nacionais'),
+            aes(x = date,
+                y = tested)) +
+  geom_line() +
+  geom_line(aes(y = positive)) +
+  theme_maragra() +
+  labs(x = 'Date',
+       y = 'People (tested and positive)',
+       title = 'Expatriates')
 ```
 
 ## Cases and tests

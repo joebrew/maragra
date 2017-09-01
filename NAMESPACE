@@ -2,6 +2,7 @@
 
 export(correct_unidade)
 export(generate_maragra_clinical_malaria_incidence)
+export(generate_paper)
 export(generate_preliminary_analysis)
 export(run_all_analyses)
 export(theme_maragra)

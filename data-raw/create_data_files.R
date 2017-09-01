@@ -1043,13 +1043,82 @@ mc <-
   left_join(mc,
             coordenadas)
 
-# Save again for use in package
+# Get IRS expanded data
+# Generate a dataset of irs coverage and time since irs
+expand_irs <- function(date,
+                       chemical,
+                       unidade){
+  data_frame(date = seq(date,
+                        date + 364,
+                        by = 1),
+             chemical = chemical,
+             unidade = unidade,
+             days_since = 0:364) 
+}
+results <- list()
+for (i in 1:nrow(mc)){
+  out <- expand_irs(date = mc$date[i],
+                    chemical = mc$insecticida[i],
+                    unidade = mc$unidade[i])
+  results[[i]] <- out
+  message(i)
+}
+
+# Combine
+irs <- bind_rows(results)
+
+# Group by date and unidade, and get the highest coverage value (for when there are overlaps)
+irs <- 
+  irs %>%
+  group_by(date, unidade) %>%
+  summarise(days_since = min(days_since),
+            chemical = dplyr::first(chemical[days_since == min(days_since)]))
+irs <- irs %>% ungroup
+
+# Bring an unidade into workers
+# only merging on those with an acceptably low match
+# of <= 0.1990741
+workers <- 
+  workers %>%
+  left_join(census %>%
+              dplyr::select(unidade,
+                            perm_id))
+
+# Generate some extra vars for workers
+workers <- 
+  workers %>%
+  mutate(permanent_or_temporary = 
+           ifelse(employee_indicator_type_desc %in% c('TEMPORARY AGRIC', 
+                                                      'FTC INDUSTRIAL'),
+                                                      'Temporary',
+                                                      'Permanent')) %>%
+  mutate(department = 
+           ifelse(grepl('CIVLS|HUMAN RESOURCES|RISK', department_name),
+                  'Administrative',
+                  ifelse(grepl('CANE|ADMIN', department_name),
+                                'Field',
+                               'Factory')))
+
+# Get rid of duplicates
+workers <- 
+  workers %>%
+  dplyr::filter(!duplicated(oracle_number))
+
+# Bring unidade into ab_panel
+ab_panel <-
+  left_join(x = ab_panel,
+            y = workers %>%
+              dplyr::filter(census_name_match_score <= 0.1990741) %>%
+              dplyr::select(oracle_number, unidade))
+
 # Save for use in package
 devtools::use_data(ab,
                    overwrite = TRUE)
 devtools::use_data(clinic,
                    overwrite = TRUE)
 devtools::use_data(clinic_agg,
+                   overwrite = TRUE)
+devtools::use_data(irs,
                    overwrite = TRUE)
 devtools::use_data(workers,
                    overwrite = TRUE)

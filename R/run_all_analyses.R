@@ -34,4 +34,10 @@ run_all_analyses <- function(date = NULL,
   generate_preliminary_analysis(date = date,
                                 output_dir = output_dir)
   
+  # Clinical preliminary analysis report
+  message(paste0('Generating the paper in ',
+                 output_dir))
+  generate_paper(date = date,
+                 output_dir = output_dir)
+  
 }

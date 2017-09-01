@@ -22,9 +22,7 @@ library(Hmisc)
 library(brew)
 library(maragra)
 library(knitr)
-library(googleVis)
 library(RColorBrewer)
-op <- options(gvis.plot.tag='chart')
 
 ## Global options
 options(max.print="75")
@@ -61,6 +59,8 @@ workers <- maragra::workers
 
 This document contains some basic preliminary analysis of data relating to malaria, IRS, and absenteeism at Maragra Açucar, in Maragra, Mozambique. To explore a specific section, click any of the below tabs.
 
+# Summary
+
 ## Description of data
 
 
@@ -86,7 +86,8 @@ for (i in 1:length(x)){
 }
 results <- bind_rows(results)
 
-kable(results)
+kable(results) %>%
+  kableExtra::kable_styling(full_width = FALSE)
 ```
 
 These tables all constitute three kinds of data: those pertaining to medical outcomes (generally referred to as "clinic" data), those pertaining to worker information (demographic and absenteeism-related), and those pertaining to malaria control activities.
@@ -106,7 +107,7 @@ For a "deep dive" into each kind of data, click the tabs at the top of this page
 
 In order to reproduce this analysis (and others related to these datasets), follow the instructions on this project's [research compendium page](https://github.com/joebrew/maragra#purpose).
 
-## IRS analysis
+## IRS data
 
 ### Data structure
 
@@ -220,7 +221,7 @@ ggplot(data = x %>%
   facet_wrap(~year)
 ```
 
-## Absenteeism analysis
+## Absenteeism data
 
 ### Data structure
 
@@ -429,7 +430,7 @@ ggplot(data = x,
   facet_grid(department~key, scales = 'free')
 ```
 
-## Clinic analysis
+## Clinic data
 
 ### Data structure
 
@@ -489,23 +490,25 @@ ggplot(data = x,
 
 The below charts show the total number of tests and postive cases, by month, for Mozambican and foreign workers, respectively, at Ilovo-Maragra.
 
-```{r, results = 'asis'}
-gg <- gvisLineChart(data = clinic_agg %>% filter(group == 'nacionais'),
-                    xvar = 'date',
-                    yvar = c('tested', 'positive'),
-                    options = list(curveType='function',
-                                  title="Malaria among Mozambican employees",
-                                  titleTextStyle="{color:'black',fontName:'Courier',fontSize:16}"))
-plot(gg)
-
-gg <- gvisLineChart(data = clinic_agg %>% filter(group == 'expatriados'),
-                    xvar = 'date',
-                    yvar = c('tested', 'positive'),
-                    options = list(curveType='function',
-                                  title="Malaria among expatriated employees",
-                                  titleTextStyle="{color:'black',fontName:'Courier',fontSize:16}"))
-plot(gg)
-
+```{r}
+ggplot(data = clinic_agg %>% filter(group == 'nacionais'),
+            aes(x = date,
+                y = tested)) +
+  geom_line() +
+  geom_line(aes(y = positive)) +
+  theme_maragra() +
+  labs(x = 'Date',
+       y = 'People (tested and positive)',
+       title = 'Mozambicans')
+ggplot(data = clinic_agg %>% filter(group != 'nacionais'),
+            aes(x = date,
+                y = tested)) +
+  geom_line() +
+  geom_line(aes(y = positive)) +
+  theme_maragra() +
+  labs(x = 'Date',
+       y = 'People (tested and positive)',
+       title = 'Expatriates')
 ```
 
 ### Cases and tests from `clinic_agg`
@@ -549,7 +552,7 @@ ggplot(data = x,
 
 ```
 
-### Seasonality analysis from `clinic_agg`
+### Seasonality data from `clinic_agg`
 
 We can examine the annual seasonality of positive cases by overlaying all years' data onto one axis.
 
@@ -685,13 +688,171 @@ ggplot(data = x,
        title = 'Distribution of severity of cases over time')
 ```
 
+# Analysis
 
-## Next steps
+## Effectiveness analysis
 
-A lot of work remains to be done:
+### Identification strategy
 
-- Figure out how to transform the `unidade` codes from the IRS data to specific workers's residences (or at least geographical area).  
-- Perform some name standardization so as to better link individual level clinical data with workers demographic and absenteeism data.  
-- Join data with census data for more demographic analysis, particularly in terms of absenteeism and health.  
-- Estimate a model for absenteeism, adjusting for relevant factors, particularly the IRS status and time since IRS.  
-- A cost-effectiveness framework for estimating the return on investment for IRS activities.  
+For our purposes we are analyzing the effect of one intervention (IRS) on 2 outcomes (absence and illness) with many confounders (age, worker type, seasonality, etc.). Our analysis can be visualized formulaically as follows:
+
+$$
+\begin{equation}
+\operatorname{Pr}(\text{Outcome} = 1 \mid \text{X}) = \beta_{0} + \beta_{1} \text{Location} + \beta_{2} \text{Season} + (\beta_3{IRS}*\beta_4{IRS_t} + ... )
+\end{equation}
+$$
+
+Our outcome is probabilistic and binomial (ie, one is either absent or present / infected or not infected). Our demographic confounders (represented by $...$) will be a function of iterative model selection. Our intervention (IRS) is not a simple yes/no, but rather the product of whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment (represented above as the interaction term, where where $_t$ represents time elapsed since commencement of the most recent IRS campaign). 
+
+### Propensity score matching
+
+Since the full accounting of confounders would greatly reduce the degrees of freedom of our analysis, we employ propensity score matching to generate a matched sample of workers who are alike in characteristics and time, but not treatment. We do this by first estimating the likelihood of having ever received the intervention, given a worker's age, sex, department and temporary vs. permanent status. We justify the necessity of this matching by noting that the differences between those workers who received IRS and those who did not (see table 1) are striking and in most cases statistically significant.
+
+```{r}
+right_side <- irs %>%
+  group_by(unidade) %>% 
+  tally %>%
+  ungroup %>%
+  mutate(received = ifelse(n > 0, TRUE, FALSE))
+
+left_side <-
+  workers %>%
+  dplyr::select(oracle_number, unidade, permanent_or_temporary, department, sex, date_of_birth)
+
+psm <- left_join(x = left_side,
+                 y = right_side,
+                 by = 'unidade') %>%
+  mutate(received = ifelse(is.na(received), FALSE, received)) %>%
+  mutate(age = round((as.numeric(as.Date('2016-01-01') - date_of_birth)) / 365.25, digits = 2)) %>%
+  filter(!is.na(sex),
+         !is.na(age)) %>%
+  dplyr::select(-unidade, -date_of_birth, -n)
+
+psmt1 <- psm
+names(psmt1) <- toupper(names(psmt1))
+psmt1 <- psmt1 %>%
+  mutate(RECEIVED = ifelse(RECEIVED == TRUE,'IRS', 'No IRS')) %>%
+  mutate(STATUS = PERMANENT_OR_TEMPORARY)
+
+pacman::p_load(tableone)
+table1 <- CreateTableOne(vars = toupper(c('STATUS', 'department', 'age',
+                                  'sex', 'received')), 
+                         data = psmt1, 
+                         factorVars = toupper(c('STATUS', 'department',
+                                  'sex')), 
+                         strata = 'RECEIVED')
+table1 <- print(table1, 
+                printToggle = FALSE, 
+                noSpaces = TRUE)
+kable(table1[,1:3],  
+      align = 'c', 
+      caption = 'Table 1: Comparison of unmatched samples') %>%
+  kableExtra::kable_styling(full_width = FALSE)
+```
+
+Having now demonstrated that are treatment and control groups are qualitatively different (and therefore require either statistical adjustment or a priori matching), we proceed to carry out the matching, using those best practices suggested by Ho et al 2004 "for improving parametric statistical models by preprocessing data with nonparametric matching methods" (Daniel Ho, Kosuke Imai, Gary King, and Elizabeth Stuart (2007). Matching as Nonparametric Preprocessing for Reducing Model Dependence in Parametric Causal Inference. Political Analysis 15(3): 199-236. http://gking.harvard.edu/files/abs/matchp-abs.shtml). We emply the nearest neighbor method for identifying those workers from our control group who most resemble those workers in the treatment group.
+
+Our match is a 1-to-1 cut, meaning those control workers who do not resemble those in the treatment group are left out of primary analysis. The below table shows the match results.
+
+```{r}
+library(MatchIt)
+set.seed(1234)
+match.it <- matchit(received ~ age + sex + permanent_or_temporary + department, data = psm, method="nearest", ratio=1)
+a <- summary(match.it)
+kable(a$nn, digits = 2, align = 'c', 
+      caption = 'Table 2: Sample sizes') %>%
+  kableExtra::kable_styling(full_width = FALSE)
+```
+
+The following output shows, that the distributions of our numeric variables are now extremely similar.
+
+```{r}
+kable(a$sum.matched[c(1,2,3,4)], digits = 2, align = 'c', 
+      caption = 'Table 3: Summary of balance for matched data') %>%
+  kableExtra::kable_styling(full_width = FALSE)
+```
+
+The propensity scores can be visualized below.
+
+```{r}
+plot(match.it, type = 'jitter', interactive = FALSE, col = adjustcolor('darkblue', alpha.f  =0.3))
+```
+
+```{r}
+# Save matched samples
+matched <- match.data(match.it)[1:ncol(psm)]
+```
+
+### Modeling
+
+Having now created a matched sample of `r nrow(matched)` workers, of which 50% received IRS and 50% did not, we can confidently carry out our analysis on this sample. Since the propensity score matching effectively cancels out demographic differences, our model only need take into account those differences which are not at the person-level. In our case, these include seasonality (defined here by quarter) (later, will add other factors).
+
+For the purposes of this first pass, we "bin" IRS exposure into 5 groups: never, ever but 180+ days ago, 90-80 days, 60-90 days, and in the last 60 days.
+
+Having estimated our binomial logistic regression model, we examine the odds ratios for absence as a function of our predictive variables.
+
+```{r}
+# Create model data
+model_data <-
+  ab_panel %>%
+  filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs) %>%
+  left_join(matched) %>%
+  mutate(days_since = ifelse(is.na(days_since), 'Never',
+                             ifelse(days_since > 180, '180+',
+                                    ifelse(days_since > 90, '090-180',
+                                           ifelse(days_since > 60, '060-090',
+                                                  '<060'))))) %>%
+  mutate(quarter = lendable::quarter_extract(date)) %>%
+  mutate(quarter = as.character(quarter)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
+# Need to add seasonality
+# Need to adjust for houses on and off site
+fit <- glm(absent ~ days_since + quarter,
+           family = binomial('logit'),
+          data = model_data)
+x <- exp(coef(fit))
+ors <- exp(confint(fit))
+ors <- data.frame(ors)
+names(ors) <- c('Lower', 'Upper')
+
+ors <- cbind(x, ors)
+ors$Variable <- row.names(ors)
+ors <- ors %>%
+  dplyr::rename(OR = x) %>%
+  dplyr::select(Variable, OR, Lower, Upper)
+# Combine into a df
+kable(ors) %>%
+  kableExtra::kable_styling(full_width = FALSE)
+```
+
+We run the same model, but instead of estimating absences, we estimate only the likelihood of sick absences. The results (in form of odds ratios) are below.
+
+```{r}
+# Need to add seasonality
+# Need to adjust for houses on and off site
+fit <- glm(absent_sick ~ days_since + quarter,
+           family = binomial('logit'),
+          data = model_data)
+x <- exp(coef(fit))
+ors <- exp(confint(fit))
+ors <- data.frame(ors)
+names(ors) <- c('Lower', 'Upper')
+
+ors <- cbind(x, ors)
+ors$Variable <- row.names(ors)
+ors <- ors %>%
+  dplyr::rename(OR = x) %>%
+  dplyr::select(Variable, OR, Lower, Upper)
+# Combine into a df
+kable(ors) %>%
+  kableExtra::kable_styling(full_width = FALSE)
+
+```
+
+## To do
+
+- More robust models and checks.  
+- Limit ton only clinical malaria. 
+- Un-bin IRS (ie, estimate semi-parametric curve of effectiveness waning)  
+- More investigation of worker type, shift, etc.

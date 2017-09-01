@@ -1,0 +1,133 @@
+---
+title: Effectiveness of private sector malaria control at a large sugar
+  facility in Southern Mozambique
+csl: elsevier-harvard.csl
+date: ''
+output:
+  html_document:
+    css: resources/style.css
+    pandoc_args:
+    - +RTS
+    - -K16000m
+    - -RTS
+    toc: yes
+  pdf_document:
+    toc: yes
+fig_width: 4
+fig_height: 2.6
+bibliography: bibliography.bib
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# Packages
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(knitr)
+library(googleVis)
+library(RColorBrewer)
+op <- options(gvis.plot.tag='chart')
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+<!-- <hr> -->
+<!-- <p style="text-align:left;"> -->
+<!-- [http://economicsofmalaria.com](http://economicsofmalaria.com) -->
+<!-- <span style="float:right;">joebrew@gmail.com</span> -->
+<!-- </p> -->
+<!-- <hr> -->
+
+```{r}
+# Read in data
+ab <- maragra::ab
+ab_panel <- maragra::ab_panel
+bairros <- maragra::bairros
+census <- maragra::census
+clinic <- maragra::clinic
+clinic_agg <- maragra::clinic_agg
+mc <- maragra::mc
+workers <- maragra::workers
+```
+
+
+# Introduction
+
+
+Public health interventions targetting malaria - and their corresponding cost-effectiveness evaluations - most often pertain to the public sector. Accordingly, the analytical framework and metrics employed by these analyses most often focus on impact pertaining to the public good, such as an increase in life years adjusted for disability or quality  [@Goodman1999, @Shretta2016, @Lee2017, Hanson2004]. Though population-level health is certainly of importance to businesses, and improvements in health incidentally improve the economy at all levels [@World1999, @Bloom2008], these improvements may be to disperse or long-term to incentivize private sector involvement in health campaigns. 
+
+In the context of Mozambique, where a significant sector of the economy is dominated by a full large-scale foreing direct investment projects [@Robbins2012], the role of the private sector in health generally, and malaria specifically, is unequivocally important. Large agriculture and extractive industry firms take up wide swaths of land and employ hundreds of thousands  [@German2013]. The Mozambican state has encouraged large-scale entreprise with the aim of general economic development [@Buur2012]. And where large firms exist, they often take on social roles such as housing and health care [@Winkler]. At times, this role is necessary from a purely practical standpoint; in other cases, it is employed under the guise of "corporate social responsibility" [@Azemar2009]. Regardless of the language used, it is clear that private industry plays an important role in public health in Mozambique [@Robbins2012, @CastelBranco2014]. 
+
+Several cases exist of foreign firms engaging in large-scale anti-malaria campaigns [@Mouzin2011, @Han]. But these cases rarely undergo the same rigorous evaluation as their public sector counterparts due to (a) unavailability of data, (b) identification strategy, etc.
+
+In this paper, we...
+
+We hypothesize that..
+
+We find that...
+
+
+# Methods
+
+```{r}
+# # Create model data
+# model_data <-
+#   ab_panel %>%
+#   left_join(irs) %>%
+#   left_join(workers %>%
+#               dplyr::select(oracle_number,
+#                             sex,
+#                             race_code,
+#                             department,
+#                             permanent_or_temporary)) %>%
+#   mutate(days_since = ifelse(is.na(days_since), 'Never',
+#                              ifelse(days_since > 180, '180+',
+#                                     ifelse(days_since > 90, '090-180',
+#                                            ifelse(days_since > 60, '060-090', 
+#                                                   '<060')))))
+# # Need to add seasonality
+# # Need to adjust for houses on and off site
+# fit <- glm(absent ~ days_since,
+#            family = binomial('logit'),
+#           data = model_data)
+# exp(coef(fit))
+```
+
+Some text goes here.
+
+All data processing and analysis were carried out in R [@R]. All code is freely available online [@brewgit].
+
+# Results
+
+Some text goes here
+
+
+# Discussion
+
+Some text goes here
+
+
+
+```{r include=FALSE}
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), 'knitr', 'rmarkdown'
+), 'packages.bib')
+```
+
+
+# References
+
