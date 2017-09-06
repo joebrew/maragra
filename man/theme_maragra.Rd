@@ -4,12 +4,10 @@
 \alias{theme_maragra}
 \title{Theme for ggplots}
 \usage{
-theme_maragra(base_size = 14, base_family = "Arial")
+theme_maragra(base_size = 14)
 }
 \arguments{
 \item{base_size}{The base font size}
-
-\item{base_family}{The font}
 }
 \value{
 A ggplot compatible theme call
@@ -17,3 +15,4 @@ A ggplot compatible theme call
 \description{
 Add a theme to a ggplot object
 }
+

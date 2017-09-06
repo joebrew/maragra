@@ -24,3 +24,4 @@ Generate an html report of Maragra clinical malaria incidence, based
 on aggregate numbers manually collected by Joe in December 2016 at the 
 Maragra clinic and laboratory
 }
+

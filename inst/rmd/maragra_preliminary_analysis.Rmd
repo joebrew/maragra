@@ -170,7 +170,9 @@ ggplot(data = x,
        y = 'Houses fumigated',
        title = 'Maragra IRS activity by insecticide type over time') +
   scale_color_manual(name = 'Chemical',
-                     values = cols)
+                     values = cols) +
+  geom_vline(xintercept = as.numeric(as.Date(paste0(2012:2017, '-01-01'))),
+             alpha = 0.2)
 ```
 
 Below is a table of the same data.

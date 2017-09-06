@@ -4,9 +4,14 @@
 \alias{run_all_analyses}
 \title{Run all analyses}
 \usage{
-run_all_analyses(date = NULL, output_dir = NULL)
+run_all_analyses(only = NULL, except = NULL, date = NULL,
+  output_dir = NULL)
 }
 \arguments{
+\item{only}{A vector of .Rmd file names (excluding path) to be knitted}
+
+\item{except}{A vector or .Rmd file names (excluding path) to be excluded}
+
 \item{date}{A date to be printed on the report. If \code{NULL} (the 
 default), the current date will be used}
 
@@ -19,3 +24,4 @@ html and pdf files will be written
 \description{
 Run all analyses and produce outputs in the \code{outputs_dir} folder
 }
+

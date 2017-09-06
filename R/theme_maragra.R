@@ -2,14 +2,13 @@
 #' 
 #' Add a theme to a ggplot object
 #' @param base_size The base font size
-#' @param base_family The font
 #' @return A ggplot compatible theme call
 #' @import ggthemes
 #' @import grid
 #' @export
 # Borrowed from https://rpubs.com/Koundy/71792
-theme_maragra <- function(base_size=14, base_family="Arial") {
-  (theme_foundation(base_size=base_size, base_family=base_family)
+theme_maragra <- function(base_size=14) {
+  (theme_foundation(base_size=base_size)
     + theme(plot.title = element_text(face = "bold",
                                       size = rel(1.2), hjust = 0.5),
             text = element_text(),
