@@ -52,6 +52,7 @@ bairros <- maragra::bairros
 census <- maragra::census
 clinic <- maragra::clinic
 clinic_agg <- maragra::clinic_agg
+irs <- maragra::irs
 mc <- maragra::mc
 workers <- maragra::workers
 ```
@@ -789,7 +790,7 @@ matched <- match.data(match.it)[1:ncol(psm)]
 
 Having now created a matched sample of `r nrow(matched)` workers, of which 50% received IRS and 50% did not, we can confidently carry out our analysis on this sample. Since the propensity score matching effectively cancels out demographic differences, our model only need take into account those differences which are not at the person-level. In our case, these include seasonality (defined here by quarter) (later, will add other factors).
 
-For the purposes of this first pass, we "bin" IRS exposure into 5 groups: never, ever but 180+ days ago, 90-80 days, 60-90 days, and in the last 60 days.
+For the purposes of this first pass, we "bin" IRS exposure into 5 groups: before IRS (includes IRS > 365 days ago), 180+ days ago, 90-80 days, 60-90 days, and in the last 60 days.
 
 Having estimated our binomial logistic regression model, we examine the odds ratios for absence as a function of our predictive variables.
 
@@ -800,11 +801,13 @@ model_data <-
   filter(oracle_number %in% matched$oracle_number) %>%
   left_join(irs) %>%
   left_join(matched) %>%
-  mutate(days_since = ifelse(is.na(days_since), 'Never',
-                             ifelse(days_since > 180, '180+',
+  mutate(days_since = ifelse(days_since > 180, '180+',
                                     ifelse(days_since > 90, '090-180',
                                            ifelse(days_since > 60, '060-090',
-                                                  '<060'))))) %>%
+                                                  ifelse(days_since >= 0, '000-060',
+                                                         ifelse(days_since < 0, 'Before', NA)))))) %>%
+  filter(!is.na(days_since)) %>%
+  mutate(days_since = factor(days_since, levels = c('Before', '000-060', '060-090', '090-180', '180+'))) %>%
   mutate(quarter = lendable::quarter_extract(date)) %>%
   mutate(quarter = as.character(quarter)) %>%
   mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
@@ -852,9 +855,202 @@ kable(ors) %>%
 
 ```
 
-## To do
+## Discontinuity analysis (not using propoensity score matching)
 
-- More robust models and checks.  
-- Limit ton only clinical malaria. 
-- Un-bin IRS (ie, estimate semi-parametric curve of effectiveness waning)  
-- More investigation of worker type, shift, etc.
+
+```{r}
+# Create model data for all obs (not just propensity score)
+model_data <-
+  ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs) %>%
+  # left_join(matched) %>%
+  mutate(days_since = ifelse(days_since > 180, '180+',
+                                    ifelse(days_since > 90, '090-180',
+                                           ifelse(days_since > 60, '060-090',
+                                                  ifelse(days_since >= 0, '000-060',
+                                                         ifelse(days_since < 0, 'Before', NA)))))) %>%
+  filter(!is.na(days_since)) %>%
+  mutate(days_since = factor(days_since, levels = c('Before', '000-060', '060-090', '090-180', '180+'))) %>%
+  mutate(quarter = lendable::quarter_extract(date)) %>%
+  mutate(quarter = as.character(quarter)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) #%>%
+  # # remove the period 30 days after spraying
+  # filter(days_since >= 30 | days_since <= 0)
+# Need to add seasonality
+# Need to adjust for houses on and off site
+```
+
+#### Raw absenteeism as a function of days since IRS
+
+```{r}
+x <- model_data %>%
+  group_by(days_since) %>%
+  summarise(absences = length(which(absent)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100)
+
+ggplot(data = x,
+       aes(x = days_since,
+           y = absenteeism_rate)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           fill = 'darkblue') +
+  theme_maragra() +
+  labs(x = 'Days since IRS',
+       y = 'Absenteeism rate') +
+  geom_label(aes(label = paste0(round(absenteeism_rate, digits = 2), '%')))
+```
+
+#### Raw absenteeism as a function of days since IRS by quarter
+
+```{r}
+x <- model_data %>%
+  group_by(days_since, quarter) %>%
+  summarise(absences = length(which(absent)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100)
+
+ggplot(data = x %>% mutate(quarter = paste0('Q', quarter)),
+       aes(x = days_since,
+           y = absenteeism_rate)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           fill = 'darkblue') +
+  theme_maragra() +
+  labs(x = 'Days since IRS',
+       y = 'Absenteeism rate') +
+  # geom_label(aes(label = paste0(round(absenteeism_rate, digits = 2), '%'))) +
+  facet_wrap(~quarter) +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+#### Modeling without propensity score
+
+(Absence)
+
+```{r}
+# Need to adjust for houses on and off site
+fit <- glm(absent ~ days_since + quarter,
+           family = binomial('logit'),
+          data = model_data)
+x <- exp(coef(fit))
+ors <- exp(confint(fit))
+ors <- data.frame(ors)
+names(ors) <- c('Lower', 'Upper')
+
+ors <- cbind(x, ors)
+ors$Variable <- row.names(ors)
+ors <- ors %>%
+  dplyr::rename(OR = x) %>%
+  dplyr::select(Variable, OR, Lower, Upper)
+# Combine into a df
+kable(ors) %>%
+  kableExtra::kable_styling(full_width = FALSE)
+```
+
+
+(Sick absence)
+
+```{r}
+# Need to add seasonality
+# Need to adjust for houses on and off site
+fit <- glm(absent_sick ~ days_since + quarter,
+           family = binomial('logit'),
+          data = model_data)
+x <- exp(coef(fit))
+ors <- exp(confint(fit))
+ors <- data.frame(ors)
+names(ors) <- c('Lower', 'Upper')
+
+ors <- cbind(x, ors)
+ors$Variable <- row.names(ors)
+ors <- ors %>%
+  dplyr::rename(OR = x) %>%
+  dplyr::select(Variable, OR, Lower, Upper)
+# Combine into a df
+kable(ors) %>%
+  kableExtra::kable_styling(full_width = FALSE)
+
+```
+
+#### Visualization of absenteeism before / after IRS
+
+
+```{r}
+plot_data <-
+  ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs) %>%
+  mutate(months_since = days_since %/% 30) %>%
+  filter(!is.na(months_since)) %>%
+  mutate(quarter = lendable::quarter_extract(date)) %>%
+  mutate(quarter = as.character(quarter)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
+
+x <- plot_data %>%
+  group_by(months_since) %>%
+  summarise(absences = length(which(absent)),
+            sick_absences = length(which(absent_sick)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(sick_absenteeism_rate = sick_absences / eligibles * 100)
+
+ggplot(data = x,
+       aes(x = months_since,
+           y = absenteeism_rate)) +
+  geom_step(color = 'darkred', alpha = 0.8) +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
+  labs(x = 'Months relative to IRS',
+       y = 'Absenteeism rate',
+       title = 'Before/after IRS',
+       subtitle = 'All absences') +
+  theme_maragra()
+
+
+ggplot(data = x,
+       aes(x = months_since,
+           y = sick_absenteeism_rate)) +
+  geom_step(color = 'darkred', alpha = 0.8) +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
+  labs(x = 'Months relative to IRS',
+       y = 'Absenteeism rate',
+       title = 'Before/after IRS',
+       subtitle = 'Sick absences only') +
+  theme_maragra()
+```
+
+
+```{r}
+plot_data <-
+  ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs) %>%
+  mutate(months_since = days_since %/% 30) %>%
+  filter(!is.na(months_since)) %>%
+  mutate(quarter = lendable::quarter_extract(date)) %>%
+  mutate(quarter = as.character(quarter)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
+
+x <- plot_data %>%
+  group_by(months_since, quarter) %>%
+  summarise(absences = length(which(absent)),
+            sick_absences = length(which(absent_sick)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(sick_absenteeism_rate = sick_absences / eligibles * 100)
+
+ggplot(data = x %>% mutate(quarter = paste0('Q', quarter)),
+       aes(x = months_since,
+           y = absenteeism_rate)) +
+  geom_step(color = 'darkred', alpha = 0.8) +
+  facet_wrap(~quarter) +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
+  labs(x = 'Months relative to IRS',
+       y = 'Absenteeism rate') +
+  theme_maragra()
+```

@@ -250,12 +250,12 @@ if('eligible_working_days.RData' %in% dir()){
       start_date <- workers$company_entry_date[i]
       end_date <- as.Date('2017-03-31')
     }
-    eligible_working_days[[i]] <- 
+    eligible_working_days[[i]] <-
       expandify(oracle_number = workers$oracle_number[i],
                 start = start_date,
                 end = end_date)
   }
-  
+
   # Bind all together
   eligible_working_days <- bind_rows(eligible_working_days)
   save(eligible_working_days,
@@ -765,7 +765,7 @@ if(!'census_done.RData' %in% dir('census_data')){
 }
 
 # Keep only relevant columns (since most census info we'll get from openhds only)
-demografia <- census %>% 
+demografia <- census %>%
   dplyr::select(-unidade,
                 -name)
 
@@ -777,13 +777,13 @@ demografia <- census %>%
 if('open_hds_data.RData' %in% dir('census_data')){
   load('census_data/open_hds_data.RData')
 } else {
-  membership <- 
+  membership <-
     cism::get_data(tab = 'membership',
                    dbname = 'openhds')
-  individual <- 
+  individual <-
     cism::get_data(tab = 'individual',
                    dbname = 'openhds')
-  location <- 
+  location <-
     cism::get_data(tab = 'location',
                    dbname = 'openhds')
   residency <-
@@ -792,7 +792,7 @@ if('open_hds_data.RData' %in% dir('census_data')){
   VISIT_REGISTRATION_CORE <-
     cism::get_data(tab = 'VISIT_REGISTRATION_CORE',
                    dbname = 'dssodk')
-  
+
   save(membership,
        individual,
        location,
@@ -861,14 +861,14 @@ people <- people %>%
                      !is.na(COORDINATES_LNG)) %>%
               filter(!duplicated(LOCATION_NAME)),
             by = c('locationName' = 'LOCATION_NAME'))
-people$latitude <- 
+people$latitude <-
   ifelse(is.na(people$latitude), people$COORDINATES_LAT, people$latitude)
-people$longitude <- 
+people$longitude <-
   ifelse(is.na(people$longitude), people$COORDINATES_LNG, people$longitude)
 
 # Get an age
 people <- people %>%
-  mutate(age_years = as.numeric(snap_shot - dob) / 365.25) 
+  mutate(age_years = as.numeric(snap_shot - dob) / 365.25)
 
 # Fix the last name / permid naming issue
 people <- people %>%
@@ -876,8 +876,8 @@ people <- people %>%
 
 # Get a household id
 people <- people %>%
-  mutate(household_id = substr(x = perm_id, 
-                               start = 1, 
+  mutate(household_id = substr(x = perm_id,
+                               start = 1,
                                stop = 8))
 
 # Get a maragra-ready unidade
@@ -897,9 +897,9 @@ census <- people
 census$name <- iconv(census$name,"WINDOWS-1252","UTF-8")
 
 # Keep only relevant columns
-census <- census %>% 
+census <- census %>%
   rename(sex = gender) %>%
-  dplyr::select(dob, 
+  dplyr::select(dob,
                 name,
                 perm_id,
                 longitude,
@@ -977,10 +977,10 @@ for (i in 1:nrow(workers)){
   dob_variants <- dob_vary(date = this_dob)
   # Get potential matches based on birthday
   same_birthday <- census %>%
-    filter(dob %in% dob_variants) 
+    filter(dob %in% dob_variants)
   # Also keep only those of the same sex
   if(!is.na(workers$sex[i])){
-    same_birthday <- 
+    same_birthday <-
       same_birthday %>%
       filter(sex == workers$sex[i])
   }
@@ -990,11 +990,11 @@ for (i in 1:nrow(workers)){
                                        y = same_birthday$name)
     if(!all(is.na(fuzzy_results[1,]))){
       # Get best match
-      best_match_indices <- 
+      best_match_indices <-
         apply(fuzzy_results, 1, function(x){
           which.min(x)
         })
-      best_match_scores <- 
+      best_match_scores <-
         apply(fuzzy_results, 1, function(x){
           min(x, na.rm = TRUE)
         })
@@ -1032,7 +1032,7 @@ coordenadas <-
   dplyr::select(unidade,
                 longitude_aura,
                 latitude_aura)
-  
+
 # Join to census
 census <-
   left_join(census,
@@ -1048,12 +1048,12 @@ mc <-
 expand_irs <- function(date,
                        chemical,
                        unidade){
-  data_frame(date = seq(date,
+  data_frame(date = seq(date - 364,
                         date + 364,
                         by = 1),
              chemical = chemical,
              unidade = unidade,
-             days_since = 0:364) 
+             days_since = -364:364)
 }
 results <- list()
 for (i in 1:nrow(mc)){
@@ -1068,31 +1068,74 @@ for (i in 1:nrow(mc)){
 irs <- bind_rows(results)
 
 # Group by date and unidade, and get the highest coverage value (for when there are overlaps)
-irs <- 
-  irs %>%
+# Flag those times which are both before and after
+
+# Divde the before and after
+before <- irs %>%
+  filter(days_since < 0) %>%
+  group_by(date, unidade) %>%
+  summarise(days_until = max(days_since),
+            chemical = dplyr::first(chemical[days_since == max(days_since)]))
+after <- irs %>%
+  filter(days_since >= 0) %>%
   group_by(date, unidade) %>%
   summarise(days_since = min(days_since),
             chemical = dplyr::first(chemical[days_since == min(days_since)]))
-irs <- irs %>% ungroup
+after <- after %>% ungroup
+before <- before %>% ungroup
+
+# Combine before and after, flagging those areas of overlap
+after <- after %>% rename(chemical_after = chemical)
+before <- before %>% rename(chemical_before = chemical)
+
+joined <- full_join(after, before)
+joined <- joined %>%
+  arrange(unidade, date)
+
+# Flag a period which is both before and after (not suitable for modeling)
+joined <-
+  joined %>%
+  mutate(ok_for_model =
+           is.na(days_until) |
+           is.na(days_since))
+irs <- joined; rm(joined)
+
+# Remove the not ok ones and calculate days
+irs <- irs %>%
+  filter(ok_for_model) %>%
+  mutate(days = ifelse(is.na(days_since), days_until,
+                       ifelse(is.na(days_until), days_since, NA))) %>%
+  mutate(chemical = ifelse(is.na(days_since), chemical_before,
+                           ifelse(is.na(days_until), chemical_after, NA))) %>%
+  mutate(days_since = days) %>%
+  dplyr::select(date, unidade, days_since, chemical)
+
+# irs <-
+#   irs %>%
+#   group_by(date, unidade) %>%
+#   summarise(days_since = min(days_since),
+#             days_until = max(days_since),
+#             chemical = dplyr::first(chemical[days_since == min(days_since)]))
+# irs <- irs %>% ungroup
 
 # Bring an unidade into workers
 # only merging on those with an acceptably low match
 # of <= 0.1990741
-workers <- 
+workers <-
   workers %>%
   left_join(census %>%
               dplyr::select(unidade,
                             perm_id))
 
 # Generate some extra vars for workers
-workers <- 
+workers <-
   workers %>%
-  mutate(permanent_or_temporary = 
-           ifelse(employee_indicator_type_desc %in% c('TEMPORARY AGRIC', 
+  mutate(permanent_or_temporary =
+           ifelse(employee_indicator_type_desc %in% c('TEMPORARY AGRIC',
                                                       'FTC INDUSTRIAL'),
                                                       'Temporary',
                                                       'Permanent')) %>%
-  mutate(department = 
+  mutate(department =
            ifelse(grepl('CIVLS|HUMAN RESOURCES|RISK', department_name),
                   'Administrative',
                   ifelse(grepl('CANE|ADMIN', department_name),
@@ -1100,9 +1143,12 @@ workers <-
                                'Factory')))
 
 # Get rid of duplicates
-workers <- 
+workers <-
   workers %>%
   dplyr::filter(!duplicated(oracle_number))
+
+# Make dob date
+workers$date_of_birth <- as.Date(workers$date_of_birth)
 
 # Bring unidade into ab_panel
 ab_panel <-

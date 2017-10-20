@@ -1,18 +1,11 @@
 ---
 title: Effectiveness of private sector malaria control at a large sugar
   facility in Southern Mozambique
-csl: elsevier-harvard.csl
 date: ''
-output:
-  html_document:
-    css: resources/style.css
-    pandoc_args:
-    - +RTS
-    - -K16000m
-    - -RTS
-    toc: yes
+output: 
   pdf_document:
-    toc: yes
+    includes:
+      in_header: preamble.sty
 fig_width: 4
 fig_height: 2.6
 bibliography: bibliography.bib
@@ -44,13 +37,6 @@ opts_knit$set(width=75)
 ```
 
 
-<!-- <hr> -->
-<!-- <p style="text-align:left;"> -->
-<!-- [http://economicsofmalaria.com](http://economicsofmalaria.com) -->
-<!-- <span style="float:right;">joebrew@gmail.com</span> -->
-<!-- </p> -->
-<!-- <hr> -->
-
 ```{r}
 # Read in data
 ab <- maragra::ab
@@ -62,6 +48,123 @@ clinic_agg <- maragra::clinic_agg
 mc <- maragra::mc
 workers <- maragra::workers
 ```
+
+
+```{r}
+authors <- data.frame(name = c('Joe Brew',
+                               'Kizito Gondo',
+                               'Elton Dorkin',
+                               'Eduardo Nhamahanga',
+                               'Menno Pradhan',
+                               'Laia Cirera',
+                               'Ranjeeta Thomas',
+                               'Elisa Sicuri'),
+                      email = c('joe@databrew.cc',
+                                'KGondo@illovo.co.za',
+                                'EDorkin@illovo.co.za',
+                                'ENhamahanga@illovo.co.za',
+                                'm.p.pradhan@vu.nl',
+                                'laia.cirera@isglobal.org',
+                                'ranjeeta.thomas@imperial.ac.uk',
+                                'elisa.sicuri@isglobal.org'),
+                      affilitation = c("isglobal,cism,vu",
+                                       'ma',
+                                       'ma',
+                                       'ma',
+                                       "vu,uva",
+                                       "icl",
+                                       'isglobal,cism',
+                                       "isglobal,icl,cism"),
+                      footnote = c("Corresponding Author",
+                                   rep('', 7)),
+                      stringsAsFactors = FALSE)
+institutions <- data.frame(code = c('isglobal',
+                                    'icl',
+                                    'cism',
+                                    'vu',
+                                    'uva',
+                                    'ma'),
+                           institution = c('Barcelona Institute for Global Health',
+                                           'Imperial College London',
+                                           'Centro de Investigação em Saúde de Manhiça',
+                                           'VU University Amsterdam',
+                                           'University of Amsterdam',
+                                           'Maragra Açucar SA, Subsidiary of Illovo Sugar Ltd'),
+                           address = c('c/ Rosselló, 132, 5è 2a. 08036, Barcelona, Spain',
+                                       'South Kensington Campus, London SW7 2AZ, U.K.',
+                                       'Vila da Manhiça, Bairro Cambeve, Rua 12, Distrito da Manhiça, CP 1929, Maputo, Mozambique',
+                                       'De Boelelaan 1105, 1081 HV Amsterdam, Netherlands',
+                                       'REC E, Roetersstraat 11, Amsterdam, Netherlands',
+                                       'CP 2789, Maputo, Mozambique'),
+                      stringsAsFactors = FALSE)
+
+make_author <- function(authors,
+                        institutions){
+  
+  out <- c()
+  for (i in 1:nrow(authors)){
+    this_author <- authors$name[i]
+    these_institutions <- authors$affilitation[i]
+    these_institutions <- unlist(strsplit(these_institutions, ','))
+    author_text <- paste0(this_author)
+    for (j in 1:length(these_institutions)){
+      this_institution <- these_institutions[j]
+      if(any(grepl(this_institution, out))){
+        author_text <- paste0(author_text,
+                              '\\footrecall{',
+                              this_institution,
+                              '}'
+                              )
+      } else {
+        # new institution, get full name
+        full_name <- institutions$institution[institutions$code == this_institution]
+        address <- institutions$address[institutions$code == this_institution]
+        author_text <- paste0(author_text,
+                              '\\footremember{',
+                              this_institution,
+                              '}{',
+                              full_name,
+                              ': ',
+                              address,
+                              '}')
+      }
+    }
+    out[i] <- author_text
+  }
+  out <- paste0(out, collapse = ', ')
+  cat(out)
+}
+```
+
+
+
+\begin{center}
+\begin{large}
+
+```{r, results = 'asis', eval = TRUE}
+make_author(authors = authors,
+            institutions = institutions)
+```
+
+\end{large}
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\textbf{Abstract}  
+\end{center}
+
+\vspace{5mm}
+\begin{center}
+\begin{changemargin}{3cm}{3cm} 
+
+Here goes some abstract text. Bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla .
+
+\end{changemargin}
+\end{center}
+
+
 
 
 # Introduction
@@ -82,28 +185,76 @@ We find that...
 
 # Methods
 
+
+### Identification strategy
+
+For our purposes we are analyzing the effect of one intervention (IRS) on 2 outcomes (absence and illness) with many confounders (age, worker type, seasonality, etc.). Our analysis can be visualized formulaically as follows:
+
+$$
+\begin{equation}
+\operatorname{Pr}(\text{Outcome} = 1 \mid \text{X}) = \beta_{0} + \beta_{1} \text{Location} + \beta_{2} \text{Season} + (\beta_3{IRS}*\beta_4{IRS_t} + ... )
+\end{equation}
+$$
+
+Our outcome is probabilistic and binomial (ie, one is either absent or present / infected or not infected). Our demographic confounders (represented by $...$) will be a function of iterative model selection. Our intervention (IRS) is not a simple yes/no, but rather the product of whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment (represented above as the interaction term, where where $_t$ represents time elapsed since commencement of the most recent IRS campaign). 
+
 ```{r}
-# # Create model data
-# model_data <-
-#   ab_panel %>%
-#   left_join(irs) %>%
-#   left_join(workers %>%
-#               dplyr::select(oracle_number,
-#                             sex,
-#                             race_code,
-#                             department,
-#                             permanent_or_temporary)) %>%
-#   mutate(days_since = ifelse(is.na(days_since), 'Never',
-#                              ifelse(days_since > 180, '180+',
-#                                     ifelse(days_since > 90, '090-180',
-#                                            ifelse(days_since > 60, '060-090', 
-#                                                   '<060')))))
-# # Need to add seasonality
-# # Need to adjust for houses on and off site
-# fit <- glm(absent ~ days_since,
-#            family = binomial('logit'),
-#           data = model_data)
-# exp(coef(fit))
+# Create model data
+model_data <-
+  ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs) %>%
+  # left_join(matched) %>%
+  mutate(days_since = ifelse(is.na(days_since), 'Never',
+                             ifelse(days_since > 180, '180+',
+                                    ifelse(days_since > 90, '090-180',
+                                           ifelse(days_since > 60, '060-090',
+                                                  '<060'))))) %>%
+  mutate(quarter = lendable::quarter_extract(date)) %>%
+  mutate(quarter = as.character(quarter)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
+# Need to add seasonality
+# Need to adjust for houses on and off site
+fit <- glm(absent ~ days_since + quarter,
+           family = binomial('logit'),
+          data = model_data)
+x <- exp(coef(fit))
+ors <- exp(confint(fit))
+ors <- data.frame(ors)
+names(ors) <- c('Lower', 'Upper')
+
+ors <- cbind(x, ors)
+ors$Variable <- row.names(ors)
+ors <- ors %>%
+  dplyr::rename(OR = x) %>%
+  dplyr::select(Variable, OR, Lower, Upper)
+# Combine into a df
+kable(ors) %>%
+  kableExtra::kable_styling(full_width = FALSE)
+```
+
+We run the same model, but instead of estimating absences, we estimate only the likelihood of sick absences. The results (in form of odds ratios) are below.
+
+```{r}
+# Need to add seasonality
+# Need to adjust for houses on and off site
+fit <- glm(absent_sick ~ days_since + quarter,
+           family = binomial('logit'),
+          data = model_data)
+x <- exp(coef(fit))
+ors <- exp(confint(fit))
+ors <- data.frame(ors)
+names(ors) <- c('Lower', 'Upper')
+
+ors <- cbind(x, ors)
+ors$Variable <- row.names(ors)
+ors <- ors %>%
+  dplyr::rename(OR = x) %>%
+  dplyr::select(Variable, OR, Lower, Upper)
+# Combine into a df
+kable(ors) %>%
+  kableExtra::kable_styling(full_width = FALSE)
+
 ```
 
 Some text goes here.
@@ -121,7 +272,7 @@ Some text goes here
 
 
 
-```{r include=FALSE}
+```{r, eval=FALSE}
 # automatically create a bib database for R packages
 knitr::write_bib(c(
   .packages(), 'knitr', 'rmarkdown'
