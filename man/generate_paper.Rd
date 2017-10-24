@@ -4,13 +4,13 @@
 \alias{generate_paper}
 \title{Generate paper}
 \usage{
-generate_paper(date = NULL, output_dir = NULL, output_file = "paper.html")
+generate_paper(date = NULL, output_dir = NULL, output_file = "paper.pdf")
 }
 \arguments{
-\item{date}{A date to be printed on the report. If \code{NULL} (the 
+\item{date}{A date to be printed on the report. If \code{NULL} (the
 default), the current date will be used}
 
-\item{output_dir}{The directory to which the file should be written. If 
+\item{output_dir}{The directory to which the file should be written. If
 \code{NULL} (the default), the current working directory will be used.}
 
 \item{output_file}{The name of the file to be written.}

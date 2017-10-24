@@ -1,0 +1,124 @@
+---
+title: !r "Effectiveness of private sector malaria control: The case of sugarcane workers in Mozambique"
+subtitle: IHMT, October, 2017, Lisboa, Portugal
+fig_height: 5
+fig_width: 7
+bibliography: bibliography.bib
+output:
+  beamer_presentation:
+    includes:
+      in_header: preamble_beamer.sty
+    theme: "Berlin"
+    colortheme: "seagull"
+    fonttheme: "structuresmallcapsserif"
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = F, results = 'hide'}
+# All beamer themes at http://deic.uab.es/~iblanes/beamer_gallery/index_by_theme_and_color.html
+library(knitr)
+opts_chunk$set(comment = NA, 
+               echo = FALSE, 
+               warning = FALSE, 
+               message = FALSE, 
+               error = TRUE, 
+               cache = FALSE)
+
+# Packages
+library(ggplot2)
+library(cism)
+library(rgeos)
+library(maptools)
+library(rgdal)
+library(tidyr)
+library(RColorBrewer)
+library(dplyr)
+library(leaflet)
+library(readr)
+library(ggthemes)
+library(ggrepel)
+library(knitr)
+options(knitr.table.format = "latex")
+library(maragra)
+```
+
+
+```{r, results = 'asis'}
+# Print the author names and affiliations
+x <- make_authors(include_address = FALSE, include_country = TRUE, seperator = ' \n\n ', cat_it = FALSE)
+cat(x)
+```
+
+
+# Introduction
+
+## Context
+
+- Malaria has a nearly unquantifiably large economic impact.
+- Many channels: fertility, fecundity, saving, investment [@Shretta2016], risk perception, productivity, absenteeism, human capital accumulation [@CastelBranco2014], mortality, costs of care [@Sachs2002].
+- Cost-benefit studies often only consider the costs of an intervention and associated costs of care, without quantifying the societal cost of non-intervention.
+
+
+## What we already know
+
+- Malaria is associated with absenteeism in workers [@Nonvignon_2016].
+- Malaria has a negative effect on GDP [@Orem_2012] and growth [@McCarthy_2000].
+- Malaria control is cost-effective from the societal/public perspective [@Purdy_2013].
+- Indoor residual spraying (IRS) is cost-effective [@Howard_2017], [@White_2011].
+
+## What we want to know  
+
+What is the investment case from the private perspective?  
+
+- From a purely financial perspective, what benefits does a private company experience?  
+- What is the short-term cost-effectiveness of IRS for large companies in malaria-endemic regions?
+- Is malaria control just good "corporate social responsibility"? Or is it also good business?
+
+## Research questions
+
+We can't answer all the previous questions (yet). So we focus on one:
+
+**What is the short-term effect on absenteeism of IRS at the homes of sugarcane workers?**
+
+
+# Methods
+
+## Reproducibility 
+
+- **Code:** [github.com/joebrew/maragra](https://github.com/joebrew/maragra)
+- **Data:** Only available to authorized collaborators, but "dummy data" has been created to validate methods  
+- **Code bundling:** All code is in an R package: `devtools::install_github('joebrew/maragra)`
+
+
+## Identification strategy
+
+Some text here.
+
+# Results
+
+## Reduction in absenteeism
+
+Some text here.
+
+## Reduction in illness
+
+Some text here.
+
+
+# Discussion
+
+## General
+
+## Implications
+
+## Limitations
+
+## Thank you
+
+
+**Email:** joe@economicsofmalaria.com
+
+**Presentation:** [economicsofmalaria.com/ihmt](http://economicsofmalaria.com/ihmt)
+
+## References
+

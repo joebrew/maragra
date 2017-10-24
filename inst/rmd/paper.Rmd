@@ -50,99 +50,11 @@ workers <- maragra::workers
 ```
 
 
-```{r}
-authors <- data.frame(name = c('Joe Brew',
-                               'Kizito Gondo',
-                               'Elton Dorkin',
-                               'Eduardo Nhamahanga',
-                               'Menno Pradhan',
-                               'Laia Cirera',
-                               'Ranjeeta Thomas',
-                               'Elisa Sicuri'),
-                      email = c('joe@databrew.cc',
-                                'KGondo@illovo.co.za',
-                                'EDorkin@illovo.co.za',
-                                'ENhamahanga@illovo.co.za',
-                                'm.p.pradhan@vu.nl',
-                                'laia.cirera@isglobal.org',
-                                'ranjeeta.thomas@imperial.ac.uk',
-                                'elisa.sicuri@isglobal.org'),
-                      affilitation = c("isglobal,cism,vu",
-                                       'ma',
-                                       'ma',
-                                       'ma',
-                                       "vu,uva",
-                                       "icl",
-                                       'isglobal,cism',
-                                       "isglobal,icl,cism"),
-                      footnote = c("Corresponding Author",
-                                   rep('', 7)),
-                      stringsAsFactors = FALSE)
-institutions <- data.frame(code = c('isglobal',
-                                    'icl',
-                                    'cism',
-                                    'vu',
-                                    'uva',
-                                    'ma'),
-                           institution = c('Barcelona Institute for Global Health',
-                                           'Imperial College London',
-                                           'Centro de Investigação em Saúde de Manhiça',
-                                           'VU University Amsterdam',
-                                           'University of Amsterdam',
-                                           'Maragra Açucar SA, Subsidiary of Illovo Sugar Ltd'),
-                           address = c('c/ Rosselló, 132, 5è 2a. 08036, Barcelona, Spain',
-                                       'South Kensington Campus, London SW7 2AZ, U.K.',
-                                       'Vila da Manhiça, Bairro Cambeve, Rua 12, Distrito da Manhiça, CP 1929, Maputo, Mozambique',
-                                       'De Boelelaan 1105, 1081 HV Amsterdam, Netherlands',
-                                       'REC E, Roetersstraat 11, Amsterdam, Netherlands',
-                                       'CP 2789, Maputo, Mozambique'),
-                      stringsAsFactors = FALSE)
-
-make_author <- function(authors,
-                        institutions){
-  
-  out <- c()
-  for (i in 1:nrow(authors)){
-    this_author <- authors$name[i]
-    these_institutions <- authors$affilitation[i]
-    these_institutions <- unlist(strsplit(these_institutions, ','))
-    author_text <- paste0(this_author)
-    for (j in 1:length(these_institutions)){
-      this_institution <- these_institutions[j]
-      if(any(grepl(this_institution, out))){
-        author_text <- paste0(author_text,
-                              '\\footrecall{',
-                              this_institution,
-                              '}'
-                              )
-      } else {
-        # new institution, get full name
-        full_name <- institutions$institution[institutions$code == this_institution]
-        address <- institutions$address[institutions$code == this_institution]
-        author_text <- paste0(author_text,
-                              '\\footremember{',
-                              this_institution,
-                              '}{',
-                              full_name,
-                              ': ',
-                              address,
-                              '}')
-      }
-    }
-    out[i] <- author_text
-  }
-  out <- paste0(out, collapse = ', ')
-  cat(out)
-}
-```
-
-
-
 \begin{center}
 \begin{large}
 
 ```{r, results = 'asis', eval = TRUE}
-make_author(authors = authors,
+make_authors(authors = authors,
             institutions = institutions)
 ```
 
