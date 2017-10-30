@@ -1,6 +1,6 @@
 ---
 title: "Effectiveness of private sector malaria control: The case of sugarcane workers in Mozambique"
-subtitle: 'IHMT, October, 2017, Lisboa, Portugal'
+subtitle: 'IHMT, October, 2017, Lisboa, Portugal economicsofmalaria.com/ihmt'
 fig_height: 5
 fig_width: 7
 bibliography: bibliography.bib
@@ -173,7 +173,8 @@ model_data <-
   # mutate(time_period = lendable::time_period_extract(date)) %>%
   # mutate(time_period = as.character(time_period)) %>%
   mutate(time_period = make_season(date = date)) %>%
-  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) #%>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) %>%
+  mutate(month = format(date, '%b'))
   # # remove the period 30 days after spraying
   # filter(days_since >= 30 | days_since <= 0)
 # Need to add seasonality
@@ -269,7 +270,7 @@ ors_sick <- ors_sick %>%
 - Malaria is associated with absenteeism in workers [@Nonvignon_2016].
 - Malaria has a negative effect on GDP [@Orem_2012] and growth [@McCarthy_2000].
 - Malaria control is cost-effective from the societal/public perspective [@Purdy_2013].
-- Indoor residual spraying (IRS) is cost-effective [@Howard_2017], [@White_2011].
+- Indoor residual spraying (IRS) is cost-effective [@Howard_2017], [@White_2011] _from a public perspective_.
 
 ## What we want to know  
 
@@ -480,24 +481,24 @@ ggplot(data = x,
 ```
 
 
-## Descriptive: sick absenteeism by time from/to intervention
+<!-- ## Descriptive: sick absenteeism by time from/to intervention -->
 
-```{r}
-ggplot(data = x,
-       aes(x = months_since,
-           y = sick_absenteeism_rate,
-           group = before)) +
-  geom_smooth() +
-  geom_step(color = 'darkred', alpha = 0.8) +
-  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
-  labs(x = 'Months relative to IRS',
-       y = 'Absenteeism rate',
-       title = 'Before/after IRS',
-       subtitle = 'Sick absences only') +
-  theme_maragra()
-```
+<!-- ```{r} -->
+<!-- ggplot(data = x, -->
+<!--        aes(x = months_since, -->
+<!--            y = sick_absenteeism_rate, -->
+<!--            group = before)) + -->
+<!--   geom_smooth() + -->
+<!--   geom_step(color = 'darkred', alpha = 0.8) + -->
+<!--   geom_vline(xintercept = 0, lty = 2, alpha = 0.5) + -->
+<!--   labs(x = 'Months relative to IRS', -->
+<!--        y = 'Absenteeism rate', -->
+<!--        title = 'Before/after IRS', -->
+<!--        subtitle = 'Sick absences only') + -->
+<!--   theme_maragra() -->
+<!-- ``` -->
 
-## Descriptive: absenteeism by time from/to intervention (by time_period)
+## Descriptive: absenteeism by time from/to intervention (by time period)
 
 ```{r}
 plot_data <-
@@ -549,84 +550,82 @@ ggplot(data = x %>% mutate(time_period = paste0(time_period)),
 ```
 
 
-## Descriptive: sick absenteeism by time from/to intervention (by time_period)
+<!-- ## Descriptive: sick absenteeism by time from/to intervention (by time_period) -->
 
-```{r}
+<!-- ```{r} -->
 
-ggplot(data = x %>% mutate(time_period = paste0(time_period)),
-       aes(x = months_since,
-           y = sick_absenteeism_rate,
-           group = before)) +
-  geom_smooth() +
-  geom_step(color = 'darkred', alpha = 0.8) +
-  facet_wrap(~time_period, ncol = 1) +
-  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
-  labs(x = 'Months relative to IRS',
-       y = 'Absenteeism rate',
-       subtitle = 'Sick absences only') +
-  theme_maragra()
-```
-
-
-## Descriptive: absenteeism in binned time period
-
-```{r}
-x <- model_data %>%
-  group_by(days_since) %>%
-  summarise(absences = length(which(absent)),
-            eligibles = length(absent)) %>%
-  ungroup %>%
-  mutate(absenteeism_rate = absences / eligibles * 100)
-
-ggplot(data = x,
-       aes(x = days_since,
-           y = absenteeism_rate)) +
-  geom_bar(stat = 'identity',
-           alpha = 0.6,
-           fill = 'darkblue') +
-  theme_maragra() +
-  labs(x = 'Days since IRS',
-       y = 'Absenteeism rate',
-       title = 'Raw absenteeism as a function of days since IRS') +
-  geom_label(aes(label = paste0(round(absenteeism_rate, digits = 2), '%')))
-```
+<!-- ggplot(data = x %>% mutate(time_period = paste0(time_period)), -->
+<!--        aes(x = months_since, -->
+<!--            y = sick_absenteeism_rate, -->
+<!--            group = before)) + -->
+<!--   geom_smooth() + -->
+<!--   geom_step(color = 'darkred', alpha = 0.8) + -->
+<!--   facet_wrap(~time_period, ncol = 1) + -->
+<!--   geom_vline(xintercept = 0, lty = 2, alpha = 0.5) + -->
+<!--   labs(x = 'Months relative to IRS', -->
+<!--        y = 'Absenteeism rate', -->
+<!--        subtitle = 'Sick absences only') + -->
+<!--   theme_maragra() -->
+<!-- ``` -->
 
 
-## Descriptive: absenteeism in binned time periods by season
+<!-- ## Descriptive: absenteeism in binned time period -->
 
-```{r}
-x <- model_data %>%
-  group_by(days_since, time_period) %>%
-  summarise(absences = length(which(absent)),
-            eligibles = length(absent)) %>%
-  ungroup %>%
-  mutate(absenteeism_rate = absences / eligibles * 100)
+<!-- ```{r} -->
+<!-- x <- model_data %>% -->
+<!--   group_by(days_since) %>% -->
+<!--   summarise(absences = length(which(absent)), -->
+<!--             eligibles = length(absent)) %>% -->
+<!--   ungroup %>% -->
+<!--   mutate(absenteeism_rate = absences / eligibles * 100) -->
 
-ggplot(data = x %>% mutate(time_period = paste0(time_period)),
-       aes(x = days_since,
-           y = absenteeism_rate)) +
-  geom_bar(stat = 'identity',
-           alpha = 0.6,
-           fill = 'darkblue') +
-  theme_maragra() +
-  labs(x = 'Days since IRS',
-       y = 'Absenteeism rate',
-       title = 'Raw absenteeism as a function of days since IRS by time_period') +
-  # geom_label(aes(label = paste0(round(absenteeism_rate, digits = 2), '%'))) +
-  facet_wrap(~time_period, ncol = 1) +
-  theme(axis.text.x = element_text(angle = 90))
-```
+<!-- ggplot(data = x, -->
+<!--        aes(x = days_since, -->
+<!--            y = absenteeism_rate)) + -->
+<!--   geom_bar(stat = 'identity', -->
+<!--            alpha = 0.6, -->
+<!--            fill = 'darkblue') + -->
+<!--   theme_maragra() + -->
+<!--   labs(x = 'Days since IRS', -->
+<!--        y = 'Absenteeism rate', -->
+<!--        title = 'Raw absenteeism as a function of days since IRS') + -->
+<!--   geom_label(aes(label = paste0(round(absenteeism_rate, digits = 2), '%'))) -->
+<!-- ``` -->
 
 
-## Modeling after matching {.allowframebreaks}
+<!-- ## Descriptive: absenteeism in binned time periods by season -->
+
+<!-- ```{r} -->
+<!-- x <- model_data %>% -->
+<!--   group_by(days_since, time_period) %>% -->
+<!--   summarise(absences = length(which(absent)), -->
+<!--             eligibles = length(absent)) %>% -->
+<!--   ungroup %>% -->
+<!--   mutate(absenteeism_rate = absences / eligibles * 100) -->
+
+<!-- ggplot(data = x %>% mutate(time_period = paste0(time_period)), -->
+<!--        aes(x = days_since, -->
+<!--            y = absenteeism_rate)) + -->
+<!--   geom_bar(stat = 'identity', -->
+<!--            alpha = 0.6, -->
+<!--            fill = 'darkblue') + -->
+<!--   theme_maragra() + -->
+<!--   labs(x = 'Days since IRS', -->
+<!--        y = 'Absenteeism rate', -->
+<!--        title = 'Raw absenteeism as a function of days since IRS by time_period') + -->
+<!--   # geom_label(aes(label = paste0(round(absenteeism_rate, digits = 2), '%'))) + -->
+<!--   facet_wrap(~time_period, ncol = 1) + -->
+<!--   theme(axis.text.x = element_text(angle = 90)) -->
+<!-- ``` -->
+
+
+## Modeling after matching I
 
 - Matched sample of `r nrow(matched)` workers, of which 50% received IRS and 50% did not.   
 - Model only takes into account seasonality, since matching theoretically handles other differences.  
 - For the purposes of this first pass, we "bin" IRS exposure and estimate a logit model to calculate odds ratios.
 
-\vfill
-\newpage
-
+## Modeling after matching II
 
 All absence:
 
@@ -639,8 +638,8 @@ kable(ors_propensity)
 
 \end{tiny}
 
-\vfill
-\newpage
+## Modeling after matching III
+
 
 
 ```{r}
@@ -668,18 +667,18 @@ visualize_ors <- function(ors_object){
 visualize_ors(ors_object = ors_propensity)
 ```
 
-\vfill
-\newpage
+<!-- \vfill -->
+<!-- \newpage -->
 
-Sick absence only:
+<!-- Sick absence only: -->
 
-\begin{tiny}
+<!-- \begin{tiny} -->
 
-```{r}
-kable(ors_propensity_sick) 
-```
+<!-- ```{r} -->
+<!-- kable(ors_propensity_sick)  -->
+<!-- ``` -->
 
-\end{tiny}
+<!-- \end{tiny} -->
 
 ## Ever IRS'ers compared with never-IRS'ers
 
@@ -741,19 +740,19 @@ kable(ors)
 visualize_ors(ors_object = ors)
 ```
 
-\vfill
-\newpage
+<!-- \vfill -->
+<!-- \newpage -->
 
 
-Sick absenteeism only:
+<!-- Sick absenteeism only: -->
 
-\begin{tiny}
+<!-- \begin{tiny} -->
 
-```{r}
-kable(ors_sick) 
-```
+<!-- ```{r} -->
+<!-- kable(ors_sick)  -->
+<!-- ``` -->
 
-\end{tiny}
+<!-- \end{tiny} -->
 
 
 # Discussion
@@ -761,11 +760,13 @@ kable(ors_sick)
 ## General
 
 - 30-50% reduction in absenteeism in the 6 months after IRS, when administered during malaria season. 
+- Next steps are incorporation of (a) productivity data (via cane cut), (b) better clinical data (via local health facilities), and (c) full cost data.  
+- Will also be comparing with a sugarcane facility in a zone where an elimination campaign is taking place.  
 
 ## Implications
 
 - Reduction is large and significant.
-- Depending on detailed cost data (pending), IRS may be effective even from a purely financial point of view. 
+- Depending on detailed cost data (pending), IRS may be effective even from a purely financial point of view (ie, beyong just "corporate social responsibility").  
 
 
 ## Limitations
