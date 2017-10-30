@@ -1,6 +1,6 @@
 ---
 title: "Effectiveness of private sector malaria control: The case of sugarcane workers in Mozambique"
-subtitle: 'IHMT, October, 2017, Lisboa, Portugal economicsofmalaria.com/ihmt'
+subtitle: 'IHMT, October, 2017, Lisboa, Portugal economicsofmalaria.com/ihmt.pdf'
 fig_height: 5
 fig_width: 7
 bibliography: bibliography.bib
@@ -64,21 +64,19 @@ workers <- maragra::workers
 
 # Define function fro breaking the days_since var
 break_days_since <- function(days_since){
-  out <- ifelse(days_since > 270, '270+',
-    ifelse(days_since > 180, '181-270',
+  out <- ifelse(days_since > 180, '181+',
            ifelse(days_since > 90, '091-180',
                   ifelse(days_since > 60, '061-090',
                          ifelse(days_since > 30, '031-060',
                                 ifelse(days_since >= 0, '000-030',
-                                       ifelse(days_since < 0, 'Before', NA)))))))
+                                       ifelse(days_since < 0, 'Before', NA))))))
   out <- factor(out,
                 levels = c('Before',
                            '000-030',
                            '031-060',
                            '061-090',
                            '091-180',
-                           '181-270',
-                           '270+'))
+                           '181+'))
   return(out)
 }
 
@@ -168,6 +166,7 @@ model_data <-
   # filter(oracle_number %in% matched$oracle_number) %>%
   left_join(irs) %>%
   # left_join(matched) %>%
+  mutate(spray_month = format(date + days_since, '%b')) %>%
   mutate(days_since = break_days_since(days_since)) %>%
   filter(!is.na(days_since)) %>%
   # mutate(time_period = lendable::time_period_extract(date)) %>%
@@ -216,6 +215,9 @@ ors_propensity_sick <- ors_propensity_sick %>%
          Lower = round(Lower, digits = 3),
          Upper = round(Upper, digits = 3))
 
+# new fit
+# new_fit <- lm(absent ~ days_since * time_period + month, data = model_data)
+
 # Need to adjust for houses on and off site
 fit <- glm(absent ~ days_since * time_period,
            family = binomial('logit'),
@@ -262,7 +264,8 @@ ors_sick <- ors_sick %>%
 
 - Malaria has a nearly unquantifiably large economic impact.
 - Many channels: fertility, fecundity, saving, investment [@Shretta2016], risk perception, productivity, absenteeism, human capital accumulation [@CastelBranco2014], mortality, costs of care [@Sachs2002].
-- Cost-benefit studies often only consider the costs of an intervention and associated costs of care, without quantifying the societal cost of non-intervention.
+- Cost-benefit studies often only consider the costs of an intervention and associated costs of care, without quantifying the societal cost of non-intervention.  
+- In elimination context, scaling-up private sector involvement is very appealing.  
 
 
 ## What we already know
@@ -396,7 +399,7 @@ kable(a$sum.matched[c(1,2,3,4)], digits = 2, align = 'c',
 
 \end{tiny}
 
-## Regression discontunity analysis
+## Regression discontinuity analysis
 
 - We simply only consider those workers who _ever_ got IRS.
 - We take into account one full year prior to IRS and one full year after IRS.
@@ -754,26 +757,52 @@ visualize_ors(ors_object = ors)
 
 <!-- \end{tiny} -->
 
+## Back of the envelope calculations
+
+```{r}
+# Get yearly absences / presences
+x <- model_data %>%
+  filter(time_period == 'Malaria season') %>%
+  group_by(days_since) %>%
+  summarise(absences = length(which(absent)),
+            eligibles = n()) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100)
+```
+
+**Savings**  
+ 
+- In percentage point terms, reduction from 13% to 8%.  
+- 5 annually prevented absences per worker.   
+- 8,000 workers: 40,000 prevented absences, wage of 3 USD
+- TOTAL: 120,000 USD in productivity-only savings.   
+
+**Costs**  
+
+- 8 IRS workers, 1500 USD yearly = 12,000 USD  
+- ACT + DDT: 50,000 USD 
+- Facilities, vehicles, gas: 50,000 USD  
+- TOTAL: 112,000 USD in IRS-only costs  
+
+**7% ROI** (ignoring clinical costs)
+
 
 # Discussion
 
 ## General
 
-- 30-50% reduction in absenteeism in the 6 months after IRS, when administered during malaria season. 
+- 30-50% reduction in absenteeism in the 6 months after IRS during malaria season. 
+- Depending on detailed cost data (pending), IRS may be effective even from a purely financial point of view (ie, beyond just "corporate social responsibility").  
 - Next steps are incorporation of (a) productivity data (via cane cut), (b) better clinical data (via local health facilities), and (c) full cost data.  
 - Will also be comparing with a sugarcane facility in a zone where an elimination campaign is taking place.  
-
-## Implications
-
-- Reduction is large and significant.
-- Depending on detailed cost data (pending), IRS may be effective even from a purely financial point of view (ie, beyong just "corporate social responsibility").  
 
 
 ## Limitations
 
 - No analysis yet of different worker types (agricultural vs. industrial).
 - Have not yet ventured at all into side-analyses (effect on employment, tonnage, etc.). 
-- Sick absenteeism seems to track absenteeism poorly: lack of clarity regarding pathways.
+- Sick absenteeism seems to track absenteeism poorly: lack of clarity regarding pathways.  
+- Large sample size, but all from same place: questionable generalizability.  
 
 ## Thank you
 
@@ -782,6 +811,6 @@ Your "pre-publication peer review" comments are appreciated:
 
 **Email:** joe@economicsofmalaria.com
 
-**Presentation:** [economicsofmalaria.com/ihmt](http://economicsofmalaria.com/ihmt)
+**Presentation:** [economicsofmalaria.com/ihmt.pdf](http://economicsofmalaria.com/ihmt.pdf)
 
 ## References {.allowframebreaks}
