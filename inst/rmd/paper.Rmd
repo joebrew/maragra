@@ -54,8 +54,7 @@ workers <- maragra::workers
 \begin{large}
 
 ```{r, results = 'asis', eval = TRUE}
-make_authors(authors = authors,
-            institutions = institutions)
+make_authors()
 ```
 
 \end{large}

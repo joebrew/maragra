@@ -1,0 +1,816 @@
+---
+title: "Effectiveness of private sector malaria control: The case of sugarcane workers in Mozambique"
+subtitle: 'Malaria Economics Community of Practice, November, 2017, Baltimore, Maryland, USA economicsofmalaria.com/cop.pdf'
+fig_height: 5
+fig_width: 7
+bibliography: bibliography.bib
+output:
+  beamer_presentation:
+    includes:
+      in_header: preamble_beamer.sty
+    theme: "Berlin"
+    colortheme: "seagull"
+    fonttheme: "structuresmallcapsserif"
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = F, results = 'hide'}
+# All beamer themes at http://deic.uab.es/~iblanes/beamer_gallery/index_by_theme_and_color.html
+library(knitr)
+opts_chunk$set(comment = NA, 
+               echo = FALSE, 
+               warning = FALSE, 
+               message = FALSE, 
+               error = TRUE, 
+               cache = FALSE)
+opts_chunk$set(dev = 'pdf')
+
+# Packages
+library(ggplot2)
+library(cism)
+library(rgeos)
+library(maptools)
+library(rgdal)
+library(tidyr)
+library(RColorBrewer)
+library(dplyr)
+library(leaflet)
+library(readr)
+library(ggthemes)
+library(ggrepel)
+library(knitr)
+options(knitr.table.format = "latex")
+library(maragra)
+```
+
+
+```{r, results = 'asis'}
+# Print the author names and affiliations
+x <- make_authors(include_address = FALSE, include_country = TRUE, seperator = ' \n\n ', cat_it = FALSE)
+cat(x)
+```
+
+```{r}
+# Read in data
+ab <- maragra::ab
+ab_panel <- maragra::ab_panel
+bairros <- maragra::bairros
+census <- maragra::census
+clinic <- maragra::clinic
+clinic_agg <- maragra::clinic_agg
+irs <- maragra::irs
+mc <- maragra::mc
+workers <- maragra::workers
+
+# Define function fro breaking the days_since var
+break_days_since <- function(days_since){
+  out <- ifelse(days_since > 180, '181+',
+           ifelse(days_since > 90, '091-180',
+                  ifelse(days_since > 60, '061-090',
+                         ifelse(days_since > 30, '031-060',
+                                ifelse(days_since >= 0, '000-030',
+                                       ifelse(days_since < 0, 'Before', NA))))))
+  out <- factor(out,
+                levels = c('Before',
+                           '000-030',
+                           '031-060',
+                           '061-090',
+                           '091-180',
+                           '181+'))
+  return(out)
+}
+
+# Define function for making season
+make_season <- function(date){
+  out <- ifelse(as.numeric(format(date, '%m')) %in% c(11:12, 1:3),
+                   'Malaria season', 'Off season')
+  out <- factor(out, levels = c('Off season', 'Malaria season'))
+  return(out)
+}
+
+library(MatchIt)
+set.seed(1234)
+
+# Create matching data for propensity scoring
+right_side <- irs %>%
+  group_by(unidade) %>% 
+  tally %>%
+  ungroup %>%
+  mutate(received = ifelse(n > 0, TRUE, FALSE))
+
+left_side <-
+  workers %>%
+  dplyr::select(oracle_number, unidade, permanent_or_temporary, department, sex, 
+                date_of_birth,
+                perm_id) %>%
+  # bring in census address
+  left_join(census %>%
+              dplyr::select(perm_id,
+                            longitude,
+                            latitude,
+                            maragra_bairro,
+                            maragra_fabrica))
+
+psm <- left_join(x = left_side,
+                 y = right_side,
+                 by = 'unidade') %>%
+  # Keep only those who are censed
+  filter(!is.na(longitude),
+         !is.na(latitude)) %>%
+  # Keep only those who live within maragra
+  filter(maragra_fabrica |maragra_bairro) %>%
+  mutate(received = ifelse(is.na(received), FALSE, received)) %>%
+  mutate(age = round((as.numeric(as.Date('2016-01-01') - date_of_birth)) / 365.25, digits = 2)) %>%
+  filter(!is.na(sex),
+         !is.na(age)) %>%
+  dplyr::select(-unidade, -date_of_birth, -n)
+
+psmt1 <- psm
+names(psmt1) <- toupper(names(psmt1))
+psmt1 <- psmt1 %>%
+  mutate(RECEIVED = ifelse(RECEIVED == TRUE,'IRS', 'No IRS')) %>%
+  mutate(STATUS = PERMANENT_OR_TEMPORARY)
+
+pacman::p_load(tableone)
+table1 <- CreateTableOne(vars = toupper(c('STATUS', 'department', 'age',
+                                  'sex', 'received')), 
+                         data = psmt1, 
+                         factorVars = toupper(c('STATUS', 'department',
+                                  'sex')), 
+                         strata = 'RECEIVED')
+table1 <- print(table1, 
+                printToggle = FALSE, 
+                noSpaces = TRUE)
+
+match.it <- matchit(received ~ age + sex + permanent_or_temporary + department, data = psm, method="nearest", ratio=1)
+# Save matched samples
+matched <- match.data(match.it)[1:ncol(psm)]
+a <- summary(match.it)
+
+# Create model data
+model_data_propensity <-
+  ab_panel %>%
+  filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs) %>%
+  left_join(matched) %>%
+  mutate(days_since = break_days_since(days_since)) %>%
+  filter(!is.na(days_since)) %>%
+  # mutate(time_period = lendable::time_period_extract(date)) %>%
+  # mutate(time_period = as.character(time_period)) %>%
+  mutate(time_period = make_season(date = date)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
+
+# Create model data for all obs (not just propensity score)
+model_data <-
+  ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs) %>%
+  # left_join(matched) %>%
+  mutate(spray_month = format(date + days_since, '%b')) %>%
+  mutate(days_since = break_days_since(days_since)) %>%
+  filter(!is.na(days_since)) %>%
+  # mutate(time_period = lendable::time_period_extract(date)) %>%
+  # mutate(time_period = as.character(time_period)) %>%
+  mutate(time_period = make_season(date = date)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) %>%
+  mutate(month = format(date, '%b'))
+  # # remove the period 30 days after spraying
+  # filter(days_since >= 30 | days_since <= 0)
+# Need to add seasonality
+# Need to adjust for houses on and off site
+
+fit_propensity <- glm(absent ~ days_since * time_period,
+           family = binomial('logit'),
+          data = model_data_propensity)
+x <- exp(coef(fit_propensity))
+ors_propensity <- exp(confint(fit_propensity))
+ors_propensity <- data.frame(ors_propensity)
+names(ors_propensity) <- c('Lower', 'Upper')
+
+ors_propensity <- cbind(x, ors_propensity)
+ors_propensity$Variable <- row.names(ors_propensity)
+ors_propensity <- ors_propensity %>%
+  dplyr::rename(OR = x) %>%
+  dplyr::select(Variable, OR, Lower, Upper) %>%
+  mutate(OR = round(OR, digits = 3),
+         Lower = round(Lower, digits = 3),
+         Upper = round(Upper, digits = 3))
+
+# Need to add seasonality
+# Need to adjust for houses on and off site
+fit_propensity_sick <- glm(absent_sick ~ days_since * time_period,
+           family = binomial('logit'),
+          data = model_data_propensity)
+x <- exp(coef(fit_propensity_sick))
+ors_propensity_sick <- exp(confint(fit_propensity_sick))
+ors_propensity_sick <- data.frame(ors_propensity_sick)
+names(ors_propensity_sick) <- c('Lower', 'Upper')
+
+ors_propensity_sick <- cbind(x, ors_propensity_sick)
+ors_propensity_sick$Variable <- row.names(ors_propensity_sick)
+ors_propensity_sick <- ors_propensity_sick %>%
+  dplyr::rename(OR = x) %>%
+  dplyr::select(Variable, OR, Lower, Upper) %>%
+  mutate(OR = round(OR, digits = 3),
+         Lower = round(Lower, digits = 3),
+         Upper = round(Upper, digits = 3))
+
+# new fit
+# new_fit <- lm(absent ~ days_since * time_period + month, data = model_data)
+
+# Need to adjust for houses on and off site
+fit <- glm(absent ~ days_since * time_period,
+           family = binomial('logit'),
+          data = model_data)
+x <- exp(coef(fit))
+ors <- exp(confint(fit))
+ors <- data.frame(ors)
+names(ors) <- c('Lower', 'Upper')
+
+ors <- cbind(x, ors)
+ors$Variable <- row.names(ors)
+ors <- ors %>%
+  dplyr::rename(OR = x) %>%
+  dplyr::select(Variable, OR, Lower, Upper) %>%
+  mutate(OR = round(OR, digits = 3),
+         Lower = round(Lower, digits = 3),
+         Upper = round(Upper, digits = 3))
+
+# Need to add seasonality
+# Need to adjust for houses on and off site
+fit_sick <- glm(absent_sick ~ days_since * time_period,
+           family = binomial('logit'),
+          data = model_data)
+x <- exp(coef(fit_sick))
+ors_sick <- exp(confint(fit_sick))
+ors_sick <- data.frame(ors_sick)
+names(ors_sick) <- c('Lower', 'Upper')
+
+ors_sick <- cbind(x, ors_sick)
+ors_sick$Variable <- row.names(ors_sick)
+ors_sick <- ors_sick %>%
+  dplyr::rename(OR = x) %>%
+  dplyr::select(Variable, OR, Lower, Upper) %>%
+  mutate(OR = round(OR, digits = 3),
+         Lower = round(Lower, digits = 3),
+         Upper = round(Upper, digits = 3))
+
+```
+
+
+# Introduction
+
+## Context
+
+- Malaria has a nearly unquantifiably large economic impact.
+- Many channels: fertility, fecundity, saving, investment [@Shretta2016], risk perception, productivity, absenteeism, human capital accumulation [@CastelBranco2014], mortality, costs of care [@Sachs2002].
+- Cost-benefit studies often only consider the costs of an intervention and associated costs of care, without quantifying the societal cost of non-intervention.  
+- In elimination context, scaling-up private sector involvement is very appealing.  
+
+
+## What we already know
+
+- Malaria is associated with absenteeism in workers [@Nonvignon_2016].
+- Malaria has a negative effect on GDP [@Orem_2012] and growth [@McCarthy_2000].
+- Malaria control is cost-effective from the societal/public perspective [@Purdy_2013].
+- Indoor residual spraying (IRS) is cost-effective [@Howard_2017], [@White_2011] _from a public perspective_.
+
+## What we want to know  
+
+What is the investment case _from the investor's perspective_?  
+
+- Is malaria control just good "corporate social responsibility"? Or is it also good business?
+- From a purely financial/investment point-of-view, what benefits does a private company experience in engaging in malaria control?  
+- What is the short-term **benefits** of IRS for large companies in malaria-endemic regions?
+- What are the **costs** of of carrying out IRS for large companies?
+
+
+## Research questions
+
+We can't answer all the previous questions (yet). So we focus on one:
+
+**What is the short-term effect of IRS on worker absenteeism and clinical illness among sugarcane workers?**
+
+## Research site
+
+```{r}
+par(mfrow = c(2,2))
+plot(cism::africa,
+     col = 'grey',
+     border = 'white',
+     lwd = 0.1)
+title('Africa')
+for(i in (seq(0.5, 1.5, length = 2))^1.3){
+  points(32.779401, -25.452049, col = adjustcolor('red', alpha.f = 0.5), cex = i)
+}
+plot(cism::moz2,
+     col = 'grey',
+     border = 'white',
+     lwd = 0.1)
+title('Mozambique')
+for(i in (seq(0.5, 2.5, length = 3))^1.3){
+  points(32.779401, -25.452049, col = adjustcolor('red', alpha.f = 0.5), cex = i)
+}
+man <- cism::man3
+plot(man,
+     col = 'grey', 
+     border = 'white',
+     lwd = 0.1)
+title('Manhiça district')
+for(i in (seq(0.5, 3, length = 4))^1.3){
+  points(32.779401, -25.452049, col = adjustcolor('red', alpha.f = 0.5), cex = i)
+}
+plot(man[man@data$NAME_3 %in% c('Manhica - Sede', 'Maluana'),],
+     col = 'grey', 
+     border = 'white',
+     lwd = 0.1)
+title('Manhiça and Maluana posts')
+for(i in (seq(0.5, 3.5, length = 4))^1.3){
+  points(32.779401, -25.452049, col = adjustcolor('red', alpha.f = 0.5), cex = i)
+}
+par(mfrow = c(1,1))
+```
+
+## Research Site II
+
+\includegraphics{images/sat}
+
+# Methods
+
+## Identification strategy
+
+- 1 intervention (IRS, time to/from)
+- 2 outcomes (absence and illness, probabilistic / binomial)
+- Many confounders (age, worker type, seasonality, etc.). 
+
+\begin{small}
+\begin{equation}
+\operatorname{Pr}(\text{Outcome} = 1 \mid \text{X}) = \beta_{0} + \beta_{1} \text{Location} + \beta_{2} \text{Season} + (\beta_3{IRS}*\beta_4{IRS_t} + ... )
+\end{equation}
+\end{small}
+
+## Modeling
+
+We employ two approaches:
+
+1. **Propensity score matching** of workers who _ever_ received IRS with workers who _never_ received IRS. **Advantage**: No need to adjust for confounders with a matched sample, thereby avoiding reduction in degrees of freedom
+
+2. **Regresion-discontinuity** of only those workers who _ever_ received IRS (ie, ignoring those who never received IRS). **Advantage**: Those who _never_ received IRS may be qualitatively different, and therefore not an appropriate comparison group.
+
+
+## Propensity score matching {.allowframebreaks}
+
+- We generate a matched sample of similar workers by first estimating the likelihood of having ever received the intervention, given a worker's age, sex, department and temporary vs. permanent status. 
+ - This is necessary due to below, significant differences:
+
+
+\begin{tiny}
+
+```{r}
+kable(table1[,1:3],  
+      align = 'c', 
+      caption = 'Comparison of unmatched samples') %>%
+  kableExtra::kable_styling(full_width = FALSE)
+```
+
+\end{tiny}
+
+We match, employing the nearest neighbor method for identifying those workers from our control group who most resemble those workers in the treatment group. [@Ho_Imai_King_Stuart_2007].  
+
+- Our match is a 1-to-1 cut, meaning those control workers who do not resemble those in the treatment group are left out of primary analysis. The below table shows the match results.
+
+\begin{tiny}
+
+```{r, results = 'asis'}
+kable(a$nn, digits = 2, align = 'c', 
+      caption = 'Sample sizes')
+```
+
+\end{tiny}
+
+The distributions of our numeric variables are now extremely similar:
+
+\begin{tiny}
+
+```{r, results = 'asis'}
+kable(a$sum.matched[c(1,2,3,4)], digits = 2, align = 'c', 
+      caption = 'Summary of balance for matched data') 
+```
+
+\end{tiny}
+
+## Regression discontinuity analysis
+
+- We simply only consider those workers who _ever_ got IRS.
+- We take into account one full year prior to IRS and one full year after IRS.
+- Our dataset constitutes one observation per worker-day. 
+- We incidentally achieve a sort of "matching" through the fact that workers are their own controls. 
+
+
+# Results
+
+## Descriptive: absenteeism by time from/to intervention
+
+```{r}
+plot_data <-
+  ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs) %>%
+  mutate(months_since = days_since %/% 30) %>%
+  filter(!is.na(months_since)) %>%
+  # mutate(time_period = lendable::time_period_extract(date)) %>%
+  # mutate(time_period = as.character(time_period)) %>%
+  mutate(time_period = make_season(date = date)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
+
+x <- plot_data %>%
+  group_by(months_since) %>%
+  summarise(absences = length(which(absent)),
+            sick_absences = length(which(absent_sick)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(sick_absenteeism_rate = sick_absences / eligibles * 100)
+
+ggplot(data = x,
+       aes(x = months_since,
+           y = absenteeism_rate)) +
+  geom_step(color = 'darkred', alpha = 0.8) +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
+  labs(x = 'Months relative to IRS',
+       y = 'Absenteeism rate',
+       title = 'Before/after IRS',
+       subtitle = 'All absences') +
+  theme_maragra()
+```
+
+
+## Descriptive: absenteeism by time from/to intervention (with local regression lines)
+
+```{r}
+plot_data <-
+  ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs) %>%
+  mutate(months_since = days_since %/% 30) %>%
+  filter(!is.na(months_since)) %>%
+  # mutate(time_period = lendable::time_period_extract(date)) %>%
+  # mutate(time_period = as.character(time_period)) %>%
+  mutate(time_period = make_season(date = date)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
+
+x <- plot_data %>%
+  group_by(months_since) %>%
+  summarise(absences = length(which(absent)),
+            sick_absences = length(which(absent_sick)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(sick_absenteeism_rate = sick_absences / eligibles * 100) %>%
+  mutate(before = months_since < 0)
+
+ggplot(data = x,
+       aes(x = months_since,
+           y = absenteeism_rate,
+           group = before)) +
+  geom_smooth() +
+  geom_step(color = 'darkred', alpha = 0.8) +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
+  labs(x = 'Months relative to IRS',
+       y = 'Absenteeism rate',
+       title = 'Before/after IRS',
+       subtitle = 'All absences') +
+  theme_maragra()
+```
+
+
+<!-- ## Descriptive: sick absenteeism by time from/to intervention -->
+
+<!-- ```{r} -->
+<!-- ggplot(data = x, -->
+<!--        aes(x = months_since, -->
+<!--            y = sick_absenteeism_rate, -->
+<!--            group = before)) + -->
+<!--   geom_smooth() + -->
+<!--   geom_step(color = 'darkred', alpha = 0.8) + -->
+<!--   geom_vline(xintercept = 0, lty = 2, alpha = 0.5) + -->
+<!--   labs(x = 'Months relative to IRS', -->
+<!--        y = 'Absenteeism rate', -->
+<!--        title = 'Before/after IRS', -->
+<!--        subtitle = 'Sick absences only') + -->
+<!--   theme_maragra() -->
+<!-- ``` -->
+
+## Descriptive: absenteeism by time from/to intervention (by time period)
+
+```{r}
+plot_data <-
+  ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs) %>%
+  mutate(months_since = days_since %/% 30) %>%
+  filter(!is.na(months_since)) %>%
+  # mutate(time_period = lendable::time_period_extract(date)) %>%
+  # mutate(time_period = as.character(time_period)) %>%
+  mutate(time_period = make_season(date = date)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
+
+x <- plot_data %>%
+  group_by(months_since, time_period) %>%
+  summarise(absences = length(which(absent)),
+            sick_absences = length(which(absent_sick)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(sick_absenteeism_rate = sick_absences / eligibles * 100) %>%
+  mutate(before = months_since < 0)
+
+ggplot(data = x %>% mutate(time_period = paste0(time_period)),
+       aes(x = months_since,
+           y = absenteeism_rate)) +
+  geom_step(color = 'darkred', alpha = 0.8) +
+  facet_wrap(~time_period, ncol = 1) +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
+  labs(x = 'Months relative to IRS',
+       y = 'Absenteeism rate') +
+  theme_maragra()
+```
+
+## Same chart with local regression lines
+
+```{r}
+ggplot(data = x %>% mutate(time_period = paste0(time_period)),
+       aes(x = months_since,
+           y = absenteeism_rate,
+           group = before)) +
+  geom_smooth() +
+  geom_step(color = 'darkred', alpha = 0.8) +
+  facet_wrap(~time_period, ncol = 1) +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
+  labs(x = 'Months relative to IRS',
+       y = 'Absenteeism rate') +
+  theme_maragra()
+```
+
+
+<!-- ## Descriptive: sick absenteeism by time from/to intervention (by time_period) -->
+
+<!-- ```{r} -->
+
+<!-- ggplot(data = x %>% mutate(time_period = paste0(time_period)), -->
+<!--        aes(x = months_since, -->
+<!--            y = sick_absenteeism_rate, -->
+<!--            group = before)) + -->
+<!--   geom_smooth() + -->
+<!--   geom_step(color = 'darkred', alpha = 0.8) + -->
+<!--   facet_wrap(~time_period, ncol = 1) + -->
+<!--   geom_vline(xintercept = 0, lty = 2, alpha = 0.5) + -->
+<!--   labs(x = 'Months relative to IRS', -->
+<!--        y = 'Absenteeism rate', -->
+<!--        subtitle = 'Sick absences only') + -->
+<!--   theme_maragra() -->
+<!-- ``` -->
+
+
+<!-- ## Descriptive: absenteeism in binned time period -->
+
+<!-- ```{r} -->
+<!-- x <- model_data %>% -->
+<!--   group_by(days_since) %>% -->
+<!--   summarise(absences = length(which(absent)), -->
+<!--             eligibles = length(absent)) %>% -->
+<!--   ungroup %>% -->
+<!--   mutate(absenteeism_rate = absences / eligibles * 100) -->
+
+<!-- ggplot(data = x, -->
+<!--        aes(x = days_since, -->
+<!--            y = absenteeism_rate)) + -->
+<!--   geom_bar(stat = 'identity', -->
+<!--            alpha = 0.6, -->
+<!--            fill = 'darkblue') + -->
+<!--   theme_maragra() + -->
+<!--   labs(x = 'Days since IRS', -->
+<!--        y = 'Absenteeism rate', -->
+<!--        title = 'Raw absenteeism as a function of days since IRS') + -->
+<!--   geom_label(aes(label = paste0(round(absenteeism_rate, digits = 2), '%'))) -->
+<!-- ``` -->
+
+
+<!-- ## Descriptive: absenteeism in binned time periods by season -->
+
+<!-- ```{r} -->
+<!-- x <- model_data %>% -->
+<!--   group_by(days_since, time_period) %>% -->
+<!--   summarise(absences = length(which(absent)), -->
+<!--             eligibles = length(absent)) %>% -->
+<!--   ungroup %>% -->
+<!--   mutate(absenteeism_rate = absences / eligibles * 100) -->
+
+<!-- ggplot(data = x %>% mutate(time_period = paste0(time_period)), -->
+<!--        aes(x = days_since, -->
+<!--            y = absenteeism_rate)) + -->
+<!--   geom_bar(stat = 'identity', -->
+<!--            alpha = 0.6, -->
+<!--            fill = 'darkblue') + -->
+<!--   theme_maragra() + -->
+<!--   labs(x = 'Days since IRS', -->
+<!--        y = 'Absenteeism rate', -->
+<!--        title = 'Raw absenteeism as a function of days since IRS by time_period') + -->
+<!--   # geom_label(aes(label = paste0(round(absenteeism_rate, digits = 2), '%'))) + -->
+<!--   facet_wrap(~time_period, ncol = 1) + -->
+<!--   theme(axis.text.x = element_text(angle = 90)) -->
+<!-- ``` -->
+
+
+## Modeling after matching I
+
+- Matched sample of `r nrow(matched)` workers, of which 50% received IRS and 50% did not.   
+- Model only takes into account seasonality, since matching theoretically handles other differences.  
+- For the purposes of this first pass, we "bin" IRS exposure and estimate a logit model to calculate odds ratios.
+
+## Modeling after matching II
+
+All absence:
+
+\begin{tiny}
+
+```{r, results = 'asis'}
+# Combine into a df
+kable(ors_propensity) 
+```
+
+\end{tiny}
+
+## Modeling after matching III
+
+
+
+```{r}
+visualize_ors <- function(ors_object){
+  ors_object <- ors_object %>% 
+    filter(grepl('days_since', Variable),
+           grepl('time_periodMalaria', Variable))
+  ors_object <- ors_object %>%
+    mutate(Variable = gsub('days_since', '', Variable),
+           Variable = gsub(':time_periodMalaria season', '', Variable))
+  ggplot(data = ors_object,
+         aes(x = Variable,Variable,
+             y = OR)) +
+    geom_point(alpha = 0.7) +
+    geom_errorbar(aes(ymin = Lower,
+                       ymax = Upper),
+                  alpha = 0.6,
+                  size = 0.5) +
+    geom_hline(yintercept = 1, lty = 2, alpha = 0.6, color = 'red') +
+    labs(x = 'Days since IRS',
+         y = 'OR (relative to pre-IRS period)',
+         title = 'ORs during malaria season') +
+    theme_maragra() 
+}
+visualize_ors(ors_object = ors_propensity)
+```
+
+<!-- \vfill -->
+<!-- \newpage -->
+
+<!-- Sick absence only: -->
+
+<!-- \begin{tiny} -->
+
+<!-- ```{r} -->
+<!-- kable(ors_propensity_sick)  -->
+<!-- ``` -->
+
+<!-- \end{tiny} -->
+
+## Ever IRS'ers compared with never-IRS'ers
+
+```{r}
+x <- model_data %>%
+  group_by(days_since) %>%
+  summarise(absences = length(which(absent)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100)
+y <- ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  filter(!unidade %in% sort(irs$unidade)) %>%
+  summarise(days_since = 'Never',
+            absences = length(which(absent)),
+            eligibles = n()) %>%
+  mutate(absenteeism_rate = absences / eligibles * 100)
+x <- bind_rows(x, y)
+x$days_since <- factor(x$days_since,
+                       levels = unique(c('Never',
+                                  'Before',
+                                  sort(unique(x$days_since)))))
+cols <- c('red', rep('blue', nrow(x) - 1))
+ggplot(data = x,
+       aes(x = days_since,
+           y = absenteeism_rate)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           fill = cols) +
+  theme_maragra() +
+  labs(x = 'Days since IRS',
+       y = 'Absenteeism rate',
+       title = 'Raw absenteeism as a function of days since IRS') +
+  geom_label(aes(label = paste0(round(absenteeism_rate, digits = 2), '%')))
+```
+
+
+## Regression discontinuity analysis {.allowframebreaks}
+
+
+\vspace{2mm}
+
+
+All absenteeism:  
+
+\begin{tiny}
+
+```{r}
+kable(ors) 
+```
+
+\end{tiny}
+
+\vfill
+\newpage
+
+
+```{r}
+visualize_ors(ors_object = ors)
+```
+
+<!-- \vfill -->
+<!-- \newpage -->
+
+
+<!-- Sick absenteeism only: -->
+
+<!-- \begin{tiny} -->
+
+<!-- ```{r} -->
+<!-- kable(ors_sick)  -->
+<!-- ``` -->
+
+<!-- \end{tiny} -->
+
+## Back of the envelope calculations
+
+```{r}
+# Get yearly absences / presences
+x <- model_data %>%
+  filter(time_period == 'Malaria season') %>%
+  group_by(days_since) %>%
+  summarise(absences = length(which(absent)),
+            eligibles = n()) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100)
+```
+
+**Savings**  
+ 
+- In percentage point terms, reduction from 13% to 8%.  
+- 5 annually prevented absences per worker.   
+- 8,000 workers: 40,000 prevented absences, wage of 3 USD
+- TOTAL: 120,000 USD in productivity-only savings.   
+
+**Costs**  
+
+- 8 IRS workers, 1500 USD yearly = 12,000 USD  
+- ACT + DDT: 50,000 USD 
+- Facilities, vehicles, gas: 50,000 USD  
+- TOTAL: 112,000 USD in IRS-only costs  
+
+**7% ROI** (ignoring clinical costs)
+
+
+# Discussion
+
+## General
+
+- 30-50% reduction in absenteeism in the 6 months after IRS during malaria season. 
+- Depending on detailed cost data (pending), IRS may be effective even from a purely financial point of view (ie, beyond just "corporate social responsibility").  
+- Next steps are incorporation of (a) productivity data (via cane cut), (b) better clinical data (via local health facilities), and (c) full cost data.  
+- Will also be comparing with a sugarcane facility in a zone where an elimination campaign is taking place.  
+
+
+## Limitations
+
+- No analysis yet of different worker types (agricultural vs. industrial).
+- Have not yet ventured at all into side-analyses (effect on employment, tonnage, etc.). 
+- Sick absenteeism seems to track absenteeism poorly: lack of clarity regarding pathways.  
+- Large sample size, but all from same place: questionable generalizability.  
+
+## Thank you
+
+Your "pre-publication peer review" comments are appreciated:  
+
+
+**Email:** joe@economicsofmalaria.com
+
+**Presentation:** [economicsofmalaria.com/ihmt.pdf](http://economicsofmalaria.com/ihmt.pdf)
+
+## References {.allowframebreaks}
