@@ -1157,7 +1157,35 @@ ab_panel <-
               dplyr::filter(census_name_match_score <= 0.1990741) %>%
               dplyr::select(oracle_number, unidade))
 
+# Create BES based incidence data (created in maltem_cost_effectiveness)
+bes <- readr::read_csv('bes_manhica.csv')
+# Expand bes into a daily dataset
+left <- data_frame(date = seq(as.Date('2010-01-01'),
+                              max(bes$date),
+                              by = 1))
+bes <- left_join(left, bes, by = 'date')
+# Fill
+bes <- bes %>% tidyr::fill(cases, population, p, .direction = 'up')
+# Divide by 7 (since we converted from weekly to daily)
+bes <- bes %>% mutate(cases = cases / 7,
+                      population = population,
+                      p = p / 7) %>%
+  mutate(p = p * 365.25) # make yearly
+# Keep only 2013 onwards
+bes <- bes %>% filter(date >= '2013-01-01') %>%
+  # and only til end of 2016
+  filter(date <= '2016-12-31')
+
+# Create NOAA weather (created in maltem_cost_effectiveness)
+weather <- readr::read_csv('weather_daily.csv')
+weather <- weather %>%
+  filter(district == 'MANHICA',
+         date >= '2013-01-01',
+         date <= '2016-12-31')
+
 # Save for use in package
+devtools::use_data(bes,
+                   overwrite = TRUE)
 devtools::use_data(ab,
                    overwrite = TRUE)
 devtools::use_data(clinic,
@@ -1175,6 +1203,8 @@ devtools::use_data(bairros,
 devtools::use_data(census,
                    overwrite = TRUE)
 devtools::use_data(mc,
+                   overwrite = TRUE)
+devtools::use_data(weather,
                    overwrite = TRUE)
 
 ##################################################

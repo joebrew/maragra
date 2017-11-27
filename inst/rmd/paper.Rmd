@@ -20,33 +20,25 @@ library(Hmisc)
 library(brew)
 library(maragra)
 library(knitr)
-library(googleVis)
 library(RColorBrewer)
-op <- options(gvis.plot.tag='chart')
-
+library(extrafont)
+loadfonts()
 ## Global options
 options(max.print="75")
 opts_chunk$set(echo=FALSE,
-	             cache=TRUE,
+	             cache=FALSE,
                prompt=FALSE,
                tidy=TRUE,
                comment=NA,
                message=FALSE,
-               warning=FALSE)
+               warning=FALSE,
+               dev = "cairo_pdf")
 opts_knit$set(width=75)
 ```
 
 
 ```{r}
-# Read in data
-ab <- maragra::ab
-ab_panel <- maragra::ab_panel
-bairros <- maragra::bairros
-census <- maragra::census
-clinic <- maragra::clinic
-clinic_agg <- maragra::clinic_agg
-mc <- maragra::mc
-workers <- maragra::workers
+source('paper_prepare.R')
 ```
 
 
@@ -70,7 +62,8 @@ make_authors()
 \begin{center}
 \begin{changemargin}{3cm}{3cm} 
 
-Here goes some abstract text. Bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla bla .
+\textbf{Context:} Incentivizing scaled-up private firms' involvement in malaria control and elimination activities requires a clear and robust demonstration of its benefits, and a quantification of which benefits can be expected to return to the firm. However, most studies to date examine benefits of malaria control purely from the perspective of the public sector. \textbf{Methods:} We analyze 4 years of malaria control and worker health and absenteeism data from a large sugar processing facility in Mozambique. We estimate the effect of indoor residual spraying (IRS) on worker health and absenteeism. \textbf{Results:} We demonstrate that the firm's engagement in malaria control activities is profitable, even if we only consider those benefits which directly affect the firm's bottom line and ignore secondary and societal benefits.  
+
 
 \end{changemargin}
 \end{center}
@@ -80,115 +73,180 @@ Here goes some abstract text. Bla bla bla bla bla bla bla bla bla bla bla bla bl
 
 # Introduction
 
+Malaria has a nearly unquantifiably large economic impact on endemic societies. By affecting saving, investment [@Shretta2016], risk perception, productivity, absenteeism [@Nonvignon_2016], human capital accumulation [@CastelBranco2014], mortality, and costs of care [@Sachs2002], malaria likely has a negative effect on GDP and growth [@McCarthy_2000] [@Orem_2012]. Because of the relative affordability of most intereventions and the enormous societal costs of malaria, most forms of malaria control are cost-effective from the perspective of the government [@White_2011] [@Purdy_2013] [@Howard_2017].
 
-Public health interventions targetting malaria - and their corresponding cost-effectiveness evaluations - most often pertain to the public sector. Accordingly, the analytical framework and metrics employed by these analyses most often focus on impact pertaining to the public good, such as an increase in life years adjusted for disability or quality  [@Goodman1999, @Shretta2016, @Lee2017, Hanson2004]. Though population-level health is certainly of importance to businesses, and improvements in health incidentally improve the economy at all levels [@World1999, @Bloom2008], these improvements may be to disperse or long-term to incentivize private sector involvement in health campaigns. 
 
-In the context of Mozambique, where a significant sector of the economy is dominated by a full large-scale foreing direct investment projects [@Robbins2012], the role of the private sector in health generally, and malaria specifically, is unequivocally important. Large agriculture and extractive industry firms take up wide swaths of land and employ hundreds of thousands  [@German2013]. The Mozambican state has encouraged large-scale entreprise with the aim of general economic development [@Buur2012]. And where large firms exist, they often take on social roles such as housing and health care [@Winkler]. At times, this role is necessary from a purely practical standpoint; in other cases, it is employed under the guise of "corporate social responsibility" [@Azemar2009]. Regardless of the language used, it is clear that private industry plays an important role in public health in Mozambique [@Robbins2012, @CastelBranco2014]. 
+From the persepctive of the private sector, however, investing in malaria control is not such a clear-cut case. Public health interventions targetting malaria - and their corresponding cost-effectiveness evaluations - most often pertain to the public sector. Accordingly, the analytical framework and metrics employed by these analyses most often focus on impact pertaining to the public good, such as an increase in life years adjusted for disability or quality  [@Goodman1999] [@Shretta2016] [@Lee2017] [@Hanson2004]. Though population-level health is certainly of importance to businesses, and improvements in health incidentally improve the economy at all levels [@World1999] [@Bloom2008] [@Vecchi_2013], these improvements may be too disperse or long-term to incentivize private sector involvement in health campaigns. 
 
-Several cases exist of foreign firms engaging in large-scale anti-malaria campaigns [@Mouzin2011, @Han]. But these cases rarely undergo the same rigorous evaluation as their public sector counterparts due to (a) unavailability of data, (b) identification strategy, etc.
+In the context of Mozambique, where a significant sector of the economy is dominated by a full large-scale foreing direct investment projects [@Robbins2012], the role of the private sector in health generally, and malaria specifically, is unequivocally important. Large agriculture and extractive industry firms take up wide swaths of land and employ hundreds of thousands  [@German2013]. The Mozambican state has encouraged large-scale entreprise with the aim of general economic development [@Buur2012]. And where large firms exist, they often take on social roles such as housing and health care [@Winkler]. At times, this role is necessary from a purely practical standpoint; in other cases, it is employed under the guise of "corporate social responsibility" [@Azemar2009]. Regardless of the language used, it is clear that private industry plays an important role in public health in Mozambique [@Robbins2012] [@CastelBranco2014]. 
 
-In this paper, we...
+Several cases exist of foreign firms engaging in large-scale malaria control campaigns [@Mouzin2011] [@Han] [@Bennett_2017] [@Kaula_2017]. But these studies generally consider population health as the outcome measure of interest, rather than worker absenteeism or productivity. Similarly, they often neglect to differentiate between those clinical costs which are absorbed by the local health system versus those which are absorbed by the firm itself. In the literature, making the "investment case" for malaria control or elimination generally implies that the investor is the public sector, and takes into account those costs and benefits which are applicable to the public sector [@Shretta_2017]; though appropriate in most cases (the public sector being the primary malaria control agent in most locations), the findings of these studies are rarely applicable to the private sector. In the case of a private firm not interested in "corporate social responsibility", it is not clear whether investing in malaria control would be profitable or not. This lack of certainty most likely discourages investment in many cases.
 
-We hypothesize that..
-
-We find that...
-
+To address the question of the profitability of malaria control activities from the standpoint of a private firm, we analyze data during a 7 year period from a private sugar facility in Southern Mozambique. We assess the effect of indoor residual spraying (IRS) on the absenteeism and health of workers, and demonstrate that the firm's engagement in malaria control not only improved worker health, but also generated a positive return on investment.
 
 # Methods
 
+In collaboration with the sugar processing facility, Maragra Açucar SA (henceforth referred to as "Maragra"), we collected data for the period from January 2010 through December 2016. Data came from four sources: (i) the Human Resources' roster of worker details and absences, (ii) the facility's on-site clinic's medical and laboratory records, (iii) the facility's on-site malaria control program's records pertaining to the dates, chemicals, and location of IRS activities, and (iv) interviews with company employees pertaining to costs, data limitations, etc. Digitization and collection of data took place during the period from March 2016 through May 2017. Supplementary data pertaining to worker characteristics was obtained from through the Centro de Investigação em Saude de Manhiça's (CISM) demographic census, which covered workers from the district, but not those who migrated from other parts of the country [@Nhacolo_2006]. 
 
-### Identification strategy
+Data pertaining to district-wide malaria incidence was obtained from Mozambique’s Boletim Epidemiológico Semanal (BES), which is the system by which the National Malaria Control Program monitors incidence at the district level throghout the entire country, and reports
+the number of confirmed weekly malaria cases at government health facilities. Using these case numbers, combined with population estimates from the National Statistical Institute (INE), we estimate each day's annualized weekly malaria incidence rate (cases per 1000 population at risk), interpolated from the weekly figures. We retrieved weather data for all Mozambican stations from NOAA. We estimated the meteorological conditions at the centroid of Manhiça using a simple interpolation method whereby the district's weather conditions were estimated to be a function of all Mozambican weather stations' reported conditions, inversely weighted by kilometers from district centroid. 
 
-For our purposes we are analyzing the effect of one intervention (IRS) on 2 outcomes (absence and illness) with many confounders (age, worker type, seasonality, etc.). Our analysis can be visualized formulaically as follows:
+Maragra regularly employs IRS at on-site worker households in order to reduce those workers' (and their families') risk of malaria infection. By using the CISM's census, we were able to identify from the record of houses sprayed (maintained by the company) who lived in those houses, as well as who lived off-site (and therefore did not receive IRS from Maragra). Then, using company HR and clinical records, we were able to identify absences and episodes of clinical malaria among all workers, as well as identify the time since the most recent IRS episode before the onsent of absence or illness.
+
+We sought to understand the effect of IRS on individual workers' likelihood of absence from work as well as their likelihood of clinical malaria. To estimate this effect, we estimated separate models for absence and illness. We employed interrupted time series [@Lopez_Bernal_2016] and a linear probability approach using the following econometric model.
+
 
 $$
-\begin{equation}
-\operatorname{Pr}(\text{Outcome} = 1 \mid \text{X}) = \beta_{0} + \beta_{1} \text{Location} + \beta_{2} \text{Season} + (\beta_3{IRS}*\beta_4{IRS_t} + ... )
-\end{equation}
+\hat{Y} = \beta_{0} +  \beta_{1} \text{Season} + (\beta_2{IRS}*\beta_3{IRS_t}) + ... 
 $$
 
-Our outcome is probabilistic and binomial (ie, one is either absent or present / infected or not infected). Our demographic confounders (represented by $...$) will be a function of iterative model selection. Our intervention (IRS) is not a simple yes/no, but rather the product of whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment (represented above as the interaction term, where where $_t$ represents time elapsed since commencement of the most recent IRS campaign). 
+$\hat{Y}$ is the rate of (illness/absence). $\beta_{1}$ represents the clinical malaria incidence at that time in the entire district of Manhiça.  Our demographic confounders (represented by $...$) are sex, age, and worker department (field, factory, or administrative). Our intervention was not a simple yes/no, but rather the product of whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment (represented above as the interaction term, where where $_t$ represents time elapsed since commencement of the most recent IRS campaign). We considered using weather data as a right-hand side variable for our models, but found that district-level clinical malaria incidence was a far better predictor of both absence and clinical malaria infection than precipitation and temperature, the former apparently capturing weather's significant effects. Accordingly, we use clinical malaria incidence as a proxy for the severity of malarial activity, and exclude weather variables from our modeling.
 
-```{r}
-# Create model data
-model_data <-
-  ab_panel %>%
-  # filter(oracle_number %in% matched$oracle_number) %>%
-  left_join(irs) %>%
-  # left_join(matched) %>%
-  mutate(days_since = ifelse(is.na(days_since), 'Never',
-                             ifelse(days_since > 180, '180+',
-                                    ifelse(days_since > 90, '090-180',
-                                           ifelse(days_since > 60, '060-090',
-                                                  '<060'))))) %>%
-  mutate(quarter = lendable::quarter_extract(date)) %>%
-  mutate(quarter = as.character(quarter)) %>%
-  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
-# Need to add seasonality
-# Need to adjust for houses on and off site
-fit <- glm(absent ~ days_since + quarter,
-           family = binomial('logit'),
-          data = model_data)
-x <- exp(coef(fit))
-ors <- exp(confint(fit))
-ors <- data.frame(ors)
-names(ors) <- c('Lower', 'Upper')
 
-ors <- cbind(x, ors)
-ors$Variable <- row.names(ors)
-ors <- ors %>%
-  dplyr::rename(OR = x) %>%
-  dplyr::select(Variable, OR, Lower, Upper)
-# Combine into a df
-kable(ors) %>%
-  kableExtra::kable_styling(full_width = FALSE)
-```
+Worker characteristics, illness and absenteeism data, along with IRS activity data, were systematically stored, collected, and used at the individual level by Maragra, and therefore of generally high quality. Because cost data was less systematically collected by Maragra, and because many costs could not be precisely quantified due to the abundance of in-kind and cross-departmental expenditures, we had to rely on rough estimations based on a mix of interviews, reciepts, and interpolations. Since our program cost data is not as reliable as our worker characteristic and outcome data, we were conservative in our estimates, and generally tried to err on the side of program activities and materials costing _more_ than what was reported, when doubt was aired. Cost data consisted of three types: (i) wages of malaria control employees, (ii) transporation and vehicle costs for IRS teams, and (iii) acquisition costs of purchasing IRS chemicals for fumigation (ACT and DDT). We define the IRS program as "profitable" if return on investment is greater than 100%, ie if the savings associated with the estimated effect of IRS is greater than the costs of the program's administration.
 
-We run the same model, but instead of estimating absences, we estimate only the likelihood of sick absences. The results (in form of odds ratios) are below.
+All data processing and analysis were carried out in R [@R] and all analysis code is freely available online [@brewgit]. Ethical approval for this project was obtained from the Institutional Ethics Review Board for Health at CISM prior to data collection.
 
-```{r}
-# Need to add seasonality
-# Need to adjust for houses on and off site
-fit <- glm(absent_sick ~ days_since + quarter,
-           family = binomial('logit'),
-          data = model_data)
-x <- exp(coef(fit))
-ors <- exp(confint(fit))
-ors <- data.frame(ors)
-names(ors) <- c('Lower', 'Upper')
 
-ors <- cbind(x, ors)
-ors$Variable <- row.names(ors)
-ors <- ors %>%
-  dplyr::rename(OR = x) %>%
-  dplyr::select(Variable, OR, Lower, Upper)
-# Combine into a df
-kable(ors) %>%
-  kableExtra::kable_styling(full_width = FALSE)
-
-```
-
-Some text goes here.
-
-All data processing and analysis were carried out in R [@R]. All code is freely available online [@brewgit].
 
 # Results
 
-Some text goes here
+In Southern Mozambique, malaria peaks during the summer months (December through March) most years (Figure 1, panel A), and worker absenteeism rates track malaria incidence closely (Figure 1, panel B). Both all-cause absenteeism and sick absenteeism have declined in recent years (Figure 1, panel C), with the latter declining at a faster rate than the former. The fact that the rate of confirmed cases at the company clinic is largely non-seasonal (Figure 1, panels E and F) suggests that a significant portion of workers either seek care for malaria elsewhere (for example, government health posts, of which several are nearby and in some many cases closer to workers' residence than the company clinic) or did not seek care during malaria infection. Accordingly, we focus our analysis on all-cause absenteeism rather than sickness absenteeism or malaria diagnostics, assuming that much of illness is captured by absenteeism but not by the clinic.
 
+
+```{r, fig.cap = 'Clinical malaria (district of Manhiça), all-cause absenteeism among Maragra workers, sick absenteeism among Maragra workers, estimated rainfall, positive cases at company clinic, and test positivity rate at company clinic', fig.height=5, fig.width=8}
+# BES incidence
+g1 <- 
+  ggplot(data = bes,
+       aes(x = date,
+           y = p)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Incidence',
+       title = 'A: Annualized district clinical\nmalaria incidence per 1,000')
+
+# Absenteeism rate
+g2_data <- ab_panel %>%
+  group_by(month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  summarise(absences = length(which(absent)),
+            absences_sick = length(which(absent_sick)),
+            
+            eligibles = n()) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100,
+         sick_absenteeism_rate = absences_sick / eligibles * 100)
+
+g2 <- ggplot(data = g2_data,
+             aes(x = month,
+                 y = absenteeism_rate)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Absenteeism rate',
+       title = 'B: Monthly absenteeism rate')
+
+g3 <- ggplot(data = g2_data,
+             aes(x = month,
+                 y = sick_absenteeism_rate)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Absenteeism rate',
+       title = 'C: Monthly sick absenteeism rate') 
+
+# Weather
+g4 <-
+  ggplot(data = weather %>%
+           group_by(date = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+           summarise(precipitation = sum(precipitation, na.rm = TRUE)),
+         aes(x = date,
+             y = precipitation)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Mililiters',
+       title = 'D: Monthly precipitation') 
+
+# Clinical incidence of malaria
+g5 <- clinic_agg %>%
+  filter(date >= '2013-01-01', date <= '2016-12-31') %>%
+  # mutate(date = as.Date(paste0(year, '-', month, '-01'))) %>%
+  group_by(date) %>%
+  summarise(tested = sum(tested),
+            positive = sum(positive)) %>%
+  ungroup %>%
+  mutate(percent_positive = positive / tested * 100) %>%
+  ggplot(aes(x = date,
+             y = positive)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Cases',
+       title = 'E: Monthly malaria cases\nat company clinic') 
+
+g6 <- clinic_agg %>%
+  filter(date >= '2013-01-01', date <= '2016-12-31') %>%
+  # mutate(date = as.Date(paste0(year, '-', month, '-01'))) %>%
+  group_by(date) %>%
+  summarise(tested = sum(tested),
+            positive = sum(positive)) %>%
+  ungroup %>%
+  mutate(percent_positive = positive / tested * 100) %>%
+  ggplot(aes(x = date,
+             y = percent_positive)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Cases',
+       title = 'F: Monthly malaria test positivity rate\nat company clinic') 
+Rmisc::multiplot(g1, g2, g3, g4, g5, g6, layout = matrix(1:6, nrow=2, byrow=TRUE)) 
+```
+
+
+```{r}
+fumigations <- mc %>%
+  filter(date >= '2012-01-01',
+         date <= '2016-12-31')
+n_fumigations <- nrow(fumigations)
+n_buildings <- sum(fumigations$casas_cobertas, na.rm = TRUE)
+unique_agregados <- length(unique(fumigations$unidade))
+people_sprayed <- length(unique(model_data$oracle_number[model_data$days_since != 'Never']))
+people_observed <- length(unique(model_data$oracle_number))
+```
+
+During the period from January 1st, 2012 through December 31st, 2016, the Maragra Malaria Control Unit carried out `r n_fumigations` episodes of fumigation of residential "agregados" (household combinations), for a total of `r n_buildings` building-fumigation combinations. The total number of unique agregados sprayed during this period was `r unique_agregados`. Among the `r people_observed` on whom we have absenteeism data, `r people_sprayed` had their homes fumigated at least once (the majority of workers live off of the facility).
+
+
+The below chart shows the effect of IRS. All workers. Reference group is "Never" (those who never got IRS). 
+
+
+```{r, fig.height = 3.5, fig.width = 4, fig.cap= 'Effect of IRS on absenteeism'}
+ggplot(data = fit_tidy %>%
+         filter(!term %in% c('(Intercept)', 'incidence')) %>%
+         filter(grepl('seasonhigh', term)) %>%
+         filter(term != 'seasonhigh') %>%
+         mutate(term = gsub('seasonhigh:days_since', '', term)) %>%
+         mutate(term = factor(term, levels = unique(c('Never',
+                                               'Before',
+                                               sort(unique(term)))))),
+       aes(x = term,
+           y = estimate)) +
+  geom_bar(stat = 'identity') +
+  theme(axis.text.x = element_text(angle = 90)) +
+  theme_maragra() +
+  labs(x = 'Time since IRS',
+       y = 'Coefficient')
+```
+
+\vfill
+
+\pagebreak
 
 # Discussion
 
 Some text goes here
 
-
-
-```{r, eval=FALSE}
-# automatically create a bib database for R packages
-knitr::write_bib(c(
-  .packages(), 'knitr', 'rmarkdown'
-), 'packages.bib')
-```
 
 
 # References

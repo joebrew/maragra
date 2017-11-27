@@ -1,0 +1,107 @@
+---
+title: Ethical considerations in regards to "Effectiveness of private sector malaria control at a large sugar
+  facility in Southern Mozambique" (PhD project)
+date: ''
+output: 
+  pdf_document:
+    includes:
+      in_header: preamble_ethical_statement.sty
+fig_width: 4
+fig_height: 2.6
+bibliography: bibliography.bib
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# Packages
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(knitr)
+library(googleVis)
+library(RColorBrewer)
+op <- options(gvis.plot.tag='chart')
+
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=TRUE,
+               prompt=FALSE,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE)
+opts_knit$set(width=75)
+```
+
+
+
+\begin{center}
+\begin{large}
+
+```{r, results = 'asis', eval = TRUE}
+make_authors()
+```
+
+\end{large}
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\textbf{Study summary}  
+\end{center}
+
+\vspace{5mm}
+\begin{center}
+\begin{changemargin}{3cm}{3cm} 
+
+This project aims to assess the return on investment of malaria control carried out by a sugar cane company in Southern Mozambique. \textbf{Justification:} Understanding the cost-benefit ratio of malaria control from an investment standpoint has important implications for the potential scaling-up of private sector involvement in the push for global malaria eradication. \textbf{Hypothesis:} We hypothesize that investment in malaria control has a strong impact and offers a high return in terms of reduced workers’ absenteeism and increased workers’ productivity. \textbf{Data: } We gather data pertaining to absenteeism and productivity information from a large sugarcane factory in Southern Mozambique based in a malaria control zone; Private malaria control program costs and activity data; Private worker clinic data. \textbf{Methodology: } We employ ordinary least squares regression to quantify the effect of indoor residual spraying (IRS) on worker absenteeism and productivity; logistic regression to quantify the same effect on the odds of clinical malaria. Finally, we carry out cost-benefit analysis using company financial data. 
+
+\end{changemargin}
+\end{center}
+
+# Institutional approval
+
+This project was approved by the Scientific and Ethical Committees of the Centro de Investigação em Saude de Manhiça (Mozambique) as part of the larger economic research related to the Mozambican Alliance Towards the Elimination of Malaria (MALTEM) campaign.
+
+# Confidentiality
+
+All information on individuals will remain confidential and be shared only by the study team. Identifiable data is required, in order to join information from company registers with the government census. Following data merge, unique identifiers will be used with only the PI (Joe Brew) having access to the decryption key. In all cases, the PI will ensure that the completed identification code list are kept in locked and encrypted files.
+
+# Consent
+
+This study is observational, using only data which is already collected and stored on company registers. Much of the data pertains to workers who are no longer active in the company, or resident in the area; in some cases, the workers have left the census catchment area or even deceased. For these reasons, direct consent is not obtained from the workers; rather, it is provided by the company (the proprietor of the data), through an explicit data sharing agreement stipulating the non-disclosure of worker identity. 
+# Beneficience
+
+The potential knowledge gained from this product stands to improve the health of workers by providing insight as to which methods are most effective in preventing malaria infection.
+
+# Beneficence
+
+The aim of this work is to determine the effectiveness of indoor residual spraying on the lived experience of workers, through the proxies of absenteeism and clinical illness. It imposes no intervention on the workers (the intervention under study is already carried out regularly by the company), and its findings are likely to improve the operations of a generally effective intervetion (as demonstrated elsewhere) [@Lee2017, @Howard_2017, @Bloom2008]. Importantly, if the findings of this study suggest a positive return on investment for private sector malaria control activities, we might expect that the results' dissemination could motivate more companies to carry out malaria control in Sub-Saharan Africa, which would improve the health of African workers [@McCarthy_2000].
+
+# Non-malfeasance  
+
+All data used are observational and retrospective in nature. No direct contact with workers is made. We have no concerns regarding the potential of causing harm to workers.
+
+# Conflicts of interest and independence  
+
+The company (Illovo Açucar) plays an important role in data acquisition and understanding. This is a potential conflict of interest, as it is feasible to share intentionally incomplete or incorrect data. The researchers understand this risk and will work diligently to avoid it. All analysis is carried out by the PI, with no influence or oversight from the company.  
+
+# Knowledge sharing and dissemination  
+
+All research products will be shared with the company. Publications will be open-access. A presentation will be made on-site with both company management and workers invited to attend. Though data must be stored privately (for reasons of confidentiality), all code will be open source, so as to allow for reproducibility and ensure transparency.\footnote{https://github.com/joebrew/maragra}
+
+
+```{r, eval=FALSE}
+# automatically create a bib database for R packages
+knitr::write_bib(c(
+  .packages(), 'knitr', 'rmarkdown'
+), 'packages.bib')
+```
+
+
+# References
+

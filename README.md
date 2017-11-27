@@ -61,11 +61,13 @@ Having run this, you'll now have the following datasets for analysis:
 -   ab
 -   ab\_panel
 -   bairros
+-   bes
 -   census
 -   clinic
 -   clinic\_agg
 -   irs
 -   mc
+-   weather
 -   workers
 
 #### 5. Install the code in the repository and build the R package.

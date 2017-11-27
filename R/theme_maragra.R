@@ -1,24 +1,29 @@
 #' Theme for ggplots
-#' 
+#'
 #' Add a theme to a ggplot object
 #' @param base_size The base font size
+#' @oaram font_family The font
 #' @return A ggplot compatible theme call
 #' @import ggthemes
 #' @import grid
 #' @export
 # Borrowed from https://rpubs.com/Koundy/71792
-theme_maragra <- function(base_size=14) {
-  (theme_foundation(base_size=base_size)
-    + theme(plot.title = element_text(face = "bold",
-                                      size = rel(1.2), hjust = 0.5),
+theme_maragra <- function(base_size=14,
+                          font_family = 'Computer Modern Roman') {
+  (theme_foundation(base_size=base_size,
+                    base_family = font_family)
+    + theme(plot.title = element_text(#face = "bold",
+                                      size = rel(1),
+                                      hjust = 0.5),
             text = element_text(),
             panel.background = element_rect(colour = NA),
             plot.background = element_rect(colour = NA),
             panel.border = element_rect(colour = NA),
-            axis.title = element_text(face = "bold",size = rel(1)),
+            axis.title = element_text(#face = "bold",
+                                      size = rel(0.75)),
             axis.title.y = element_text(angle=90,vjust =2),
             axis.title.x = element_text(vjust = -0.2),
-            axis.text = element_text(), 
+            axis.text = element_text(size = rel(0.65)),
             axis.line = element_line(colour="black"),
             axis.ticks = element_line(),
             panel.grid.major = element_line(colour="#f0f0f0"),
@@ -31,6 +36,8 @@ theme_maragra <- function(base_size=14) {
             legend.title = element_text(face="italic"),
             plot.margin=unit(c(10,5,5,5),"mm"),
             strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
-            strip.text = element_text(face="bold")
+            strip.text = element_text(face="bold") +
+            theme(text=element_text(size=16,
+                                      family=font_family))
     ))
 }
