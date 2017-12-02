@@ -19,31 +19,111 @@ mc <- maragra::mc
 weather <- maragra::weather
 workers <- maragra::workers
 
+# Define function for adding zero
+add_zero <- function (x, n) {
+  x <- as.character(x)
+  adders <- n - nchar(x)
+  adders <- ifelse(adders < 0, 0, adders)
+  for (i in 1:length(x)) {
+    if (!is.na(x[i])) {
+      x[i] <- paste0(paste0(rep("0", adders[i]), collapse = ""),
+                     x[i], collapse = "")
+    }
+  }
+  return(x)
+}
 
 model_data <-
   ab_panel %>%
   left_join(irs, by = c('unidade', 'date')) %>%
-  mutate(days_since = ifelse(days_since > 180, '180+',
-                             ifelse(days_since > 90, '090-180',
-                                    ifelse(days_since > 60, '060-090',
-                                           ifelse(days_since >= 0, '000-060',
-                                                  ifelse(days_since < 0, 'Before', NA)))))) %>%
-  mutate(days_since = ifelse(is.na(days_since), 'Never', days_since)) %>%
-  mutate(days_since = factor(days_since, levels = c('Never', 'Before', '000-060', '060-090', '090-180', '180+'))) %>%
-  mutate(quarter = lendable::quarter_extract(date)) %>%
-  mutate(quarter = as.character(quarter)) %>%
+  mutate(days_since = days_since %/% 30) %>%
+  mutate(days_since = ifelse(is.na(days_since), 'Never',
+                             ifelse(days_since < 0, 'Before',
+                             ifelse(days_since >= 12, '12+', as.character(add_zero(days_since, n = 2)))))) %>%
+  mutate(months_since = factor(days_since, levels = unique(c('Never', 'Before', sort(unique(days_since)))))) %>%
   mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) %>%
-    # Add malaria incidence
-    left_join(bes %>%
-                dplyr::select(date, p) %>%
-                dplyr::rename(incidence = p),
-              by = 'date') %>%
+  # Add malaria incidence
+  left_join(bes %>%
+              dplyr::select(date, p) %>%
+              dplyr::rename(incidence = p),
+            by = 'date') %>%
   mutate(season = ifelse(incidence >= median(incidence),
                          'high',
                          'low')) %>%
-  mutate(season = factor(season, levels = c('low', 'high')))
+  mutate(season = factor(season, levels = c('low', 'high'))) %>%
+  # Bring in some information on workers
+  left_join(workers %>%
+              dplyr::select(oracle_number,
+                            permanent_or_temporary,
+                            department,
+                            sex,
+                            date_of_birth,
+                            perm_id,
+                            census_name_match_score) %>%
+              # void the permids of anyone with a match score of greater than 0.2
+              mutate(perm_id = ifelse(census_name_match_score > 0.25,
+                                      NA,
+                                      perm_id))) %>%
+  # Bring in some info from the census
+  left_join(census %>%
+              filter(!duplicated(perm_id)) %>%
+              dplyr::select(perm_id,
+                            maragra_bairro,
+                            maragra_fabrica,
+                            education,
+                            floor_material)) %>%
+  # Bring in some data for weather
+  left_join(weather %>%
+              dplyr::select(date, precipitation,
+                            temp) %>%
+              mutate(precipitation = ifelse(is.na(precipitation),
+                                            0,
+                                            precipitation))) %>%
+  mutate(rainy = precipitation > 0)
 
-# Model
-fit <- lm(absent ~ season * days_since, data = model_data)
-fit_tidy <- broom::tidy(fit)
+# Model simple
+fit <- lm(absent ~ season * months_since, data = model_data)
+# sick_fit <- lm(absent_sick ~ season * months_since, data = model_data)
+# fit_tidy <- broom::tidy(fit)
 
+# Full model
+# model <- lm(absent ~ season * months_since + rainy + sex +
+#               maragra_fabrica + education, data = model_data)
+# model_tidy <- broom::tidy(model)
+#
+# # Predict for visualization
+# model_dummy <- expand.grid(season = sort(unique(model_data$season)),
+#                      months_since = sort(unique(model_data$months_since)),
+#                      sex = sort(unique(model_data$sex)),
+#                      rainy = sort(unique(model_data$rainy)),
+#                      department = sort(unique(model_data$department)))
+# predictions <- predict(model, model_dummy, se.fit = TRUE, interval = 'confidence')
+# model_dummy$predicted <- predictions$fit[,1]
+# model_dummy$lwr <- predictions$fit[,2]
+# model_dummy$upr <- predictions$fit[,3]
+# ggplot(data = model_dummy %>%
+#          filter(!rainy) %>%
+#          filter(months_since != 'Never') %>%
+#          mutate(lwr = lwr * 100,
+#                 upr = upr * 100,
+#                 predicted = predicted * 100) %>%
+#          mutate(season = paste0(Hmisc::capitalize(as.character(season)), ' season')),
+#        aes(x = months_since,
+#            y = predicted,
+#            group = sex)) +
+#   # geom_ribbon(aes(x = months_since,
+#   #                 ymin = lwr,
+#   #                 ymax = upr,
+#   #                 color = sex),
+#   #             alpha = 0.6) +
+#   # geom_line(color = 'blue', alpha = 0.5) +
+#   geom_point(aes(color = sex), alpha = 0.5) +
+#   geom_smooth(se = FALSE,
+#               aes(color = sex),
+#               alpha = 0.5,
+#               span = 1) +
+#   facet_grid(department~season) +
+#   theme_maragra() +
+#   theme(axis.text.x = element_text(angle = 90, size = 8)) +
+#   labs(x = 'Months since IRS',
+#        y = 'Absenteeism (%)')
