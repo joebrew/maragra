@@ -83,6 +83,13 @@ model_data <-
 
 # Model simple
 fit <- lm(absent ~ season * months_since, data = model_data)
+summary(fit)
+
+
+
+
+
+
 # sick_fit <- lm(absent_sick ~ season * months_since, data = model_data)
 # fit_tidy <- broom::tidy(fit)
 
@@ -101,29 +108,3 @@ fit <- lm(absent ~ season * months_since, data = model_data)
 # model_dummy$predicted <- predictions$fit[,1]
 # model_dummy$lwr <- predictions$fit[,2]
 # model_dummy$upr <- predictions$fit[,3]
-# ggplot(data = model_dummy %>%
-#          filter(!rainy) %>%
-#          filter(months_since != 'Never') %>%
-#          mutate(lwr = lwr * 100,
-#                 upr = upr * 100,
-#                 predicted = predicted * 100) %>%
-#          mutate(season = paste0(Hmisc::capitalize(as.character(season)), ' season')),
-#        aes(x = months_since,
-#            y = predicted,
-#            group = sex)) +
-#   # geom_ribbon(aes(x = months_since,
-#   #                 ymin = lwr,
-#   #                 ymax = upr,
-#   #                 color = sex),
-#   #             alpha = 0.6) +
-#   # geom_line(color = 'blue', alpha = 0.5) +
-#   geom_point(aes(color = sex), alpha = 0.5) +
-#   geom_smooth(se = FALSE,
-#               aes(color = sex),
-#               alpha = 0.5,
-#               span = 1) +
-#   facet_grid(department~season) +
-#   theme_maragra() +
-#   theme(axis.text.x = element_text(angle = 90, size = 8)) +
-#   labs(x = 'Months since IRS',
-#        y = 'Absenteeism (%)')
