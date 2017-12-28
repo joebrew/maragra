@@ -34,6 +34,8 @@ opts_chunk$set(echo=FALSE,
                warning=FALSE,
                dev = "cairo_pdf")
 opts_knit$set(width=75)
+options(xtable.comment = FALSE)
+
 ```
 
 
@@ -103,75 +105,27 @@ $$
 
 $\hat{Y}$ is the rate of absence. $\beta_{1}$ represents the clinical malaria incidence at that time in the entire district of Manhiça.  Our demographic confounders (represented by $...$) are sex, age, and worker department (field, factory, or administrative). Our intervention was not a simple yes/no, but rather the product of whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment (represented above as the interaction term, where where $_t$ represents time elapsed since commencement of the most recent IRS campaign). We define the malaria season as any time during which the clinical incidence of malaria in the district of Manhiça was at or greater than the median clinical incidence of malaria for the entire study period. These weeks are flagged as red in Figure 1, Panel A.  By using clinical incidence of the area of residence of the workers (as opposed to more typical proxies for malaria risk, such as only rainy vs. non rainy season), our seasonality estimate is a closer approximation of true malaria risk, incorporating lagged effects such as the incubation period of the parasite, as well as any inherent non-linear effects of weather. In addition, we adjust for daily precipitation
 
-Because cost data was less systematically collected by Maragra, and because many costs could not be precisely quantified due to the abundance of in-kind and cross-departmental expenditures, we had to rely on rough estimations based on a mix of interviews, reciepts, and interpolations. Since our program cost data is not as reliable as our worker characteristic and outcome data, we were conservative in our estimates, and generally tried to err on the side of program activities and materials costing _more_ than what was reported, when doubt was aired. Cost data consisted of three types: (i) wages of malaria control employees, (ii) transporation and vehicle costs for IRS teams, and (iii) acquisition costs of purchasing IRS chemicals for fumigation (ACT and DDT). We define the IRS program as "profitable" if return on investment is greater than 100%, ie if the savings associated with the estimated effect of IRS is greater than the costs of the program's administration.
+Because cost data was less systematically collected by Maragra, and because many costs could not be precisely quantified due to the abundance of in-kind and cross-departmental expenditures, we had to rely on rough estimations based on a mix of interviews, reciepts, and interpolations. Since our program cost data is not as reliable as our worker characteristic and outcome data, we were conservative in our estimates, and generally tried to err on the side of program activities and materials costing _more_ than what was reported, when doubt was aired. Cost data consisted of three types: (i) wages of malaria control employees, (ii) transporation and vehicle costs for IRS teams, and (iii) acquisition costs of purchasing IRS chemicals for fumigation (ACT and DDT), the latter two being combined into malaria control "programme" costs. We define the IRS program as "profitable" if return on investment is greater than 100%, ie if the savings associated with the estimated effect of IRS is greater than the costs of the program's administration.
 
 
+Our formula for return on investment can be described in a straightforward fashion...
 
-All data processing and analysis were carried out in R [@R] and all analysis code is freely available online [@brewgit]. Ethical approval for this project was obtained from the Institutional Ethics Review Board for Health at CISM prior to data collection.
 
+\begin{center}
+$R = \dfrac{P_{w} - S_{wa} - S_{wc}}{P_{w}}$
+
+\end{center}
+
+...where $R$ is the return on investment, $P$ is the malaria control program's total operating cost, $w$ refers to costs at the per-worker level, $a$ refers to savings through avoided absences, and $ c $ refers to savings through avoided clinical encounters.
+
+
+All data processing and analysis were carried out in R [@R] and all analysis code is freely available online [@brewgit]. Ethical approval for this project was obtained from the Institutional Ethics Review Board for Health at the CISM prior to data collection.
 
 
 # Results
 
-In Southern Mozambique, malaria peaks during the summer months (December through March) most years (Figure 1, panel A), and worker absenteeism rates track malaria incidence closely (Figure 1, panel B). Both all-cause absenteeism and sick absenteeism have declined in recent years (Figure 1, panel C), with the latter declining at a faster rate than the former. The fact that the rate of confirmed cases at the company clinic is largely non-seasonal (Figure 1, panels E and F) suggests that a significant portion of workers either seek care for malaria elsewhere (for example, government health posts, of which several are nearby and in some many cases closer to workers' residence than the company clinic) or did not seek care during malaria infection. Accordingly, we focus our analysis on all-cause absenteeism rather than sickness absenteeism or malaria diagnostics, assuming that much of illness is captured by absenteeism but not by the clinic.
+In Southern Mozambique, malaria peaks during the summer months (December through March) most years (Figure 1, panel A), and worker absenteeism rates track malaria incidence closely, following the same seasonal patterns (Figure 1, panel B). Both all-cause absenteeism and sick absenteeism have declined in recent years at Maragra (Figure 1, panel C), with the latter declining at a faster rate than the former. The fact that the rate of confirmed cases at the company clinic is largely non-seasonal (Figure 1, panels E and F) suggests that a significant portion of workers either seek care for malaria elsewhere (for example, government health posts, of which several are nearby and in some many cases closer to workers' residence than the company clinic) or do not seek care during malaria infection. Accordingly, we focus our analysis on all-cause absenteeism rather than sickness absenteeism or malaria diagnostics, with the assumption that much of illness is captured by absenteeism but not by the clinical data.
 
-```{r, results='asis'}
-calculate <- function(var){
-  out <- 
-  model_data %>%
-    mutate(year = format(date, '%Y')) %>%
-    mutate(maragra_fabrica = ifelse(maragra_fabrica,
-                                    'On site',
-                                    'Off site'),
-           rainy = ifelse(rainy,
-                          'Rainy',
-                          'Dry')) %>%
-    filter(!is.na(rainy)) %>%
-  group_by_(var, 'year') %>%
-  summarise(absences = length(which(absent)),
-            eligibles = length(absent),
-            workers = length(unique(oracle_number))) %>%
-  ungroup %>%
-  mutate(absenteeism_rate = absences / eligibles * 100) 
-  names(out)[1] <- 'variable'
-  out$val <- paste0(round(out$absenteeism_rate, digits = 2),
-                    '%')#,
-                    # ')',
-                    # '\n',
-                    # ' (workers:', out$workers,
-                    # ')')
-  out <- 
-    out %>%
-    dplyr::select(variable, year, val)
-  
-  out <- out %>%
-    spread(key = year,
-           value = val)
-  out$variable <- as.character(out$variable)
-  new_var <- ifelse(var == 'maragra_fabrica',
-                    'Residence',
-                    ifelse(var == 'rainy',
-                           'Precipitation',
-                           var))
-  out$variable[1] <- paste0(Hmisc::capitalize(new_var), ': ', out$variable[1])
-  return(out)
-}
-out_list <- list()
-vars <- c('season', 
-           'department',
-           'sex',
-           'maragra_fabrica',
-           'rainy')
-for(i in 1:length(vars)){
-  x <- calculate(var = vars[i])
-  out_list[[i]] <- x
-}
-ab_table <- bind_rows(out_list)
-names(ab_table)[1] <- ''
-print(xtable::xtable(ab_table,
-                     align = c('r' ,'r', rep('l', 4))),
-      include.rownames = FALSE)
-```
 
 
 ```{r, fig.cap = 'Clinical malaria (district of Manhiça), all-cause absenteeism among Maragra workers, sick absenteeism among Maragra workers, estimated rainfall, positive cases at company clinic, and test positivity rate at company clinic', fig.height=5, fig.width=8}
@@ -285,14 +239,81 @@ n_buildings <- sum(fumigations$casas_cobertas, na.rm = TRUE)
 unique_agregados <- length(unique(fumigations$unidade))
 people_sprayed <- length(unique(model_data$oracle_number[model_data$days_since != 'Never']))
 people_observed <- length(unique(model_data$oracle_number))
+pr <- function(x){prettyNum(x, big.mark = ',')}
 ```
 
-During the period from January 1st, 2012 through December 31st, 2016, the Maragra Malaria Control Unit carried out `r n_fumigations` episodes of fumigation of residential "agregados" (household combinations), for a total of `r n_buildings` building-fumigation combinations. The total number of unique agregados sprayed during this period was `r unique_agregados`. Among the `r people_observed` on whom we have absenteeism data, `r people_sprayed` had their homes fumigated at least once (the majority of workers live off of the facility).
+**Fumigations**: During the period from January 1st, 2012 through December 31st, 2016, the Maragra Malaria Control Unit carried out `r pr(n_fumigations)` episodes of fumigation of residential "agregados" (household combinations), for a total of `r pr(n_buildings)` building-fumigation combinations. The total number of unique agregados sprayed during this period was `r pr(unique_agregados)`. Among the `r pr(people_observed)` workers for whom we have reliable absenteeism and residential data, `r pr(people_sprayed)` had their homes fumigated at least once (the majority of workers live off of the facility).
+
+**Absences**: We observed `r pr(nrow(ab_panel))` unique worker-days among the `r pr(people_observed)` workers. The all-period average absenteeism rate was `r round(100 * sum(ab_panel$absent) / nrow(ab_panel), digits = 2)`%, though this rate varied widely as a function of worker department, sex, residence, and season (table 1).
+
+```{r, results='asis'}
+calculate <- function(var){
+  out <- 
+  model_data %>%
+    mutate(year = format(date, '%Y')) %>%
+    mutate(maragra_fabrica = ifelse(maragra_fabrica,
+                                    'On site',
+                                    'Off site'),
+           rainy = ifelse(rainy,
+                          'Rainy',
+                          'Dry')) %>%
+    filter(!is.na(rainy)) %>%
+  group_by_(var, 'year') %>%
+  summarise(absences = length(which(absent)),
+            eligibles = length(absent),
+            workers = length(unique(oracle_number))) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) 
+  names(out)[1] <- 'variable'
+  out$val <- paste0(round(out$absenteeism_rate, digits = 2),
+                    '%')#,
+                    # ')',
+                    # '\n',
+                    # ' (workers:', out$workers,
+                    # ')')
+  out <- 
+    out %>%
+    dplyr::select(variable, year, val)
+  
+  out <- out %>%
+    spread(key = year,
+           value = val)
+  out$variable <- as.character(out$variable)
+  new_var <- ifelse(var == 'maragra_fabrica',
+                    'Residence',
+                    ifelse(var == 'rainy',
+                           'Precipitation',
+                           var))
+  out$variable[1] <- paste0(Hmisc::capitalize(new_var), ': ', out$variable[1])
+  return(out)
+}
+out_list <- list()
+vars <- c('season', 
+           'department',
+           'sex',
+           'maragra_fabrica',
+           'rainy')
+for(i in 1:length(vars)){
+  x <- calculate(var = vars[i])
+  out_list[[i]] <- x
+}
+ab_table <- bind_rows(out_list)
+names(ab_table)[1] <- ''
+print(xtable::xtable(ab_table,
+                     caption = 'Absenteeism rate by year and worker characteristics',
+                     align = c('r' ,'r', rep('l', 4))),
+      include.rownames = FALSE)
+```
 
 
+**Costs**: The malaria control program at Maragra has an annual operating budget of approximately XX, which includes the purchase of insecticide, the wages of IRS sprayers and drivers, transportation, record-keeping, and general administrative costs. Assuming linearity in costs, the program spends approximately XX per agregado sprayed. With each agregado containing an average of 2.2 workers, this translates to a cost of XX per worker protected per season. Much of the benefit of IRS goes to non-worker residents of sprayed agregados (who constitute a majority), but this benefit is purposefully ignored for this analysis.  
+
+Given the likelihood that clinical data does not fully capture all malaria cases, we do not quantify the costs of malaria infection to the company. Rather, we first estimate the reduction in absenteeism attributible to IRS, and then quantify the savings associated with prevented absences. Additionally, we calculate the clinical savings of IRS by first estimating the share of absences which are associated with an episode of clinical malaria, and then applying the clinical cost per case to the equivalent share of prevented absences. We intentionally ignore the savings accrued by the public health system, as well as the likely utility gains in secondary realms such as school absenteeism, producitivity, etc. 
 
 
-```{r, fig.height = 3.5, fig.width = 6, fig.cap = 'Effect of IRS on absenteeism by season'}
+**Effect of IRS on absenteeism**: IRS is associated with a year-long, significant reduction in absenteeism during the malaria season (figure 2). As one would expect if the mechanism by which IRS reduces absence is through reduced malaria infection, the effect of IRS during the low transmission season is significant, but far less substantial in effect size.
+
+```{r, fig.height = 3.5, fig.width = 6, fig.cap = 'Estimated effect of IRS on absenteeism by season'}
 # Predict for visualization
 dummy <- expand.grid(season = sort(unique(model_data$season)),
                      months_since = sort(unique(model_data$months_since)))
@@ -318,13 +339,58 @@ ggplot(data = dummy %>%
   geom_point(color = 'blue', alpha = 0.5) + 
   geom_smooth(se = FALSE,
               color = 'black',
-              alpha = 0.5,
-              span = 1) +
+              # span = 10,
+              alpha = 0.5) +
   facet_wrap(~season) +
   theme_maragra() +
   theme(axis.text.x = element_text(angle = 90, size = 8)) +
   labs(x = 'Months since IRS',
        y = 'Absenteeism (%)')
+```
+
+
+Details on full model here. Bla bla bla. See table 3.
+
+```{r, results = 'asis'}
+clean_up_model <- function(x){
+  x = broom::tidy(x)
+  for(j in 2:(ncol(x) -1)){
+    x[,j] <- x[,j] * 100
+  }
+  x$term <- gsub('seasonhigh', 'High transmission season', x$term)
+  x$term <- gsub('months_since', 'Months since IRS: ', x$term)
+  x$term <- gsub('department', 'Department: ', x$term)
+  x$term <- gsub('precipitation', 'Precipitation (mm) ', x$term)
+  x$term <- gsub('maragra_fabricaTRUE', 'Living at factory', x$term)
+  x$term <- gsub('sexM', 'Male', x$term)
+  x$term <- gsub('permanent_or_temporaryTemporary', 'Temp contract', x$term)
+  x$term <- gsub('rainyTRUE', 'Rainy day', x$term)
+  names(x) <- Hmisc::capitalize(names(x))
+  names(x) <- gsub('.', ' ', names(x), fixed = TRUE)
+  x <- x %>% 
+    mutate(Estimate = paste0(round(Estimate, 3), ' (P = ',
+                             ifelse(`P value` <= 0.001,
+                                    '< 0.001',
+                                    round(`P value`, 4)), ')')) %>%
+    dplyr::select(Term, Estimate)
+  return(x)
+}
+# Combine them all
+out_list <- list()
+for (i in 1:length(models)){
+  this_model <- letters[i]
+  the_model <- models[[this_model]]
+  the_model <- clean_up_model(the_model)
+  names(the_model)[2] <- paste0('Model ', i)
+  out_list[[i]] <- the_model
+}
+df <- out_list[[length(models)]]
+for(i in (length(models) - 1):1){
+  message(i)
+    df <- left_join(df, out_list[[i]])
+}
+df <- df[,unique(c('Term', sort(names(df))))]
+print(xtable::xtable(x, caption = ))
 
 ```
 

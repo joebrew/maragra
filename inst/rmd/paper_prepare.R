@@ -80,13 +80,34 @@ model_data <-
                                             0,
                                             precipitation))) %>%
   mutate(rainy = precipitation > 0)
-
+  
+# Aggregate months since 
+model_data <- model_data %>%
+  mutate(months_since = as.character(months_since)) %>%
+  mutate(months_since = ifelse(months_since %in% c('Never', 'Before'),
+                               months_since,
+                               ifelse(months_since %in% c('00', '01'), '01',
+                                      ifelse(months_since %in% c('02', '03', '04'),
+                                             '02-04',
+                                             ifelse(months_since %in% c('05', '06', '07', '08', '09'),
+                                                    '05-09',
+                                                           ifelse(months_since %in% c('10', '11', '12+'), '10+', months_since)))))) %>%
+  mutate(months_since = factor(months_since, levels = unique(c('Never', 'Before', sort(unique(months_since)))))) 
+                               
 # Model simple
 fit <- lm(absent ~ season * months_since, data = model_data)
-summary(fit)
+# summary(fit)
 
+# Complex model
+fit_full <- lm(absent ~ season * months_since + sex + department + precipitation, data = model_data)
 
-
+models <- list(
+  a = lm(absent ~ season * months_since, data = model_data),
+  b = lm(absent ~ season * months_since + sex, data = model_data),
+  c = lm(absent ~ season * months_since + sex + department, data = model_data),
+  d = lm(absent ~ season * months_since + sex + department + rainy, data = model_data),
+  e = lm(absent ~ season * months_since + sex + department + rainy + permanent_or_temporary, data = model_data)
+)
 
 
 
