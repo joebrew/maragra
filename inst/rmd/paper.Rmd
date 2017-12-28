@@ -357,7 +357,7 @@ clean_up_model <- function(x){
   for(j in 2:(ncol(x) -1)){
     x[,j] <- x[,j] * 100
   }
-  x$term <- gsub('seasonhigh', 'High transmission season', x$term)
+  x$term <- gsub('seasonhigh', 'Malaria season', x$term)
   x$term <- gsub('months_since', 'Months since IRS: ', x$term)
   x$term <- gsub('department', 'Department: ', x$term)
   x$term <- gsub('precipitation', 'Precipitation (mm) ', x$term)
@@ -390,7 +390,7 @@ for(i in (length(models) - 1):1){
     df <- left_join(df, out_list[[i]])
 }
 df <- df[,unique(c('Term', sort(names(df))))]
-print(xtable::xtable(x, caption = ))
+print(xtable::xtable(df, caption = 'Regression outputs'), size="\\fontsize{5pt}{6pt}\\selectfont")
 
 ```
 

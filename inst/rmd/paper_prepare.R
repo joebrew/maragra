@@ -105,8 +105,8 @@ models <- list(
   a = lm(absent ~ season * months_since, data = model_data),
   b = lm(absent ~ season * months_since + sex, data = model_data),
   c = lm(absent ~ season * months_since + sex + department, data = model_data),
-  d = lm(absent ~ season * months_since + sex + department + rainy, data = model_data),
-  e = lm(absent ~ season * months_since + sex + department + rainy + permanent_or_temporary, data = model_data)
+  # d = lm(absent ~ season * months_since + sex + department + rainy, data = model_data),
+  d = lm(absent ~ season * months_since + sex + department + rainy + permanent_or_temporary, data = model_data)
 )
 
 
