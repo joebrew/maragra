@@ -33,13 +33,15 @@ add_zero <- function (x, n) {
   return(x)
 }
 
+# filter for on-site only
+
 model_data <-
   ab_panel %>%
   left_join(irs, by = c('unidade', 'date')) %>%
   mutate(days_since = days_since %/% 30) %>%
   mutate(days_since = ifelse(is.na(days_since), 'Never',
                              ifelse(days_since < 0, 'Before',
-                             ifelse(days_since >= 12, '12+', as.character(add_zero(days_since, n = 2)))))) %>%
+                                    ifelse(days_since >= 12, '12+', as.character(add_zero(days_since, n = 2)))))) %>%
   mutate(months_since = factor(days_since, levels = unique(c('Never', 'Before', sort(unique(days_since)))))) %>%
   mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) %>%
   # Add malaria incidence
@@ -80,7 +82,7 @@ model_data <-
                                             0,
                                             precipitation))) %>%
   mutate(rainy = precipitation > 0)
-  
+
 # Aggregate months since 
 model_data <- model_data %>%
   mutate(months_since = as.character(months_since)) %>%
@@ -91,24 +93,62 @@ model_data <- model_data %>%
                                              '02-04',
                                              ifelse(months_since %in% c('05', '06', '07', '08', '09'),
                                                     '05-09',
-                                                           ifelse(months_since %in% c('10', '11', '12+'), '10+', months_since)))))) %>%
-  mutate(months_since = factor(months_since, levels = unique(c('Never', 'Before', sort(unique(months_since)))))) 
-                               
+                                                    ifelse(months_since %in% c('10', '11', '12+'), '10+', months_since)))))) %>%
+# Define whether every sprayed
+  ungroup %>%
+  group_by(oracle_number) %>%
+  mutate(ever_sprayed = length(which(unidade %in% mc$unidade)) > 0) %>%
+  ungroup %>%
+  # Correct the nevers
+  mutate(days_since = ifelse(days_since == 'Never' & ever_sprayed, 'Before', days_since)) %>%
+  mutate(months_since = as.character(months_since)) %>%
+  mutate(months_since = ifelse(months_since == 'Never' & ever_sprayed, 'Before', months_since)) %>%
+  # Make never and before the same
+  mutate(months_since = ifelse(months_since %in% c('Never', 'Before'), 'No IRS', months_since)) %>%
+    # mutate(months_since = factor(months_since, levels = unique(c('Never', 'Before', sort(unique(months_since))))))
+  mutate(months_since = factor(months_since, levels = unique(c('No IRS', sort(unique(months_since)))))) %>%
+  rename(on_site = ever_sprayed)
+# Since ad and factory are same, keep same
+model_data$field <- ifelse(model_data$department == 'Field', 
+                           'Field worker',
+                           'Not field worker')
+  
+
 # Model simple
-fit <- lm(absent ~ season * months_since, data = model_data)
+fit <- lm(absent ~ season * months_since + on_site, data = model_data)
 # summary(fit)
 
 # Complex model
-fit_full <- lm(absent ~ season * months_since + sex + department + precipitation, data = model_data)
+fit_full <- lm(absent ~ season * months_since + on_site + sex + field + precipitation, data = model_data)
 
 models <- list(
-  a = lm(absent ~ season * months_since, data = model_data),
-  b = lm(absent ~ season * months_since + sex, data = model_data),
-  c = lm(absent ~ season * months_since + sex + department, data = model_data),
+  a = lm(absent ~ season * months_since + on_site, data = model_data),
+  b = lm(absent ~ season * months_since + on_site + sex, data = model_data),
+  c = lm(absent ~ season * months_since + on_site + sex + field, data = model_data),
   # d = lm(absent ~ season * months_since + sex + department + rainy, data = model_data),
-  d = lm(absent ~ season * months_since + sex + department + rainy + permanent_or_temporary, data = model_data)
+  d = lm(absent ~ season * months_since + on_site + sex + field + rainy + permanent_or_temporary, data = model_data)
 )
 
+model_data <- model_data %>% 
+  # mutate(group = paste0(ifelse(on_site, 'On site', 'Off site'), ' ',
+  #                          tolower(field)
+  #                          ))
+  mutate(group = paste0(permanent_or_temporary, ' ',
+                        tolower(field)))
+fe_models <- list()
+groups <- sort(unique(model_data$group))
+library(lme4)
+# library(lmerTest)
+
+# library(nlme)
+for (i in 1:length(groups)){
+  message(i)
+  this_group <- groups[i]
+  these_data <- model_data %>% filter(group == this_group)
+  this_model <- lmer(absent ~ season * months_since + (1|oracle_number), data = these_data)
+  fe_models[[i]] <- this_model
+}
+names(fe_models) <- groups
 
 
 # sick_fit <- lm(absent_sick ~ season * months_since, data = model_data)
