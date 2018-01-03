@@ -62,7 +62,7 @@ make_authors <- function(
                             stringsAsFactors = FALSE),
   cat_it = TRUE,
   include_address = TRUE,
-  include_country = FALSE,
+  include_country = TRUE,
   seperator = '\n'){
 
   out <- c()
@@ -94,6 +94,12 @@ make_authors <- function(
                               '}')
       }
     }
+    author_text <- paste0(author_text, 
+                          ifelse(nchar(authors$footnote[i]) > 0,
+                                 paste0(' \\footnote{',
+                                        authors$footnote[i],
+                                        '}'),
+                                 ''))
     out[i] <- author_text
   }
   out <- paste0(out, collapse = seperator)

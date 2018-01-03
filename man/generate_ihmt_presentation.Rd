@@ -22,4 +22,3 @@ An html will be written
 \description{
 Generate the presentation for the Oct 30-31 IHMT presentation
 }
-

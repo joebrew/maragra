@@ -15,4 +15,3 @@ A ggplot compatible theme call
 \description{
 Add a theme to a ggplot object
 }
-

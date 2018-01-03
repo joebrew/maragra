@@ -23,4 +23,3 @@ An html will be written
 Generate an html report of the preliminary analysis report,
 originally prepared in August / September 2017
 }
-

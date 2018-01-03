@@ -1,7 +1,25 @@
+\usepackage[table]{xcolor}
+
+
+% Font
+\usepackage{fontspec}
+\setmainfont{Swift-Regular_43151.ttf}
+\setsansfont{Swift-Regular_43151.ttf}
+% \setsansfont[BoldFont={Swift-Bold_43130.ttf}]{Swift-Bold_43130.ttf}
+\setmonofont{Swift-Regular_43151.ttf}
+\renewcommand{\familydefault}{\sfdefault}
+
 \usepackage{multicol}
 \usepackage{hyperref}
 \usepackage{geometry}
 \usepackage{lipsum}
+\usepackage[utf8]{inputenc}
+
+
+
+
+% \usepackage{todonotes} % for side notes
+\usepackage[colorinlistoftodos]{todonotes} % for side notes
 \usepackage[utf8]{inputenc}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
@@ -9,7 +27,8 @@
 \pagestyle{fancy} % All pages have headers and footers
 \fancyhead{} % Blank out the default header
 \fancyfoot{} % Blank out the default footer
-\fancyhead[C]{joebrew@economicsofmalaria.com $\bullet$ ROUGH DRAFT $\bullet$ Private sector malaria control}
+\fancyhead[C]{Effectiveness of private sector malaria control at a large sugar
+  facility in Southern Mozambique}
 \renewcommand{\thefootnote}{\fnsymbol{footnote}}
 
 \newcommand{\footremember}[2]{%
@@ -39,3 +58,17 @@
    \belowdisplayskip \abovedisplayskip
 }
 \makeatother
+
+\DeclareTextCommandDefault{\nobreakspace}{\leavevmode\nobreak\ } 
+
+
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}

@@ -1,0 +1,47 @@
+
+# Methods
+
+## Data collection
+
+In collaboration with the sugar processing facility, we collected data for the period from January 2010 through December 2016. Data came from four sources: (i) the Human Resources' roster of worker details and absences, (ii) the facility's on-site clinic's medical and laboratory records, (iii) the facility's on-site malaria control program's records pertaining to the dates, chemicals, and location of IRS activities, and (iv) interviews with company employees pertaining to costs, data limitations, etc. Digitization and collection of data took place during the period from March 2016 through May 2017. Supplementary data pertaining to worker characteristics was obtained from through the Centro de Investigação em Saude de Manhiça's (CISM) demographic census, which covered workers from the district, but not those who migrated from other parts of the country [@Nhacolo_2006]. 
+
+Data pertaining to district-wide malaria incidence was obtained from Mozambique’s Boletim Epidemiológico Semanal (BES), which is the system by which the National Malaria Control Program monitors incidence at the district level throghout the entire country, and reports
+the number of confirmed weekly malaria cases at government health facilities. Using these case numbers, combined with population estimates from the National Statistical Institute (INE), we estimate each day's annualized weekly malaria incidence rate (cases per 1000 population at risk), interpolated from the weekly figures. We retrieved weather data for all Mozambican stations from NOAA. We estimated the meteorological conditions at the centroid of Manhiça using a simple interpolation method whereby the district's weather conditions were estimated to be a function of all Mozambican weather stations' reported conditions, inversely weighted by kilometers from district centroid. 
+
+Maragra regularly employs IRS at on-site worker households in order to reduce those workers' (and their families') risk of malaria infection. Workers living off-site (our control group) also may have received IRS at some point during the study period (from government programs). Even though we do not have reliable person-level data on IRS carried out by the government, off-site workers are a suitable control in the sense that they represent "business as usual" (ie, what would happen if the company carried out no IRS and relied solely on public interventions). Using company HR and clinical records, we were able to identify absences and episodes of clinical malaria among all workers, as well as identify the time since the most recent IRS episode before the onsent of absence or illness.
+
+Worker characteristics, illness and absenteeism data, along with IRS activity data, were systematically stored, collected, and used at the individual level by Maragra, and therefore of generally high quality. Because cost data was less systematically collected by Maragra, and because many costs could not be precisely quantified due to the abundance of in-kind and cross-departmental expenditures, we had to rely on rough estimations based on a mix of interviews, reciepts, and interpolations. Since our program cost data is not as reliable as our worker characteristic and outcome data, we were conservative in our estimates, and generally tried to err on the side of program activities and materials costing _more_ than what was reported, when doubt was aired. Cost data consisted of three types: (i) wages of malaria control employees, (ii) transporation and vehicle costs for IRS teams, and (iii) acquisition costs of purchasing IRS chemicals for fumigation (ACT and DDT), the latter two being combined into malaria control "programme" costs. 
+
+
+## Conceptual framework and identification strategy
+
+We sought to understand the effect of IRS on individual workers' likelihood of absence from work as well as their likelihood of clinical malaria. To estimate this effect, we estimated separate models for absence and illness. We employed interrupted time series [@Lopez_Bernal_2016] and a linear probability approach using the following econometric model.
+
+
+$$
+\hat{Y_{it}} = \beta_{0} +  (\beta_{1}) (\text{Season}_{t}) + (\beta_2{IRS}*\beta_3{IRS_t}) + ... + \epsilon
+$$
+
+$\hat{Y}$ is the rate of absence. $\beta_{1}$ represents the clinical malaria incidence at that time in the entire district of Manhiça.  Our demographic confounders (represented by $...$) are sex, age, and worker department (field, factory, or administrative). Our intervention was not a simple yes/no, but rather the product of whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment (represented above as the interaction term, where where $_t$ represents time elapsed since commencement of the most recent IRS campaign). We define the malaria season as any time during which the clinical incidence of malaria in the district of Manhiça was at or greater than the median clinical incidence of malaria for the entire study period. These weeks are flagged as red in Figure 1, Panel A.  By using clinical incidence of the area of residence of the workers (as opposed to more typical proxies for malaria risk, such as only rainy vs. non rainy season), our seasonality estimate is a closer approximation of true malaria risk, incorporating lagged effects such as the incubation period of the parasite, as well as any inherent non-linear effects of weather. In addition, we adjust for daily precipitation
+
+
+## Estimating return on investment
+
+Our formula for return on investment can be described in a straightforward fashion...
+
+
+\begin{center}
+$R = \dfrac{P_{w} - S_{wa} - S_{wc}}{P_{w}}$
+
+\end{center}
+
+...where $R$ is the return on investment, $P$ is the malaria control program's total operating cost, $w$ refers to costs at the per-worker level, $a$ refers to savings through avoided absences, and $ c $ refers to savings through avoided clinical encounters. We define the malaria control program as "profitable" from an investment standpoint if ROI is greater than 100%, ie if the savings associated with the estimated effect of IRS is greater than the costs of the program's administration. 
+
+
+## Reproducibility and ethical approval
+
+All data processing and analysis were carried out in R [@R] and all analysis code is freely available online [@brewgit]. Ethical approval for this project was obtained from the Institutional Ethics Review Board for Health at the CISM prior to data collection.
+
+## Descriptive statistics
+
+Age, types of workers, bla bla bla. \todo{Will add a table here and some overview}

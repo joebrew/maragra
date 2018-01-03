@@ -1,0 +1,365 @@
+
+# Results
+
+
+In Southern Mozambique, malaria peaks during the summer months (December through March) most years (Figure 1, panel A), and worker absenteeism rates track malaria incidence closely, following the same seasonal patterns (Figure 1, panel B). Both all-cause absenteeism and sick absenteeism have declined in recent years at Maragra (Figure 1, panel C), with the latter declining at a faster rate than the former. The fact that the rate of confirmed cases at the company clinic is largely non-seasonal (Figure 1, panels E and F) suggests that a significant portion of workers either seek care for malaria elsewhere (for example, government health posts, of which several are nearby and in some many cases closer to workers' residence than the company clinic) or do not seek care during malaria infection. Accordingly, we focus our analysis on all-cause absenteeism rather than sickness absenteeism or malaria diagnostics, with the assumption that much of illness is captured by absenteeism but not by the clinical data.
+
+
+
+```{r, fig.cap = 'Clinical malaria (district of Manhiça), all-cause absenteeism among Maragra workers, sick absenteeism among Maragra workers, estimated rainfall, positive cases at company clinic, and test positivity rate at company clinic', fig.height=5, fig.width=8}
+# BES incidence
+g1 <- 
+  ggplot(data = bes %>%
+           mutate(season = ifelse(p >= median(p), 'High season',
+                                  'Low season')) %>%
+           filter(weekdays(date) == 'Monday'),
+       aes(x = date,
+           y = p)) +
+  geom_point(alpha = 0.6,
+             aes(color = season),
+             size = 0.2) +
+  geom_line(alpha = 0.1) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Incidence',
+       title = 'A: Annualized district clinical\nmalaria incidence per 1,000') +
+  scale_color_manual(name = '',
+                     values = c('red', 'black')) + 
+  guides(color = guide_legend(ncol = 1)) +
+  theme(legend.position = c(.8, .8),
+        legend.text = element_text(size = 5),
+        legend.background = element_rect(fill=alpha('white', 0)))
+
+# Absenteeism rate
+g2_data <- ab_panel %>%
+  group_by(month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  summarise(absences = length(which(absent)),
+            absences_sick = length(which(absent_sick)),
+            
+            eligibles = n()) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100,
+         sick_absenteeism_rate = absences_sick / eligibles * 100)
+
+g2 <- ggplot(data = g2_data,
+             aes(x = month,
+                 y = absenteeism_rate)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Absenteeism rate',
+       title = 'B: Monthly absenteeism rate')
+
+g3 <- ggplot(data = g2_data,
+             aes(x = month,
+                 y = sick_absenteeism_rate)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Absenteeism rate',
+       title = 'C: Monthly sick absenteeism rate') 
+
+# Weather
+g4 <-
+  ggplot(data = weather %>%
+           group_by(date = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+           summarise(precipitation = sum(precipitation, na.rm = TRUE)),
+         aes(x = date,
+             y = precipitation)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Mililiters',
+       title = 'D: Monthly precipitation') 
+
+# Clinical incidence of malaria
+g5 <- clinic_agg %>%
+  filter(date >= '2013-01-01', date <= '2016-12-31') %>%
+  # mutate(date = as.Date(paste0(year, '-', month, '-01'))) %>%
+  group_by(date) %>%
+  summarise(tested = sum(tested),
+            positive = sum(positive)) %>%
+  ungroup %>%
+  mutate(percent_positive = positive / tested * 100) %>%
+  ggplot(aes(x = date,
+             y = positive)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Cases',
+       title = 'E: Monthly malaria cases\nat company clinic') 
+
+g6 <- clinic_agg %>%
+  filter(date >= '2013-01-01', date <= '2016-12-31') %>%
+  # mutate(date = as.Date(paste0(year, '-', month, '-01'))) %>%
+  group_by(date) %>%
+  summarise(tested = sum(tested),
+            positive = sum(positive)) %>%
+  ungroup %>%
+  mutate(percent_positive = positive / tested * 100) %>%
+  ggplot(aes(x = date,
+             y = percent_positive)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Cases',
+       title = 'F: Monthly malaria test positivity rate\nat company clinic') 
+Rmisc::multiplot(g1, g2, g3, g4, g5, g6, layout = matrix(1:6, nrow=2, byrow=TRUE)) 
+```
+
+
+```{r}
+fumigations <- mc %>%
+  filter(date >= '2012-01-01',
+         date <= '2016-12-31')
+n_fumigations <- nrow(fumigations)
+n_buildings <- sum(fumigations$casas_cobertas, na.rm = TRUE)
+unique_agregados <- length(unique(fumigations$unidade))
+people_sprayed <- length(unique(model_data$oracle_number[model_data$days_since != 'Never']))
+people_observed <- length(unique(model_data$oracle_number))
+pr <- function(x){prettyNum(x, big.mark = ',')}
+```
+
+**Fumigations**: During the period from January 1st, 2012 through December 31st, 2016, the Maragra Malaria Control Unit carried out `r pr(n_fumigations)` episodes of fumigation of residential "agregados" (household combinations), for a total of `r pr(n_buildings)` building-fumigation combinations. The total number of unique agregados sprayed during this period was `r pr(unique_agregados)`. Among the `r pr(people_observed)` workers for whom we have reliable absenteeism and residential data, `r pr(people_sprayed)` had their homes fumigated at least once (the majority of workers live off of the facility).
+
+**Absences**: We observed `r pr(nrow(ab_panel))` unique worker-days among the `r pr(people_observed)` workers. The all-period average absenteeism rate was `r round(100 * sum(ab_panel$absent) / nrow(ab_panel), digits = 2)`%, though this rate varied widely as a function of worker department, sex, residence, and season (table 1).
+
+```{r, results='asis'}
+calculate <- function(var){
+  out <- 
+  model_data %>%
+    mutate(year = format(date, '%Y')) %>%
+    mutate(on_site = ifelse(on_site,
+                                    'On site',
+                                    'Off site'),
+           rainy = ifelse(rainy,
+                          'Rainy',
+                          'Dry')) %>%
+    filter(!is.na(rainy)) %>%
+  group_by_(var, 'year') %>%
+  summarise(absences = length(which(absent)),
+            eligibles = length(absent),
+            workers = length(unique(oracle_number))) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) 
+  names(out)[1] <- 'variable'
+  out$val <- paste0(round(out$absenteeism_rate, digits = 1),
+                    '%')#,
+                    # ')',
+                    # '\n',
+                    # ' (workers:', out$workers,
+                    # ')')
+  out <- 
+    out %>%
+    dplyr::select(variable, year, val)
+  
+  out <- out %>%
+    spread(key = year,
+           value = val)
+  out$variable <- as.character(out$variable)
+  new_var <- ifelse(var == 'on_site',
+                    'Residence',
+                    ifelse(var == 'rainy',
+                           'Precipitation',
+                           var))
+  left <- data.frame(x = c(new_var, rep('', (nrow(out) - 1))))
+  out <- cbind(left, out)
+  names(out)[1:2] <- c('Variable', 'x')
+  # out$variable[1] <- paste0(Hmisc::capitalize(new_var), ': ', out$variable[1])
+  return(out)
+}
+out_list <- list()
+vars <- c('season', 
+           'field',
+          'permanent_or_temporary',
+           'sex',
+           'on_site',
+           'rainy')
+for(i in 1:length(vars)){
+  x <- calculate(var = vars[i])
+  out_list[[i]] <- x
+}
+ab_table <- bind_rows(out_list)
+ab_table$Variable <- Hmisc::capitalize(ab_table$Variable)
+ab_table$Variable[ab_table$Variable == 'Season'] <- 'Malaria season'
+ab_table$Variable[ab_table$Variable == 'Field'] <- 'Worker type'
+ab_table$Variable[ab_table$Variable == 'Permanent_or_temporary'] <- 'Contract'
+ab_table$x <- Hmisc::capitalize(ab_table$x)
+names(ab_table)[2] <- ''
+print(xtable::xtable(ab_table,
+                     caption = 'Absenteeism rate by year and worker characteristics',
+                     align = c('r', 'r', 'l', rep('l', 4))),
+      include.rownames = FALSE)
+```
+
+
+**Costs**: The malaria control program at Maragra has an annual operating budget of approximately XX, which includes the purchase of insecticide, the wages of IRS sprayers and drivers, transportation, record-keeping, and general administrative costs. Assuming linearity in costs, the program spends approximately XX per agregado sprayed. With each agregado containing an average of 2.2 workers, this translates to a cost of XX per worker protected per season. Much of the benefit of IRS goes to non-worker residents of sprayed agregados (who constitute a majority), but this benefit is purposefully ignored for this analysis.  
+
+Given the likelihood that clinical data does not fully capture all malaria cases, we do not quantify the costs of malaria infection to the company. Rather, we first estimate the reduction in absenteeism attributible to IRS, and then quantify the savings associated with prevented absences. Additionally, we calculate the clinical savings of IRS by first estimating the share of absences which are associated with an episode of clinical malaria, and then applying the clinical cost per case to the equivalent share of prevented absences. We intentionally ignore the savings accrued by the public health system, as well as the likely utility gains in secondary realms such as school absenteeism, producitivity, etc. 
+
+
+**Effect of IRS on absenteeism**: IRS is associated with a year-long, significant reduction in absenteeism during the malaria season (figure 2). As one would expect if the mechanism by which IRS reduces absence is through reduced malaria infection, the effect of IRS during the low transmission season is significant, but far less substantial in effect size.
+
+
+
+```{r, fig.height = 3.5, fig.width = 6, fig.cap = 'Estimated effect of IRS on absenteeism by season'}
+# Predict for visualization
+dummy <- expand.grid(season = sort(unique(model_data$season)),
+                     months_since = sort(unique(model_data$months_since)),
+                     on_site = TRUE)
+predictions <- predict(fit, dummy, se.fit = TRUE, interval = 'confidence', level = 0.99)
+dummy$predicted <- predictions$fit[,1]
+dummy$lwr <- predictions$fit[,2]
+dummy$upr <- predictions$fit[,3]
+ggplot(data = dummy %>%
+         filter(months_since != 'Never') %>%
+         mutate(lwr = lwr * 100,
+                upr = upr * 100,
+                predicted = predicted * 100) %>%
+         mutate(season = paste0(Hmisc::capitalize(as.character(season)), ' season')),
+       aes(x = months_since,
+           y = predicted,
+           group = 1)) +
+  geom_ribbon(aes(x = months_since,
+                  ymin = lwr,
+                  ymax = upr),
+              fill = 'lightblue',
+              alpha = 0.6) +
+  # geom_line(color = 'blue', alpha = 0.5) +
+  geom_point(color = 'blue', alpha = 0.5) + 
+  geom_line(color = 'blue', alpha = 0.5) +
+  # geom_smooth(se = FALSE,
+  #             color = 'black',
+  #             # span = 10,
+  #             alpha = 0.5) +
+  facet_wrap(~season) +
+  theme_maragra() +
+  theme(axis.text.x = element_text(angle = 90, size = 8)) +
+  labs(x = 'Months since IRS',
+       y = 'Absenteeism (%)')
+```
+
+
+We create 4 worker fixed effects models. Different models for field vs not field, permanent vs temporary.
+
+
+
+```{r, results = 'asis'}
+clean_up_model <- function(x){
+  # extract coefficients
+  coefs <- data.frame(coef(summary(x)))
+  # use normal distribution to approximate p-value
+  coefs$p.z <- 2 * (1 - pnorm(abs(coefs$t.value)))
+  ps <- coefs$p.z
+  x = broom::tidy(x)
+  for(j in 2:(ncol(x) -1)){
+    x[,j] <- x[,j] * 100
+  }
+  x$term <- gsub('seasonhigh', 'Malaria season', x$term)    
+  x$term <- gsub('seasonlow', 'Low malaria season', x$term)
+  x$term <- gsub('months_since', 'Months since IRS: ', x$term)
+  x$term <- gsub('department', 'Department: ', x$term)
+  x$term <- gsub('precipitation', 'Precipitation (mm) ', x$term)
+  x$term <- gsub('maragra_fabricaTRUE', 'Living at factory', x$term)
+  x$term <- gsub('sexM', 'Male', x$term)
+  x$term <- gsub('permanent_or_temporaryTemporary', 'Temp contract', x$term)
+  x$term <- gsub('rainyTRUE', 'Rainy day', x$term)
+  x$term <- gsub('on_siteTRUE', 'On site', x$term)
+  x$term <- gsub('on_siteFALSE', 'Off site', x$term)
+  x$term <- gsub('fieldNot field worker', 'Not field worker', x$term)
+  names(x) <- Hmisc::capitalize(names(x))
+  names(x) <- gsub('.', ' ', names(x), fixed = TRUE)
+  x$`P value` <- NA
+  x$`P value`[1:length(ps)] <- ps
+  x <- x %>% 
+    mutate(Estimate = paste0(round(Estimate, 3), ' (P',
+                             ifelse(`P value` <= 0.001,
+                                    '<0.001',
+                                    paste0('=', round(`P value`, 3))
+                                    ), ')')) %>%
+    dplyr::select(Term, Estimate)
+  x <- x %>% filter(!grepl('sd_', Term))
+  return(x)
+}
+
+out_list <- list()
+for(i in 1:length(fe_models)){
+  message(i)
+  this_model <- names(fe_models)[i]
+  the_model <- fe_models[[which(names(fe_models) == this_model)]]
+  the_model <- clean_up_model(the_model)
+  names(the_model)[2] <- this_model
+  out_list[[i]] <- the_model
+}
+
+# df <- out_list[[1]]
+# for(i in 2:length(out_list)){
+#   df <- left_join(df, out_list[[i]])
+# }
+# print(xtable::xtable(df, caption = 'Regression outputs'), size="\\fontsize{5pt}{6pt}\\selectfont",
+#       include.rownames = FALSE)
+
+df <- out_list[[1]]
+namer <- names(df)[2]
+names(df)[2] <- 'Estimate'
+
+for(i in 2:length(out_list)){
+  temp <- out_list[[i]]
+  namer[i] <- names(temp)[2]
+  names(temp)[2] <- 'Estimate'
+  df <- bind_rows(df, temp)
+}
+
+library(kableExtra)
+breaker <- nrow(out_list[[1]])
+lengther <- length(out_list)
+breaks <- c(0, breaker * 1:(lengther))
+k <- kable(df, format = "latex", caption = "Models with worker fixed effects", booktabs = T) %>%
+  kable_styling()
+for (i in 1:(length(breaks)-1)){
+  message(i)
+  k <- k %>%
+    group_rows(namer[i], 
+               breaks[i] + 1,
+               breaks[i] + breaker,
+               latex_gap_space = "1.5em") 
+}
+print(k)
+
+  
+# # Combine them all
+# out_list <- list()
+# for (i in 1:length(models)){
+#   this_model <- letters[i]
+#   the_model <- models[[this_model]]
+#   the_model <- clean_up_model(the_model)
+#   names(the_model)[2] <- paste0('Model ', i)
+#   out_list[[i]] <- the_model
+# }
+# df <- out_list[[length(models)]]
+# # Order the Terms
+# df_order <- c()
+# for(i in 1:length(models)){
+#   df_order <- c(df_order, out_list[[i]]$Term)
+# }
+# df_order <- unique(df_order)
+# df <- left_join(data.frame(Term = df_order),
+#                 df)
+# for(i in (length(models) - 1):1){
+#   message(i)
+#     df <- left_join(df, out_list[[i]])
+# }
+# df <- df[,unique(c('Term', sort(names(df))))]
+# print(xtable::xtable(df, caption = 'Regression outputs'), size="\\fontsize{5pt}{6pt}\\selectfont")
+
+```
+
+
+## Return on investment 
+
+Details here on ROI calculation outcomes \todo{Not done yet. In conversation with Eduardo from MC about getting more accurate costs}
+
+
+## Robustness and generalizability 
+
+Two principal concerns call into question the results of our analysis. First, the application of IRS to a workers house may be endogenous. To check for this  bla bla bla \todo{As per Menno's suggestion, will add details here pertaining to whether IRS predicts absenteeism before it is applied}. The second concern is that our quantification of consists is distorted by the fact that we treat IRS operations as essentially linear in nature, when in reality economies of scale, in-kind purchases and other factors likely make the true cost-per-spraying convex.\todo{Will address this with some sensitivity analysis}

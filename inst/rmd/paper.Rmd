@@ -1,14 +1,17 @@
 ---
-title: Effectiveness of private sector malaria control at a large sugar
+title: Return on investment of private sector malaria control at a large sugar
   facility in Southern Mozambique
 date: ''
 output: 
   pdf_document:
+    keep_tex: true
+    latex_engine: xelatex
     includes:
       in_header: preamble.sty
 fig_width: 4
 fig_height: 2.6
 bibliography: bibliography.bib
+# csl: journal-of-health-economics.csl
 ---
 
 
@@ -22,6 +25,7 @@ library(maragra)
 library(knitr)
 library(RColorBrewer)
 library(extrafont)
+library(kableExtra)
 loadfonts()
 ## Global options
 options(max.print="75")
@@ -32,465 +36,42 @@ opts_chunk$set(echo=FALSE,
                comment=NA,
                message=FALSE,
                warning=FALSE,
-               dev = "cairo_pdf")
+               dev = "cairo_pdf",
+               fig.pos="H",
+               fig.path = 'figures/')
 opts_knit$set(width=75)
 options(xtable.comment = FALSE)
 
 ```
 
-
 ```{r}
 source('paper_prepare.R')
 ```
 
-
-\begin{center}
-\begin{large}
-
-```{r, results = 'asis', eval = TRUE}
-make_authors()
-```
-
-\end{large}
-\end{center}
-
-\vspace{5mm}
-
-\begin{center}
-\textbf{Abstract}  
-\end{center}
-
-\vspace{5mm}
-\begin{center}
-\begin{changemargin}{3cm}{3cm} 
-
-\textbf{Context:} Incentivizing scaled-up private firms' involvement in malaria control and elimination activities requires a clear and robust demonstration of its benefits, and a quantification of which benefits can be expected to return to the firm. However, most studies to date examine benefits of malaria control purely from the perspective of the public sector. \textbf{Methods:} We analyze 4 years of malaria control and worker health and absenteeism data from a large sugar processing facility in Mozambique. We estimate the effect of indoor residual spraying (IRS) on worker health and absenteeism. \textbf{Results:} We demonstrate that the firm's engagement in malaria control activities is profitable, even if we only consider those benefits which directly affect the firm's bottom line and ignore secondary and societal benefits.  
-
-MENNO: Add context about moz incidence
-
-
-\end{changemargin}
-\end{center}
-
-
-
-
-# Introduction
-
-Malaria has a nearly unquantifiably large economic impact on endemic societies. By affecting saving, investment [@Shretta2016], risk perception, productivity, absenteeism [@Nonvignon_2016], human capital accumulation [@CastelBranco2014], mortality, and costs of care [@Sachs2002], malaria likely has a negative effect on GDP and growth [@McCarthy_2000] [@Orem_2012]. Because of the relative affordability of most intereventions and the enormous societal costs of malaria, most forms of malaria control are cost-effective from the perspective of the government [@White_2011] [@Purdy_2013] [@Howard_2017].
-
-
-MENNO: NOT ALL BENEFITS FROM PRIVATE SECTOR CONTROL ACCRUE TO PRIVATE SECTOR
-MOST CB ANALYSES LOOK AT PUBLIC WELFARE POV
-POINT OUT THAT EVEN BELOW 100% ROI COULD INFORM RE: RIGHT AMOUNT OF SUBSIDY
-From the persepctive of the private sector, however, investing in malaria control is not such a clear-cut case. Public health interventions targetting malaria - and their corresponding cost-effectiveness evaluations - most often pertain to the public sector. Accordingly, the analytical framework and metrics employed by these analyses most often focus on impact pertaining to the public good, such as an increase in life years adjusted for disability or quality  [@Goodman1999] [@Shretta2016] [@Lee2017] [@Hanson2004]. Though population-level health is certainly of importance to businesses, and improvements in health incidentally improve the economy at all levels [@World1999] [@Bloom2008] [@Vecchi_2013], these improvements may be too disperse or long-term to incentivize private sector involvement in health campaigns. 
-
-In the context of Mozambique, where a significant sector of the economy is dominated by a full large-scale foreing direct investment projects [@Robbins2012], the role of the private sector in health generally, and malaria specifically, is unequivocally important. Large agriculture and extractive industry firms take up wide swaths of land and employ hundreds of thousands  [@German2013]. The Mozambican state has encouraged large-scale entreprise with the aim of general economic development [@Buur2012]. And where large firms exist, they often take on social roles such as housing and health care [@Winkler]. At times, this role is necessary from a purely practical standpoint; in other cases, it is employed under the guise of "corporate social responsibility" [@Azemar2009]. Regardless of the language used, it is clear that private industry plays an important role in public health in Mozambique [@Robbins2012] [@CastelBranco2014]. 
-
-Several cases exist of foreign firms engaging in large-scale malaria control campaigns [@Mouzin2011] [@Han] [@Bennett_2017] [@Kaula_2017]. But these studies generally consider population health as the outcome measure of interest, rather than worker absenteeism or productivity. Similarly, they often neglect to differentiate between those clinical costs which are absorbed by the local health system versus those which are absorbed by the firm itself. In the literature, making the "investment case" for malaria control or elimination generally implies that the investor is the public sector, and takes into account those costs and benefits which are applicable to the public sector [@Shretta_2017]; though appropriate in most cases (the public sector being the primary malaria control agent in most locations), the findings of these studies are rarely applicable to the private sector. In the case of a private firm not interested in "corporate social responsibility", it is not clear whether investing in malaria control would be profitable or not. This lack of certainty most likely discourages investment in many cases.
-
-To address the question of the profitability of malaria control activities from the standpoint of a private firm, we analyze data during a 7 year period from a private sugar facility in Southern Mozambique. We assess the effect of indoor residual spraying (IRS) on the absenteeism and health of workers, and demonstrate that the firm's engagement in malaria control not only improved worker health, but also generated a positive return on investment.
-
-## Study area
-
-Details on Maragra: 
-
-Maragra Açucar SA (henceforth referred to as "Maragra")
-
-Details on Manhica
-
-Details on Mozambique
-
-Details on Plasmodium, etc.
-
-
-
-# Methods
-
-## Data collection
-
-In collaboration with the sugar processing facility, we collected data for the period from January 2010 through December 2016. Data came from four sources: (i) the Human Resources' roster of worker details and absences, (ii) the facility's on-site clinic's medical and laboratory records, (iii) the facility's on-site malaria control program's records pertaining to the dates, chemicals, and location of IRS activities, and (iv) interviews with company employees pertaining to costs, data limitations, etc. Digitization and collection of data took place during the period from March 2016 through May 2017. Supplementary data pertaining to worker characteristics was obtained from through the Centro de Investigação em Saude de Manhiça's (CISM) demographic census, which covered workers from the district, but not those who migrated from other parts of the country [@Nhacolo_2006]. 
-
-Data pertaining to district-wide malaria incidence was obtained from Mozambique’s Boletim Epidemiológico Semanal (BES), which is the system by which the National Malaria Control Program monitors incidence at the district level throghout the entire country, and reports
-the number of confirmed weekly malaria cases at government health facilities. Using these case numbers, combined with population estimates from the National Statistical Institute (INE), we estimate each day's annualized weekly malaria incidence rate (cases per 1000 population at risk), interpolated from the weekly figures. We retrieved weather data for all Mozambican stations from NOAA. We estimated the meteorological conditions at the centroid of Manhiça using a simple interpolation method whereby the district's weather conditions were estimated to be a function of all Mozambican weather stations' reported conditions, inversely weighted by kilometers from district centroid. 
-
-Maragra regularly employs IRS at on-site worker households in order to reduce those workers' (and their families') risk of malaria infection. By using the CISM's census, we were able to identify from the record of houses sprayed (maintained by the company) who lived in those houses, as well as who lived off-site (and therefore did not receive IRS from Maragra). Then, using company HR and clinical records, we were able to identify absences and episodes of clinical malaria among all workers, as well as identify the time since the most recent IRS episode before the onsent of absence or illness.
-
-Worker characteristics, illness and absenteeism data, along with IRS activity data, were systematically stored, collected, and used at the individual level by Maragra, and therefore of generally high quality. Because cost data was less systematically collected by Maragra, and because many costs could not be precisely quantified due to the abundance of in-kind and cross-departmental expenditures, we had to rely on rough estimations based on a mix of interviews, reciepts, and interpolations. Since our program cost data is not as reliable as our worker characteristic and outcome data, we were conservative in our estimates, and generally tried to err on the side of program activities and materials costing _more_ than what was reported, when doubt was aired. Cost data consisted of three types: (i) wages of malaria control employees, (ii) transporation and vehicle costs for IRS teams, and (iii) acquisition costs of purchasing IRS chemicals for fumigation (ACT and DDT), the latter two being combined into malaria control "programme" costs. 
-
-
-## Identification strategy
-
-We sought to understand the effect of IRS on individual workers' likelihood of absence from work as well as their likelihood of clinical malaria. To estimate this effect, we estimated separate models for absence and illness. We employed interrupted time series [@Lopez_Bernal_2016] and a linear probability approach using the following econometric model.
-
-
-$$
-\hat{Y_{it}} = \beta_{0} +  (\beta_{1}) (\text{Season}_{t}) + (\beta_2{IRS}*\beta_3{IRS_t}) + ... + \epsilon
-$$
-
-$\hat{Y}$ is the rate of absence. $\beta_{1}$ represents the clinical malaria incidence at that time in the entire district of Manhiça.  Our demographic confounders (represented by $...$) are sex, age, and worker department (field, factory, or administrative). Our intervention was not a simple yes/no, but rather the product of whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment (represented above as the interaction term, where where $_t$ represents time elapsed since commencement of the most recent IRS campaign). We define the malaria season as any time during which the clinical incidence of malaria in the district of Manhiça was at or greater than the median clinical incidence of malaria for the entire study period. These weeks are flagged as red in Figure 1, Panel A.  By using clinical incidence of the area of residence of the workers (as opposed to more typical proxies for malaria risk, such as only rainy vs. non rainy season), our seasonality estimate is a closer approximation of true malaria risk, incorporating lagged effects such as the incubation period of the parasite, as well as any inherent non-linear effects of weather. In addition, we adjust for daily precipitation
-
-
-## Estimating return on investment
-
-Our formula for return on investment can be described in a straightforward fashion...
-
-
-\begin{center}
-$R = \dfrac{P_{w} - S_{wa} - S_{wc}}{P_{w}}$
-
-\end{center}
-
-...where $R$ is the return on investment, $P$ is the malaria control program's total operating cost, $w$ refers to costs at the per-worker level, $a$ refers to savings through avoided absences, and $ c $ refers to savings through avoided clinical encounters. We define the malaria control program as "profitable" from an investment standpoint if ROI is greater than 100%, ie if the savings associated with the estimated effect of IRS is greater than the costs of the program's administration. 
-
-
-## Reproducibility and ethical approval
-
-All data processing and analysis were carried out in R [@R] and all analysis code is freely available online [@brewgit]. Ethical approval for this project was obtained from the Institutional Ethics Review Board for Health at the CISM prior to data collection.
-
-
-# Results
-
-In Southern Mozambique, malaria peaks during the summer months (December through March) most years (Figure 1, panel A), and worker absenteeism rates track malaria incidence closely, following the same seasonal patterns (Figure 1, panel B). Both all-cause absenteeism and sick absenteeism have declined in recent years at Maragra (Figure 1, panel C), with the latter declining at a faster rate than the former. The fact that the rate of confirmed cases at the company clinic is largely non-seasonal (Figure 1, panels E and F) suggests that a significant portion of workers either seek care for malaria elsewhere (for example, government health posts, of which several are nearby and in some many cases closer to workers' residence than the company clinic) or do not seek care during malaria infection. Accordingly, we focus our analysis on all-cause absenteeism rather than sickness absenteeism or malaria diagnostics, with the assumption that much of illness is captured by absenteeism but not by the clinical data.
-
-
-
-```{r, fig.cap = 'Clinical malaria (district of Manhiça), all-cause absenteeism among Maragra workers, sick absenteeism among Maragra workers, estimated rainfall, positive cases at company clinic, and test positivity rate at company clinic', fig.height=5, fig.width=8}
-# BES incidence
-g1 <- 
-  ggplot(data = bes %>%
-           mutate(season = ifelse(p >= median(p), 'High season',
-                                  'Low season')) %>%
-           filter(weekdays(date) == 'Monday'),
-       aes(x = date,
-           y = p)) +
-  geom_point(alpha = 0.6,
-             aes(color = season),
-             size = 0.2) +
-  geom_line(alpha = 0.1) +
-  theme_maragra(base_size = 9) +
-  labs(x = 'Date',
-       y = 'Incidence',
-       title = 'A: Annualized district clinical\nmalaria incidence per 1,000') +
-  scale_color_manual(name = '',
-                     values = c('red', 'black')) + 
-  guides(color = guide_legend(ncol = 1)) +
-  theme(legend.position = c(.8, .8),
-        legend.text = element_text(size = 5),
-        legend.background = element_rect(fill=alpha('white', 0)))
-
-# Absenteeism rate
-g2_data <- ab_panel %>%
-  group_by(month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
-  summarise(absences = length(which(absent)),
-            absences_sick = length(which(absent_sick)),
-            
-            eligibles = n()) %>%
-  ungroup %>%
-  mutate(absenteeism_rate = absences / eligibles * 100,
-         sick_absenteeism_rate = absences_sick / eligibles * 100)
-
-g2 <- ggplot(data = g2_data,
-             aes(x = month,
-                 y = absenteeism_rate)) +
-  geom_line(alpha = 0.6) +
-  theme_maragra(base_size = 9) +
-  labs(x = 'Date',
-       y = 'Absenteeism rate',
-       title = 'B: Monthly absenteeism rate')
-
-g3 <- ggplot(data = g2_data,
-             aes(x = month,
-                 y = sick_absenteeism_rate)) +
-  geom_line(alpha = 0.6) +
-  theme_maragra(base_size = 9) +
-  labs(x = 'Date',
-       y = 'Absenteeism rate',
-       title = 'C: Monthly sick absenteeism rate') 
-
-# Weather
-g4 <-
-  ggplot(data = weather %>%
-           group_by(date = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
-           summarise(precipitation = sum(precipitation, na.rm = TRUE)),
-         aes(x = date,
-             y = precipitation)) +
-  geom_line(alpha = 0.6) +
-  theme_maragra(base_size = 9) +
-  labs(x = 'Date',
-       y = 'Mililiters',
-       title = 'D: Monthly precipitation') 
-
-# Clinical incidence of malaria
-g5 <- clinic_agg %>%
-  filter(date >= '2013-01-01', date <= '2016-12-31') %>%
-  # mutate(date = as.Date(paste0(year, '-', month, '-01'))) %>%
-  group_by(date) %>%
-  summarise(tested = sum(tested),
-            positive = sum(positive)) %>%
-  ungroup %>%
-  mutate(percent_positive = positive / tested * 100) %>%
-  ggplot(aes(x = date,
-             y = positive)) +
-  geom_line(alpha = 0.6) +
-  theme_maragra(base_size = 9) +
-  labs(x = 'Date',
-       y = 'Cases',
-       title = 'E: Monthly malaria cases\nat company clinic') 
-
-g6 <- clinic_agg %>%
-  filter(date >= '2013-01-01', date <= '2016-12-31') %>%
-  # mutate(date = as.Date(paste0(year, '-', month, '-01'))) %>%
-  group_by(date) %>%
-  summarise(tested = sum(tested),
-            positive = sum(positive)) %>%
-  ungroup %>%
-  mutate(percent_positive = positive / tested * 100) %>%
-  ggplot(aes(x = date,
-             y = percent_positive)) +
-  geom_line(alpha = 0.6) +
-  theme_maragra(base_size = 9) +
-  labs(x = 'Date',
-       y = 'Cases',
-       title = 'F: Monthly malaria test positivity rate\nat company clinic') 
-Rmisc::multiplot(g1, g2, g3, g4, g5, g6, layout = matrix(1:6, nrow=2, byrow=TRUE)) 
-```
-
-
 ```{r}
-fumigations <- mc %>%
-  filter(date >= '2012-01-01',
-         date <= '2016-12-31')
-n_fumigations <- nrow(fumigations)
-n_buildings <- sum(fumigations$casas_cobertas, na.rm = TRUE)
-unique_agregados <- length(unique(fumigations$unidade))
-people_sprayed <- length(unique(model_data$oracle_number[model_data$days_since != 'Never']))
-people_observed <- length(unique(model_data$oracle_number))
-pr <- function(x){prettyNum(x, big.mark = ',')}
-```
-
-**Fumigations**: During the period from January 1st, 2012 through December 31st, 2016, the Maragra Malaria Control Unit carried out `r pr(n_fumigations)` episodes of fumigation of residential "agregados" (household combinations), for a total of `r pr(n_buildings)` building-fumigation combinations. The total number of unique agregados sprayed during this period was `r pr(unique_agregados)`. Among the `r pr(people_observed)` workers for whom we have reliable absenteeism and residential data, `r pr(people_sprayed)` had their homes fumigated at least once (the majority of workers live off of the facility).
-
-**Absences**: We observed `r pr(nrow(ab_panel))` unique worker-days among the `r pr(people_observed)` workers. The all-period average absenteeism rate was `r round(100 * sum(ab_panel$absent) / nrow(ab_panel), digits = 2)`%, though this rate varied widely as a function of worker department, sex, residence, and season (table 1).
-
-```{r, results='asis'}
-calculate <- function(var){
-  out <- 
-  model_data %>%
-    mutate(year = format(date, '%Y')) %>%
-    mutate(on_site = ifelse(on_site,
-                                    'On site',
-                                    'Off site'),
-           rainy = ifelse(rainy,
-                          'Rainy',
-                          'Dry')) %>%
-    filter(!is.na(rainy)) %>%
-  group_by_(var, 'year') %>%
-  summarise(absences = length(which(absent)),
-            eligibles = length(absent),
-            workers = length(unique(oracle_number))) %>%
-  ungroup %>%
-  mutate(absenteeism_rate = absences / eligibles * 100) 
-  names(out)[1] <- 'variable'
-  out$val <- paste0(round(out$absenteeism_rate, digits = 1),
-                    '%')#,
-                    # ')',
-                    # '\n',
-                    # ' (workers:', out$workers,
-                    # ')')
-  out <- 
-    out %>%
-    dplyr::select(variable, year, val)
-  
-  out <- out %>%
-    spread(key = year,
-           value = val)
-  out$variable <- as.character(out$variable)
-  new_var <- ifelse(var == 'on_site',
-                    'Residence',
-                    ifelse(var == 'rainy',
-                           'Precipitation',
-                           var))
-  left <- data.frame(x = c(new_var, rep('', (nrow(out) - 1))))
-  out <- cbind(left, out)
-  names(out)[1:2] <- c('Variable', 'x')
-  # out$variable[1] <- paste0(Hmisc::capitalize(new_var), ': ', out$variable[1])
-  return(out)
-}
-out_list <- list()
-vars <- c('season', 
-           'field',
-          'permanent_or_temporary',
-           'sex',
-           'on_site',
-           'rainy')
-for(i in 1:length(vars)){
-  x <- calculate(var = vars[i])
-  out_list[[i]] <- x
-}
-ab_table <- bind_rows(out_list)
-ab_table$Variable <- Hmisc::capitalize(ab_table$Variable)
-ab_table$Variable[ab_table$Variable == 'Season'] <- 'Malaria season'
-ab_table$Variable[ab_table$Variable == 'Field'] <- 'Worker type'
-ab_table$Variable[ab_table$Variable == 'Permanent_or_temporary'] <- 'Contract'
-ab_table$x <- Hmisc::capitalize(ab_table$x)
-names(ab_table)[2] <- ''
-print(xtable::xtable(ab_table,
-                     caption = 'Absenteeism rate by year and worker characteristics',
-                     align = c('r', 'r', 'l', rep('l', 4))),
-      include.rownames = FALSE)
-```
+# Build document from contents of directory
+# Get a list of all the child documents
+rmds <- list.files(pattern = '*.Rmd', recursive = FALSE, include.dirs = FALSE)
+# Must include an underscore!
+rmds <- rmds[grepl('_', rmds)]
 
 
-**Costs**: The malaria control program at Maragra has an annual operating budget of approximately XX, which includes the purchase of insecticide, the wages of IRS sprayers and drivers, transportation, record-keeping, and general administrative costs. Assuming linearity in costs, the program spends approximately XX per agregado sprayed. With each agregado containing an average of 2.2 workers, this translates to a cost of XX per worker protected per season. Much of the benefit of IRS goes to non-worker residents of sprayed agregados (who constitute a majority), but this benefit is purposefully ignored for this analysis.  
+chunks <- paste0("\n\n```{r child = '", 
+                 rmds, 
+                 "'}\n```\n")
 
-Given the likelihood that clinical data does not fully capture all malaria cases, we do not quantify the costs of malaria infection to the company. Rather, we first estimate the reduction in absenteeism attributible to IRS, and then quantify the savings associated with prevented absences. Additionally, we calculate the clinical savings of IRS by first estimating the share of absences which are associated with an episode of clinical malaria, and then applying the clinical cost per case to the equivalent share of prevented absences. We intentionally ignore the savings accrued by the public health system, as well as the likely utility gains in secondary realms such as school absenteeism, producitivity, etc. 
-
-
-**Effect of IRS on absenteeism**: IRS is associated with a year-long, significant reduction in absenteeism during the malaria season (figure 2). As one would expect if the mechanism by which IRS reduces absence is through reduced malaria infection, the effect of IRS during the low transmission season is significant, but far less substantial in effect size.
-
-\lipsum
-
-```{r, fig.height = 3.5, fig.width = 6, fig.cap = 'Estimated effect of IRS on absenteeism by season'}
-# Predict for visualization
-dummy <- expand.grid(season = sort(unique(model_data$season)),
-                     months_since = sort(unique(model_data$months_since)),
-                     on_site = TRUE)
-predictions <- predict(fit, dummy, se.fit = TRUE, interval = 'confidence', level = 0.99)
-dummy$predicted <- predictions$fit[,1]
-dummy$lwr <- predictions$fit[,2]
-dummy$upr <- predictions$fit[,3]
-ggplot(data = dummy %>%
-         filter(months_since != 'Never') %>%
-         mutate(lwr = lwr * 100,
-                upr = upr * 100,
-                predicted = predicted * 100) %>%
-         mutate(season = paste0(Hmisc::capitalize(as.character(season)), ' season')),
-       aes(x = months_since,
-           y = predicted,
-           group = 1)) +
-  geom_ribbon(aes(x = months_since,
-                  ymin = lwr,
-                  ymax = upr),
-              fill = 'lightblue',
-              alpha = 0.6) +
-  # geom_line(color = 'blue', alpha = 0.5) +
-  geom_point(color = 'blue', alpha = 0.5) + 
-  geom_line(color = 'blue', alpha = 0.5) +
-  # geom_smooth(se = FALSE,
-  #             color = 'black',
-  #             # span = 10,
-  #             alpha = 0.5) +
-  facet_wrap(~season) +
-  theme_maragra() +
-  theme(axis.text.x = element_text(angle = 90, size = 8)) +
-  labs(x = 'Months since IRS',
-       y = 'Absenteeism (%)')
-```
-
-
-We create 4 worker fixed effects models. Different models for field vs not field, permanent vs temporary.
-
-\lipsum
-
-
-```{r, results = 'asis'}
-clean_up_model <- function(x){
-  # extract coefficients
-  coefs <- data.frame(coef(summary(x)))
-  # use normal distribution to approximate p-value
-  coefs$p.z <- 2 * (1 - pnorm(abs(coefs$t.value)))
-  ps <- coefs$p.z
-  x = broom::tidy(x)
-  for(j in 2:(ncol(x) -1)){
-    x[,j] <- x[,j] * 100
-  }
-  x$term <- gsub('seasonhigh', 'Malaria season', x$term)
-  x$term <- gsub('months_since', 'Months since IRS: ', x$term)
-  x$term <- gsub('department', 'Department: ', x$term)
-  x$term <- gsub('precipitation', 'Precipitation (mm) ', x$term)
-  x$term <- gsub('maragra_fabricaTRUE', 'Living at factory', x$term)
-  x$term <- gsub('sexM', 'Male', x$term)
-  x$term <- gsub('permanent_or_temporaryTemporary', 'Temp contract', x$term)
-  x$term <- gsub('rainyTRUE', 'Rainy day', x$term)
-  x$term <- gsub('on_siteTRUE', 'On site', x$term)
-  x$term <- gsub('fieldNot field worker', 'Not field worker', x$term)
-  names(x) <- Hmisc::capitalize(names(x))
-  names(x) <- gsub('.', ' ', names(x), fixed = TRUE)
-  x$`P value` <- NA
-  x$`P value`[1:length(ps)] <- ps
-  x <- x %>% 
-    mutate(Estimate = paste0(round(Estimate, 3), ' (P',
-                             ifelse(`P value` <= 0.001,
-                                    '<0.001',
-                                    paste0('=', round(`P value`, 3))
-                                    ), ')')) %>%
-    dplyr::select(Term, Estimate)
-  x <- x %>% filter(!grepl('sd_', Term))
-  return(x)
-}
-
-out_list <- list()
-for(i in 1:length(fe_models)){
-  message(i)
-  this_model <- names(fe_models)[i]
-  the_model <- fe_models[[which(names(fe_models) == this_model)]]
-  the_model <- clean_up_model(the_model)
-  names(the_model)[2] <- this_model
-  out_list[[i]] <- the_model
-}
-df <- out_list[[1]]
-for(i in 2:length(out_list)){
-  df <- left_join(df, out_list[[i]])
-}
-print(xtable::xtable(df, caption = 'Regression outputs'), size="\\fontsize{5pt}{6pt}\\selectfont",
-      include.rownames = FALSE)
-
-
-# # Combine them all
-# out_list <- list()
-# for (i in 1:length(models)){
-#   this_model <- letters[i]
-#   the_model <- models[[this_model]]
-#   the_model <- clean_up_model(the_model)
-#   names(the_model)[2] <- paste0('Model ', i)
-#   out_list[[i]] <- the_model
-# }
-# df <- out_list[[length(models)]]
-# # Order the Terms
-# df_order <- c()
-# for(i in 1:length(models)){
-#   df_order <- c(df_order, out_list[[i]]$Term)
-# }
-# df_order <- unique(df_order)
-# df <- left_join(data.frame(Term = df_order),
-#                 df)
-# for(i in (length(models) - 1):1){
-#   message(i)
-#     df <- left_join(df, out_list[[i]])
-# }
-# df <- df[,unique(c('Term', sort(names(df))))]
-# print(xtable::xtable(df, caption = 'Regression outputs'), size="\\fontsize{5pt}{6pt}\\selectfont")
+# Write our order / child-calls to a doc
+file_connection <- file('children.Rmd')
+writeLines(paste0('---\noutput: html_document\n---\n\n', 
+                  chunks), 
+           file_connection)
+close(file_connection)
 
 ```
+```{r child='children.Rmd', echo = FALSE}
+```
+```{r, results='hide'}
+file.remove('children.Rmd')
+```
 
-\lipsum
-
-## Return on investment 
-
-Details here on ROI calculation outcomes
-
-
-# Discussion
-
-Overall stuff
-
-## Limitations
-
-
-## Implications
-
-
-
-# References
 

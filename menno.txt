@@ -1,0 +1,21 @@
+Jed Friedman (WB)
+
+If for economics paper, the whole thing is in intro (motivation, case, study design, summarise conclusions, rest of paper is as follows, then rest of paper)
+
+Journal of HE
+HE
+Journal of Dev E
+
+Control group: what happens is if govt does work
+
+Consider worker fixed effects models (one model for each category of variable of interest)
+	 - Ideally one variable only, which has differential effect of IRS (consider recoding manual vs. non-manual work)
+- Piece rate vs. fixed wage contract
+
+Is spraying endogenous? Does it predict ab before it happens?
+- Create model w/ future spraying (expect 0)
+- Describe how company goes about spraying
+
+
+# Survey paper
+- Figure out why unadjusted lines are different and fix

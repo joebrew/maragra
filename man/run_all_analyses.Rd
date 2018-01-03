@@ -24,4 +24,3 @@ html and pdf files will be written
 \description{
 Run all analyses and produce outputs in the \code{outputs_dir} folder
 }
-

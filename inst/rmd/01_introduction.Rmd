@@ -1,0 +1,36 @@
+# Introduction  
+
+
+
+Malaria has a large economic impact on endemic societies. By affecting saving, investment [@Shretta2016], risk perception, productivity, absenteeism [@Nonvignon_2016], human capital accumulation [@CastelBranco2014], mortality, and costs of care [@Sachs2002], malaria likely has a negative effect on GDP and growth [@McCarthy_2000] [@Orem_2012]. Because of the relative affordability of most intereventions and the enormous societal costs of malaria, most forms of malaria control are cost-effective when a public welfare perspective is assumed, such as when a government provides the financing [@White_2011] [@Purdy_2013] [@Howard_2017].
+
+From the persepctive of the private sector, however, investing in malaria control is not so clear-cut. Public health interventions targetting malaria - and their corresponding cost-effectiveness evaluations - most often focus on impacts pertaining to public welfare, such as an increase in life years adjusted for disability or quality  [@Goodman1999] [@Shretta2016] [@Lee2017] [@Hanson2004]. Though population-level health is certainly of importance to businesses, and improvements in health incidentally improve the economy at all levels [@World1999] [@Bloom2008] [@Vecchi_2013], these improvements may be too disperse or long-term to incentivize private sector involvement in health campaigns. 
+
+100% of the Mozambican population are at risk of malaria, living in what the WHO classifies as a "high transmission" area [@Moonasar_2016]. Annually, Mozambique has more than 8 million clinical malaria cases (an annual incidence of approximately 300 per 1,000 residents), with an estimated 14,000 deaths. Malaria accounts for 29% of all deaths, and 42% of deaths among those under five years of age [@estatistica2009]. Since 2013, Mozambique has seen a gradual increase in the incidence of malaria [@Moonasar_2016]. 100% of the malaria in Mozambique is of the Plasmodium falciparum species, with Anopheles funestus, gambiae, and arabiensis as the primary mosquito vectors of the disease [@whoprof]. 
+
+A significant sector of the economy in Mozambique is dominated by a full large-scale foreing direct investment projects [@Robbins2012], and the role of the private sector in health generally, and malaria specifically, is unequivocally important. Large agriculture and extractive industry firms take up wide swaths of land and employ hundreds of thousands  [@German2013]. The Mozambican state has encouraged large-scale entreprise with the aim of general economic development [@Buur2012]. And where large firms exist, they often take on social roles such as housing and health care [@Winkler]. At times, this role is necessary from a purely practical standpoint; in other cases, it is employed under the guise of "corporate social responsibility" [@Azemar2009]. Regardless of the language used, it is clear that private industry plays an important role in public health in Mozambique [@Robbins2012] [@CastelBranco2014]. 
+
+Several cases exist of foreign firms engaging in large-scale malaria control campaigns [@Mouzin2011] [@Han] [@Bennett_2017] [@Kaula_2017]. But these studies generally consider population health as the outcome measure of interest, rather than worker absenteeism or productivity. Similarly, they often neglect to differentiate between those clinical costs which are absorbed by the local health system versus those which are absorbed by the firm itself. In the literature, making the "investment case" for malaria control or elimination generally implies that the investor is the public sector, and takes into account those costs and benefits which are applicable from a public welfare point of view [@Shretta_2017]; though appropriate in most cases (the government or institutions interested in public welfare primarily being the primary malaria control agents in most locations), the findings of these studies are rarely applicable to the private sector. In the case of a private firm not interested in "corporate social responsibility", it is not clear whether investing in malaria control would be profitable or not. This lack of clarity not only discourages investment, but also makes it difficult for governments to pinpoint the correct of amount of subsidy (if applicable) to encourage private sector scale-up in malaria control.
+
+To address the question of the profitability of malaria control activities from the standpoint of a private firm, we analyze data during a 7 year period from a private sugar facility in Southern Mozambique. We assess the effect of indoor residual spraying (IRS) on the absenteeism and health of workers, and demonstrate that the firm's engagement in malaria control not only improved worker health, but also generated a positive return on investment.
+
+The structure of the paper is as follows. After a brief review of the existing literature on the subject of private sector investment in malaria control and its effects on worker productivity, we provide an overview of the sugar company under study, and the epidemiology of malaria in the nearby area, as well as in Mozambique as a whole. We then give an overview of the data collected, and outline the theoretical and methdological assumptions that underly our analysis. In the results, we show the effectiveness of the company's malaria control program in reducing absences, and translate this reduction into cost savings. Our robustness checks consist of \todo{Add some stuff here}. Our discussion covers potential implications from this study in terms of policy and investment, as well as the paper's limitations. 
+
+## Background Literature
+
+\todo{Will add 3-5 paragraphs of background lit review}
+
+Our study adds to the existing literature in several ways. \todo{Will add details here.}
+
+## Study area
+
+Details on Maragra: 
+
+Maragra Açucar SA (henceforth referred to as "Maragra")\todo{This is a comment that will appear in the margin}
+
+
+Details on Manhica
+
+Details on Mozambique
+
+

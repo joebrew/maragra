@@ -25,7 +25,7 @@ make_authors(authors = data.frame(name = c("Joe Brew", "Kizito Gondo",
   "De Boelelaan 1105, 1081 HV Amsterdam, Netherlands",
   "REC E, Roetersstraat 11, Amsterdam, Netherlands",
   "CP 2789, Maputo, Mozambique"), stringsAsFactors = FALSE), cat_it = TRUE,
-  include_address = TRUE, include_country = FALSE, seperator = "\\n")
+  include_address = TRUE, include_country = TRUE, seperator = "\\n")
 }
 \arguments{
 \item{authors}{A dataframe with columns: name, email, affiliation, footnote}
@@ -46,4 +46,3 @@ Latex text
 \description{
 Cat the authors in latex-ready format
 }
-
