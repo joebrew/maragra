@@ -20,13 +20,13 @@ The structure of the paper is as follows. After a brief review of the existing l
 
 \todo{Will add 3-5 paragraphs of background lit review}
 
-Our study adds to the existing literature in several ways. \todo{Will add details here.}
+Our study adds to the existing literature in several ways. \improvement{Will add details here.}
 
 ## Study area
 
 Details on Maragra: 
 
-Maragra Açucar SA (henceforth referred to as "Maragra")\todo{This is a comment that will appear in the margin}
+Maragra Açucar SA (henceforth referred to as "Maragra").
 
 
 Details on Manhica

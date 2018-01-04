@@ -81,37 +81,55 @@ facility in Southern Mozambique}
   \date{}
   \predate{}\postdate{}
 
-\usepackage[table]{xcolor}
-
-
+\pagenumbering{gobble}
+\usepackage{longtable}
+\usepackage[utf8]{inputenc}
+\usepackage{changepage}
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{color}
+\usepackage{colortbl}
+\usepackage{color}
 % Font
 \usepackage{fontspec}
 \setmainfont{Swift-Regular_43151.ttf}
-\setsansfont{Swift-Regular_43151.ttf}
-% \setsansfont[BoldFont={Swift-Bold_43130.ttf}]{Swift-Bold_43130.ttf}
-\setmonofont{Swift-Regular_43151.ttf}
+\setsansfont[BoldFont={Swift-Bold_43130.ttf}]{Swift-Regular_43151.ttf}
+% \setmonofont{Swift-Regular_43151.ttf}
 \renewcommand{\familydefault}{\sfdefault}
+% \usepackage{fontspec}
+% \setmainfont{Lato-Regular.ttf}
+% \setsansfont[BoldFont={Lato-Bold.ttf}]{Lato-Regular.ttf}
+% \renewcommand{\familydefault}{\sfdefault}
+
+\def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
+\let\endchangemargin=\endlist
+\renewcommand{\rmdefault}{ppl}
 
 \usepackage{multicol}
 \usepackage{hyperref}
 \usepackage{geometry}
 \usepackage{lipsum}
-\usepackage[utf8]{inputenc}
-
-
-
 
 % \usepackage{todonotes} % for side notes
-\usepackage[colorinlistoftodos]{todonotes} % for side notes
-\usepackage[utf8]{inputenc}
-\usepackage[T1]{fontenc}
+% \usepackage[colorinlistoftodos]{todonotes} % for side notes
+
+\usepackage{xargs}                      % Use more than one optional parameter in a new commands
+\usepackage[dvipsnames, table]{xcolor}  % Coloured text etc.
+% 
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+\newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+\newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
+\newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
+\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}}
 \usepackage{lmodern}
 \usepackage{fancyhdr} % Headers and footers
 \pagestyle{fancy} % All pages have headers and footers
 \fancyhead{} % Blank out the default header
 \fancyfoot{} % Blank out the default footer
-\fancyhead[C]{Effectiveness of private sector malaria control at a large sugar
-  facility in Southern Mozambique}
+\fancyhead[C]{Return on investment of private sector malaria control at a large sugar facility in Southern Mozambique}
 \renewcommand{\thefootnote}{\fnsymbol{footnote}}
 
 \newcommand{\footremember}[2]{%
@@ -142,19 +160,7 @@ facility in Southern Mozambique}
 }
 \makeatother
 
-\DeclareTextCommandDefault{\nobreakspace}{\leavevmode\nobreak\ } 
-
-
-\usepackage{booktabs}
-\usepackage{longtable}
-\usepackage{array}
-\usepackage{multirow}
-\usepackage{wrapfig}
-\usepackage{float}
-\usepackage{colortbl}
-\usepackage{pdflscape}
-\usepackage{tabu}
-\usepackage{threeparttable}
+\DeclareTextCommandDefault{\nobreakspace}{\leavevmode\nobreak\ }
 \usepackage{booktabs}
 \usepackage{longtable}
 \usepackage{array}
@@ -230,61 +236,60 @@ This paper provides new empirical evidence regarding the return on investment of
 \section{Introduction}\label{introduction}
 
 Malaria has a large economic impact on endemic societies. By affecting
-saving, investment (Shretta, Avanceña, and Hatefi 2016), risk
-perception, productivity, absenteeism (Nonvignon et al. 2016), human
-capital accumulation (Castel-Branco 2014), mortality, and costs of care
-(Sachs and Malaney 2002), malaria likely has a negative effect on GDP
-and growth (McCarthy, Wolf, and Wu 2000) (Orem et al. 2012). Because of
-the relative affordability of most intereventions and the enormous
-societal costs of malaria, most forms of malaria control are
-cost-effective when a public welfare perspective is assumed, such as
-when a government provides the financing (White et al. 2011) (Purdy et
-al. 2013) (Howard et al. 2017).
+saving, investment (Shretta et al., 2016), risk perception,
+productivity, absenteeism (Nonvignon et al., 2016), human capital
+accumulation (Castel-Branco, 2014), mortality, and costs of care (Sachs
+and Malaney, 2002), malaria likely has a negative effect on GDP and
+growth (McCarthy et al., 2000) (Orem et al., 2012). Because of the
+relative affordability of most intereventions and the enormous societal
+costs of malaria, most forms of malaria control are cost-effective when
+a public welfare perspective is assumed, such as when a government
+provides the financing (White et al., 2011) (Purdy et al., 2013) (Howard
+et al., 2017).
 
 From the persepctive of the private sector, however, investing in
 malaria control is not so clear-cut. Public health interventions
 targetting malaria - and their corresponding cost-effectiveness
 evaluations - most often focus on impacts pertaining to public welfare,
 such as an increase in life years adjusted for disability or quality
-(Goodman, Coleman, and Mills 1999) (Shretta, Avanceña, and Hatefi 2016)
-(Lee et al. 2017) (Hanson 2004). Though population-level health is
-certainly of importance to businesses, and improvements in health
-incidentally improve the economy at all levels (Brundtland 1999) (Bloom
-and Canning 2008) (Vecchi, Hellowell, and Gatti 2013), these
-improvements may be too disperse or long-term to incentivize private
-sector involvement in health campaigns.
+(Goodman et al., 1999) (Shretta et al., 2016) (Lee et al., 2017)
+(Hanson, 2004). Though population-level health is certainly of
+importance to businesses, and improvements in health incidentally
+improve the economy at all levels (Brundtland, 1999) (Bloom and Canning,
+2008) (Vecchi et al., 2013), these improvements may be too disperse or
+long-term to incentivize private sector involvement in health campaigns.
 
 100\% of the Mozambican population are at risk of malaria, living in
-what the WHO classifies as a ``high transmission'' area (Moonasar et al.
-2016). Annually, Mozambique has more than 8 million clinical malaria
-cases (an annual incidence of approximately 300 per 1,000 residents),
-with an estimated 14,000 deaths. Malaria accounts for 29\% of all
-deaths, and 42\% of deaths among those under five years of age (INE
-2011). Since 2013, Mozambique has seen a gradual increase in the
-incidence of malaria (Moonasar et al. 2016). 100\% of the malaria in
+what the WHO classifies as a ``high transmission'' area (Moonasar et
+al., 2016). Annually, Mozambique has more than 8 million clinical
+malaria cases (an annual incidence of approximately 300 per 1,000
+residents), with an estimated 14,000 deaths. Malaria accounts for 29\%
+of all deaths, and 42\% of deaths among those under five years of age
+(INE, 2011). Since 2013, Mozambique has seen a gradual increase in the
+incidence of malaria (Moonasar et al., 2016). 100\% of the malaria in
 Mozambique is of the Plasmodium falciparum species, with Anopheles
 funestus, gambiae, and arabiensis as the primary mosquito vectors of the
-disease (WHO 2015).
+disease (WHO, 2015).
 
 A significant sector of the economy in Mozambique is dominated by a full
-large-scale foreing direct investment projects (Robbins and Perkins
+large-scale foreing direct investment projects (Robbins and Perkins,
 2012), and the role of the private sector in health generally, and
 malaria specifically, is unequivocally important. Large agriculture and
 extractive industry firms take up wide swaths of land and employ
-hundreds of thousands (German, Schoneveld, and Mwangi 2013). The
-Mozambican state has encouraged large-scale entreprise with the aim of
-general economic development (Buur, Tembe, and Baloi 2012). And where
-large firms exist, they often take on social roles such as housing and
-health care (Winkler 2013). At times, this role is necessary from a
-purely practical standpoint; in other cases, it is employed under the
-guise of ``corporate social responsibility'' (Azemar and Desbordes
-2009). Regardless of the language used, it is clear that private
-industry plays an important role in public health in Mozambique (Robbins
-and Perkins 2012) (Castel-Branco 2014).
+hundreds of thousands (German et al., 2013). The Mozambican state has
+encouraged large-scale entreprise with the aim of general economic
+development (Buur et al., 2012). And where large firms exist, they often
+take on social roles such as housing and health care (Winkler, 2013). At
+times, this role is necessary from a purely practical standpoint; in
+other cases, it is employed under the guise of ``corporate social
+responsibility'' (Azemar and Desbordes, 2009). Regardless of the
+language used, it is clear that private industry plays an important role
+in public health in Mozambique (Robbins and Perkins, 2012)
+(Castel-Branco, 2014).
 
 Several cases exist of foreign firms engaging in large-scale malaria
-control campaigns (Mouzin and al. 2011) (Han 2015) (Bennett et al. 2017)
-(Kaula, Buyungo, and Opigo 2017). But these studies generally consider
+control campaigns (Mouzin and al., 2011) (Han, 2015) (Bennett et al.,
+2017) (Kaula et al., 2017). But these studies generally consider
 population health as the outcome measure of interest, rather than worker
 absenteeism or productivity. Similarly, they often neglect to
 differentiate between those clinical costs which are absorbed by the
@@ -292,7 +297,7 @@ local health system versus those which are absorbed by the firm itself.
 In the literature, making the ``investment case'' for malaria control or
 elimination generally implies that the investor is the public sector,
 and takes into account those costs and benefits which are applicable
-from a public welfare point of view (Shretta et al. 2017); though
+from a public welfare point of view (Shretta et al., 2017); though
 appropriate in most cases (the government or institutions interested in
 public welfare primarily being the primary malaria control agents in
 most locations), the findings of these studies are rarely applicable to
@@ -329,14 +334,13 @@ investment, as well as the paper's limitations.
 \todo{Will add 3-5 paragraphs of background lit review}
 
 Our study adds to the existing literature in several ways.
-\todo{Will add details here.}
+\improvement{Will add details here.}
 
 \subsection{Study area}\label{study-area}
 
 Details on Maragra:
 
-Maragra Açucar SA (henceforth referred to as
-``Maragra'')\todo{This is a comment that will appear in the margin}
+Maragra Açucar SA (henceforth referred to as ``Maragra'').
 
 Details on Manhica
 
@@ -358,7 +362,7 @@ the period from March 2016 through May 2017. Supplementary data
 pertaining to worker characteristics was obtained from through the
 Centro de Investigação em Saude de Manhiça's (CISM) demographic census,
 which covered workers from the district, but not those who migrated from
-other parts of the country (Nhacolo et al. 2006).
+other parts of the country (Nhacolo et al., 2006).
 
 Data pertaining to district-wide malaria incidence was obtained from
 Mozambique's Boletim Epidemiológico Semanal (BES), which is the system
@@ -411,9 +415,9 @@ strategy}\label{conceptual-framework-and-identification-strategy}
 We sought to understand the effect of IRS on individual workers'
 likelihood of absence from work as well as their likelihood of clinical
 malaria. To estimate this effect, we estimated separate models for
-absence and illness. We employed interrupted time series (Lopez Bernal,
-Cummins, and Gasparrini 2016) and a linear probability approach using
-the following econometric model.
+absence and illness. We employed interrupted time series (Lopez Bernal
+et al., 2016) and a linear probability approach using the following
+econometric model.
 
 \[
 \hat{Y_{it}} = \beta_{0} +  (\beta_{1}) (\text{Season}_{t}) + (\beta_2{IRS}*\beta_3{IRS_t}) + ... + \epsilon
@@ -462,8 +466,8 @@ program's administration.
 \subsection{Reproducibility and ethical
 approval}\label{reproducibility-and-ethical-approval}
 
-All data processing and analysis were carried out in R (R Core Team
-2017) and all analysis code is freely available online (Brew 2017).
+All data processing and analysis were carried out in R (R Core Team,
+2017) and all analysis code is freely available online (Brew, 2017).
 Ethical approval for this project was obtained from the Institutional
 Ethics Review Board for Health at the CISM prior to data collection.
 
@@ -669,205 +673,173 @@ Overall stuff
 
 \hypertarget{refs}{}
 \hypertarget{ref-Azemar2009}{}
-Azemar, C., and R. Desbordes. 2009. ``Public Governance, Health and
-Foreign Direct Investment in Sub-Saharan Africa.'' \emph{Journal of
-African Economies} 18 (4). Oxford University Press (OUP): 667--709.
-doi:\href{https://doi.org/10.1093/jae/ejn028}{10.1093/jae/ejn028}.
+Azemar, C., Desbordes, R., 2009. Public governance, health and foreign
+direct investment in sub-saharan africa. Journal of African Economies
+18, 667--709. \url{https://doi.org/10.1093/jae/ejn028}
 
 \hypertarget{ref-Bennett_2017}{}
-Bennett, Adam, Anton L. V. Avanceña, Jennifer Wegbreit, Chris Cotter,
-Kathryn Roberts, and Roly Gosling. 2017. ``Engaging the Private Sector
-in Malaria Surveillance: A Review of Strategies and Recommendations for
-Elimination Settings.'' \emph{Malaria Journal} 16 (1). Springer Nature.
-doi:\href{https://doi.org/10.1186/s12936-017-1901-1}{10.1186/s12936-017-1901-1}.
+Bennett, A., Avanceña, A.L.V., Wegbreit, J., Cotter, C., Roberts, K.,
+Gosling, R., 2017. Engaging the private sector in malaria surveillance:
+A review of strategies and recommendations for elimination settings.
+Malaria Journal 16. \url{https://doi.org/10.1186/s12936-017-1901-1}
 
 \hypertarget{ref-Bloom2008}{}
-Bloom, David, and David Canning. 2008. ``Population Health and Economic
-Growth,'' 1--25.
+Bloom, D., Canning, D., 2008. Population Health and Economic Growth
+1--25.
 
 \hypertarget{ref-brewgit}{}
-Brew, J.R. 2017. ``Malaria and Sugar: An in-Depth Examination of the
-Effect of Malaria Control Activities on the Health and Productivity of
-Maragra Sugarcane Factory Workers.'' \emph{GitHub Repository}.
-\url{https://github.com/joebrew/maragra}; GitHub.
+Brew, J., 2017. Malaria and sugar: An in-depth examination of the effect
+of malaria control activities on the health and productivity of maragra
+sugarcane factory workers. GitHub repository.
 
 \hypertarget{ref-World1999}{}
-Brundtland, Gro Harlem. 1999. ``WHO on Health and Economic
-Productivity'' 25 (2): 396--402.
+Brundtland, G.H., 1999. WHO on Health and Economic Productivity 25,
+396--402.
 
 \hypertarget{ref-Buur2012}{}
-Buur, Lars, Carlota Mondlane Tembe, and Obede Baloi. 2012. ``The White
-Gold: The Role of Government and State in Rehabilitating the Sugar
-Industry in Mozambique.'' \emph{Journal of Development Studies} 48 (3).
-Informa UK Limited: 349--62.
-doi:\href{https://doi.org/10.1080/00220388.2011.635200}{10.1080/00220388.2011.635200}.
+Buur, L., Tembe, C.M., Baloi, O., 2012. The white gold: The role of
+government and state in rehabilitating the sugar industry in mozambique.
+Journal of Development Studies 48, 349--362.
+\url{https://doi.org/10.1080/00220388.2011.635200}
 
 \hypertarget{ref-CastelBranco2014}{}
-Castel-Branco, Carlos Nuno. 2014. ``Growth, Capital Accumulation and
-Economic Porosity in Mozambique: Social Losses, Private Gains.''
-\emph{Review of African Political Economy} 41 (sup1). Informa UK
-Limited: S26--S48.
-doi:\href{https://doi.org/10.1080/03056244.2014.976363}{10.1080/03056244.2014.976363}.
+Castel-Branco, C.N., 2014. Growth, capital accumulation and economic
+porosity in mozambique: Social losses, private gains. Review of African
+Political Economy 41, S26--S48.
+\url{https://doi.org/10.1080/03056244.2014.976363}
 
 \hypertarget{ref-German2013}{}
-German, Laura, George Schoneveld, and Esther Mwangi. 2013.
-``Contemporary Processes of Large-Scale Land Acquisition in Sub-Saharan
-Africa: Legal Deficiency or Elite Capture of the Rule of Law?''
-\emph{World Development} 48 (August). Elsevier BV: 1--18.
-doi:\href{https://doi.org/10.1016/j.worlddev.2013.03.006}{10.1016/j.worlddev.2013.03.006}.
+German, L., Schoneveld, G., Mwangi, E., 2013. Contemporary processes of
+large-scale land acquisition in sub-saharan africa: Legal deficiency or
+elite capture of the rule of law? World Development 48, 1--18.
+\url{https://doi.org/10.1016/j.worlddev.2013.03.006}
 
 \hypertarget{ref-Goodman1999}{}
-Goodman, CA, PG Coleman, and AJ Mills. 1999. ``Cost-Effectiveness of
-Malaria Control in Sub-Saharan Africa.'' \emph{The Lancet} 354 (9176).
-Elsevier BV: 378--85.
-doi:\href{https://doi.org/10.1016/s0140-6736(99)02141-8}{10.1016/s0140-6736(99)02141-8}.
+Goodman, C., Coleman, P., Mills, A., 1999. Cost-effectiveness of malaria
+control in sub-saharan africa. The Lancet 354, 378--385.
+\url{https://doi.org/10.1016/s0140-6736(99)02141-8}
 
 \hypertarget{ref-Han}{}
-Han, Lily. 2015. ``Malaria in Mozambique: trialling payment by
-results.''
-\url{http://www.theguardian.com/global-development-professionals-network/2014/mar/31/malaria-control-payment-by-results}.
+Han, L., 2015. Malaria in Mozambique: trialling payment by results.
 
 \hypertarget{ref-Hanson2004}{}
-Hanson, K. 2004. ``Public and Private Roles in Malaria Control: The
-Contributions of Economic Analysis.'' \emph{The American Journal of
-Tropical Medicine and Hygiene} 71 (9176). The American Society of
-Tropical Medicine; Hygiene: 168--73.
-\url{http://www.ajtmh.org/docserver/fulltext/14761645/71/2_suppl/0700168.pdf?expires=1503070750\&id=id\&accname=guest\&checksum=F969ACD7BE7E3A5D929D87EEA8A6EA2B}.
+Hanson, K., 2004. Public and private roles in malaria control: The
+contributions of economic analysis. The American Journal of Tropical
+Medicine and Hygiene 71, 168--173.
 
 \hypertarget{ref-Howard_2017}{}
-Howard, Natasha, Lorna Guinness, Mark Rowland, Naeem Durrani, and
-Kristian S. Hansen. 2017. ``Cost-Effectiveness of Adding Indoor Residual
-Spraying to Case Management in Afghan Refugee Settlements in Northwest
-Pakistan During a Prolonged Malaria Epidemic.'' Edited by Guilherme
-S.Editor Ribeiro. \emph{PLOS Neglected Tropical Diseases} 11 (10).
-Public Library of Science (PLoS): e0005935.
-doi:\href{https://doi.org/10.1371/journal.pntd.0005935}{10.1371/journal.pntd.0005935}.
+Howard, N., Guinness, L., Rowland, M., Durrani, N., Hansen, K.S., 2017.
+Cost-effectiveness of adding indoor residual spraying to case management
+in afghan refugee settlements in northwest pakistan during a prolonged
+malaria epidemic. PLOS Neglected Tropical Diseases 11, e0005935.
+\url{https://doi.org/10.1371/journal.pntd.0005935}
 
 \hypertarget{ref-estatistica2009}{}
-INE. 2011. ``Demographic Health Survey.'' \url{http://www.ine.gov.mz/}.
+INE, 2011. Demographic health survey.
 
 \hypertarget{ref-Kaula_2017}{}
-Kaula, Henry, Peter Buyungo, and Jimmy Opigo. 2017. ``Private Sector
-Role, Readiness and Performance for Malaria Case Management in Uganda,
-2015.'' \emph{Malaria Journal} 16 (1). Springer Nature.
-doi:\href{https://doi.org/10.1186/s12936-017-1824-x}{10.1186/s12936-017-1824-x}.
+Kaula, H., Buyungo, P., Opigo, J., 2017. Private sector role, readiness
+and performance for malaria case management in uganda, 2015. Malaria
+Journal 16. \url{https://doi.org/10.1186/s12936-017-1824-x}
 
 \hypertarget{ref-Lee2017}{}
-Lee, Bruce Y., Eli Zenkov, Chandrani Chatterjee, Baltazar Candrinho,
-Shufang Zhang, James Colborn, Olivier J. T. Briët, et al. 2017. ``The
-Economic Value of Long-Lasting Insecticidal Nets and Indoor Residual
-Spraying Implementation in Mozambique.'' \emph{The American Journal of
-Tropical Medicine and Hygiene} 96 (6). American Society of Tropical
-Medicine; Hygiene: 1430--40.
-doi:\href{https://doi.org/10.4269/ajtmh.16-0744}{10.4269/ajtmh.16-0744}.
+Lee, B.Y., Zenkov, E., Chatterjee, C., Candrinho, B., Zhang, S.,
+Colborn, J., Briët, O.J.T., Brown, S.T., Mendis, C., Bartsch, S.M.,
+Viisainen, K., DePasse, J.V., Stone, N.T.B., 2017. The economic value of
+long-lasting insecticidal nets and indoor residual spraying
+implementation in mozambique. The American Journal of Tropical Medicine
+and Hygiene 96, 1430--1440. \url{https://doi.org/10.4269/ajtmh.16-0744}
 
 \hypertarget{ref-Lopez_Bernal_2016}{}
-Lopez Bernal, James, Steven Cummins, and Antonio Gasparrini. 2016.
-``Interrupted Time Series Regression for the Evaluation of Public Health
-Interventions: A Tutorial.'' \emph{International Journal of
-Epidemiology}, June. Oxford University Press (OUP), dyw098.
-doi:\href{https://doi.org/10.1093/ije/dyw098}{10.1093/ije/dyw098}.
+Lopez Bernal, J., Cummins, S., Gasparrini, A., 2016. Interrupted time
+series regression for the evaluation of public health interventions: A
+tutorial. International Journal of Epidemiology dyw098.
+\url{https://doi.org/10.1093/ije/dyw098}
 
 \hypertarget{ref-McCarthy_2000}{}
-McCarthy, Desmond, Holger Wolf, and Yi Wu. 2000. ``The Growth Costs of
-Malaria,'' February. National Bureau of Economic Research.
-doi:\href{https://doi.org/10.3386/w7541}{10.3386/w7541}.
+McCarthy, D., Wolf, H., Wu, Y., 2000. The growth costs of malaria.
+\url{https://doi.org/10.3386/w7541}
 
 \hypertarget{ref-Moonasar_2016}{}
-Moonasar, Devanand, Rajendra Maharaj, Simon Kunene, Baltazar Candrinho,
-Francisco Saute, Nyasatu Ntshalintshali, and Natashia Morris. 2016.
-``Towards Malaria Elimination in the Mosaswa (Mozambique, South Africa
-and Swaziland) Region.'' \emph{Malaria Journal} 15 (1). Springer Nature.
-doi:\href{https://doi.org/10.1186/s12936-016-1470-8}{10.1186/s12936-016-1470-8}.
+Moonasar, D., Maharaj, R., Kunene, S., Candrinho, B., Saute, F.,
+Ntshalintshali, N., Morris, N., 2016. Towards malaria elimination in the
+mosaswa (mozambique, south africa and swaziland) region. Malaria Journal
+15. \url{https://doi.org/10.1186/s12936-016-1470-8}
 
 \hypertarget{ref-Mouzin2011}{}
-Mouzin, Eric, and Et al. 2011. ``Business Investing in Malaria Control:
-Economic Returns and a Healthy Workforce for Africa.'' \emph{Progress \&
-Impact Series}, no. 6.
+Mouzin, E., al., E., 2011. Business Investing in Malaria Control:
+Economic Returns and a Healthy Workforce for Africa. Progress \& Impact
+series.
 
 \hypertarget{ref-Nhacolo_2006}{}
-Nhacolo, Ariel Q, Delino A Nhalungo, Charfudin N Sacoor, John J Aponte,
-Ricardo Thompson, and Pedro Alonso. 2006. ``Levels and Trends of
-Demographic Indices in Southern Rural Mozambique: Evidence from
-Demographic Surveillance in Manhiça District.'' \emph{BMC Public Health}
-6 (1). Springer Nature.
-doi:\href{https://doi.org/10.1186/1471-2458-6-291}{10.1186/1471-2458-6-291}.
+Nhacolo, A.Q., Nhalungo, D.A., Sacoor, C.N., Aponte, J.J., Thompson, R.,
+Alonso, P., 2006. Levels and trends of demographic indices in southern
+rural mozambique: Evidence from demographic surveillance in manhiça
+district. BMC Public Health 6.
+\url{https://doi.org/10.1186/1471-2458-6-291}
 
 \hypertarget{ref-Nonvignon_2016}{}
-Nonvignon, Justice, Genevieve Cecilia Aryeetey, Keziah L. Malm, Samuel
-Agyei Agyemang, Vivian N. A. Aubyn, Nana Yaw Peprah, Constance N.
-Bart-Plange, and Moses Aikins. 2016. ``Economic Burden of Malaria on
-Businesses in Ghana: A Case for Private Sector Investment in Malaria
-Control.'' \emph{Malaria Journal} 15 (1). Springer Nature.
-doi:\href{https://doi.org/10.1186/s12936-016-1506-0}{10.1186/s12936-016-1506-0}.
+Nonvignon, J., Aryeetey, G.C., Malm, K.L., Agyemang, S.A., Aubyn,
+V.N.A., Peprah, N.Y., Bart-Plange, C.N., Aikins, M., 2016. Economic
+burden of malaria on businesses in ghana: A case for private sector
+investment in malaria control. Malaria Journal 15.
+\url{https://doi.org/10.1186/s12936-016-1506-0}
 
 \hypertarget{ref-Orem_2012}{}
-Orem, Juliet, Joses Kirigia, Robert Azairwe, Ibrahim Kasirye, and
-Oladapo Walker. 2012. ``Impact of Malaria Morbidity on Gross Domestic
-Product in Uganda.'' \emph{International Archives of Medicine} 5 (1).
-Springer Nature: 12.
-doi:\href{https://doi.org/10.1186/1755-7682-5-12}{10.1186/1755-7682-5-12}.
+Orem, J., Kirigia, J., Azairwe, R., Kasirye, I., Walker, O., 2012.
+Impact of malaria morbidity on gross domestic product in uganda.
+International Archives of Medicine 5, 12.
+\url{https://doi.org/10.1186/1755-7682-5-12}
 
 \hypertarget{ref-Purdy_2013}{}
-Purdy, Mark, David Rublin, Kuangyi Wei, and Matthew Robinson. 2013.
-``The Economic Case for Combating Malaria.'' \emph{The American Journal
-of Tropical Medicine and Hygiene} 89 (5). American Society of Tropical
-Medicine; Hygiene: 819--23.
-doi:\href{https://doi.org/10.4269/ajtmh.12-0689}{10.4269/ajtmh.12-0689}.
+Purdy, M., Rublin, D., Wei, K., Robinson, M., 2013. The economic case
+for combating malaria. The American Journal of Tropical Medicine and
+Hygiene 89, 819--823. \url{https://doi.org/10.4269/ajtmh.12-0689}
 
 \hypertarget{ref-R}{}
-R Core Team. 2017. \emph{R: A Language and Environment for Statistical
-Computing}. Vienna, Austria: R Foundation for Statistical Computing.
-\url{https://www.R-project.org/}.
+R Core Team, 2017. R: A language and environment for statistical
+computing. R Foundation for Statistical Computing, Vienna, Austria.
 
 \hypertarget{ref-Robbins2012}{}
-Robbins, Glen, and David Perkins. 2012. ``Mining Fdi and Infrastructure
-Development on Africa's East Coast: Examining the Recent Experience of
-Tanzania and Mozambique.'' \emph{Journal of International Development}
-24 (2). Wiley-Blackwell: 220--36.
-doi:\href{https://doi.org/10.1002/jid.2817}{10.1002/jid.2817}.
+Robbins, G., Perkins, D., 2012. Mining fdi and infrastructure
+development on africa's east coast: Examining the recent experience of
+tanzania and mozambique. Journal of International Development 24,
+220--236. \url{https://doi.org/10.1002/jid.2817}
 
 \hypertarget{ref-Sachs2002}{}
-Sachs, Jeffrey, and Pia Malaney. 2002. ``The Economic and Social Burden
-of Malaria.'' \emph{Nature} 415 (6872). Springer Nature: 680--85.
-doi:\href{https://doi.org/10.1038/415680a}{10.1038/415680a}.
+Sachs, J., Malaney, P., 2002. The economic and social burden of malaria.
+Nature 415, 680--685. \url{https://doi.org/10.1038/415680a}
 
 \hypertarget{ref-Shretta2016}{}
-Shretta, Rima, Anton L. V. Avanceña, and Arian Hatefi. 2016. ``The
-Economics of Malaria Control and Elimination: A Systematic Review.''
-\emph{Malaria Journal} 15 (1). Springer Nature.
-doi:\href{https://doi.org/10.1186/s12936-016-1635-5}{10.1186/s12936-016-1635-5}.
+Shretta, R., Avanceña, A.L.V., Hatefi, A., 2016. The economics of
+malaria control and elimination: A systematic review. Malaria Journal
+15. \url{https://doi.org/10.1186/s12936-016-1635-5}
 
 \hypertarget{ref-Shretta_2017}{}
-Shretta, Rima, Ranju Baral, Anton L. V. Avanceña, Katie Fox, Asoka
-Premasiri Dannoruwa, Ravindra Jayanetti, Arumainayagam Jeyakumaran,
-Rasike Hasantha, Lalanthika Peris, and Risintha Premaratne. 2017. ``An
-Investment Case to Prevent the Reintroduction of Malaria in Sri Lanka.''
-\emph{The American Journal of Tropical Medicine and Hygiene}, January.
-American Society of Tropical Medicine; Hygiene, 16--0209.
-doi:\href{https://doi.org/10.4269/ajtmh.16-0209}{10.4269/ajtmh.16-0209}.
+Shretta, R., Baral, R., Avanceña, A.L.V., Fox, K., Dannoruwa, A.P.,
+Jayanetti, R., Jeyakumaran, A., Hasantha, R., Peris, L., Premaratne, R.,
+2017. An investment case to prevent the reintroduction of malaria in sri
+lanka. The American Journal of Tropical Medicine and Hygiene 16--0209.
+\url{https://doi.org/10.4269/ajtmh.16-0209}
 
 \hypertarget{ref-Vecchi_2013}{}
-Vecchi, Veronica, Mark Hellowell, and Stefano Gatti. 2013. ``Does the
-Private Sector Receive an Excessive Return from Investments in Health
-Care Infrastructure Projects? Evidence from the Uk.'' \emph{Health
-Policy} 110 (2-3). Elsevier BV: 243--70.
-doi:\href{https://doi.org/10.1016/j.healthpol.2012.12.010}{10.1016/j.healthpol.2012.12.010}.
+Vecchi, V., Hellowell, M., Gatti, S., 2013. Does the private sector
+receive an excessive return from investments in health care
+infrastructure projects? Evidence from the uk. Health Policy 110,
+243--270. \url{https://doi.org/10.1016/j.healthpol.2012.12.010}
 
 \hypertarget{ref-White_2011}{}
-White, Michael T, Lesong Conteh, Richard Cibulskis, and Azra C Ghani.
-2011. ``Costs and Cost-Effectiveness of Malaria Control Interventions -
-a Systematic Review.'' \emph{Malaria Journal} 10 (1). Springer Nature:
-337.
-doi:\href{https://doi.org/10.1186/1475-2875-10-337}{10.1186/1475-2875-10-337}.
+White, M.T., Conteh, L., Cibulskis, R., Ghani, A.C., 2011. Costs and
+cost-effectiveness of malaria control interventions - a systematic
+review. Malaria Journal 10, 337.
+\url{https://doi.org/10.1186/1475-2875-10-337}
 
 \hypertarget{ref-whoprof}{}
-WHO. 2015. ``Malaria Profile: Mozambique.'' World Health Organization.
-\url{http://www.who.int/malaria/publications/country-profiles/profile_moz_en.pdf}.
+WHO, 2015. Malaria profile: Mozambique.
 
 \hypertarget{ref-Winkler}{}
-Winkler, Deborah. 2013. ``Potential and Actual FDI Spillovers in Global
-Value Chains.''
+Winkler, D., 2013. Potential and Actual FDI Spillovers in Global Value
+Chains.
 
 
 \end{document}
