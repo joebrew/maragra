@@ -20,7 +20,7 @@ make_authors()
 \begin{center}
 \begin{changemargin}{3cm}{3cm} 
 
-This paper provides new empirical evidence regarding the return on investment of privately managed malaria control activities (indoor residual spraying with pesticides) on worker absenteeism in Mozambique. We analyze 4 years of malaria control and worker health and absenteeism data from a large sugar processing facility in Mozambique. We find that the benefits outweight the costs (ie, there is a positive return on investment) even when the consideration of benefits is limited to those directly accrued by the company. These findings suggest that the private sector may have an important role to play in malaria control in endemic areas.
+This paper provides new empirical evidence regarding the effect and return on investment of privately managed malaria control activities (indoor residual spraying with pesticides) on worker absenteeism in Mozambique. We analyze 4 years of malaria control and worker health and absenteeism data from a large sugar processing facility in Mozambique. We find that the benefits outweight the costs (ie, there is a positive return on investment) even when the consideration of benefits is limited to those directly accrued by the company. These findings suggest that the private sector may have an important role to play in malaria control in endemic areas.
 
 \end{changemargin}
 \end{center}
