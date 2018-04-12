@@ -19,9 +19,15 @@ The structure of the paper is as follows. After a brief review of the existing l
 
 ## Background Literature
 
-\todo{Will add 3-5 paragraphs of background lit review}
+The literature on the effect of sugarcane cultivation on malaria risk is mixed. While some studies have found that the prevalence of malaria vectors in sugarcane areas to be similar to that of uncultivated areas (and less than in areas dedicated to other forms of more water-inensive agriculture, such as rice) [@Ijumba2002], other studies have found significant increases in factors associated with malaria transmission at large-scale sugarcane facilities relative to traditional, small-scale farming and non-irrigated farming [@Jaleta2013]. Regardless of the effect the presence of a sugarcane farm _per se_ on local malaria epidemiology, the time spent outdoors by sugarcane workers, the fact that many workers are migrants, and their sometimes precarious housing situations, suggest that sugarcane farmers are likely at increased risk of malaria infection [@OLaughlin2016]. This is important, given that even among occupations with far less inherent exposure to mosquitoes (such as health professionals), malaria is one of the primary causes of work absenteeism in malaria-endemic countries [@Burton1999]. There is also some concern regarding the effect of large-scale insecticide use - common at essentially all Sub-Saharan African sugarcane farms - on insecticide resistance among moquitoes in the area. A study in Belize found that mosquito populations on the edge of sugarcane fields had higher tolerance to insecticide than similar populations in the core of fields or outside of the periphery [@Dusfour2009]. Sugarcane areas may offer the standing water necessary for mosquito breeding, but also perhaps attract mosquitoes which would otherwise be elsewhere, due to compounds in sugarcane pollen [@Wondwosen2018].
 
-Our study adds to the existing literature in several ways. \improvement{Will add details here.}
+Regardless of the academic literature on the risk of workers becoming infected with malaria, the companies running large agricultural operations in malaria-endemic regions generally consider the disease to be an important enough threat to workers' health to merit some form of investment in malaria control [@Pluess2009]. Insecticide fumigation, bednet distribution, test-and-treat clinics, and occasional educational campaigns are common forms of corporate social responsibility to combat malaria. The evidence of malaria's negative effects on both health and wealth, at both the individual [@Cole2006] and collective [@McCarthy2000] levels, as well as in both the short [@AsensoOkyere1997] [@Ajani2010] and long [@Hong2011] [@Sachs2002] terms, are amply described in the public health and economics literature [@Phillips98]. That said, very little exists in the literature examining the costs and benefits of malaria control from a private ledger perspective (ie, the point of view a business investor). Unlike a government or individual, a private firm investing in malaria control may be most interested not in its long-term macroeconomic effects, nor its short-term personal health effects, but rather on the impact on productivity (and the extent to which that producitivty's benefits accrue to the firm), absenteeism, and the opportunity costs of expenditures in malaria control. In other words, though the large magnitude of malaria control's benefits are well known, the portion of those benefits accrued by a private firm investing in malaria control is unknown. \improvement{This is a rough transition; need to add some details here.}
+
+A World Bank study on Nigerian sugarcane cutters found that the simple availability of testing and treatment increased productivity by 10% in the weeks following the provision of services, the conclusion being that both the treatment and the test result were effective in increasing productivity, the latter simply increasing the information available which could influence personal labor allocation decisions [@Dillon2014].
+
+Malaria may disincentivize investment in business in malaria zones. In a vicious cycle, businesses already in malaria zones may not be incentivized to invest in malaria control, perhaps because this is seen as the domain of the public sector [@Curtis2003], or perhaps due to not knowing the extent to which the benefits in health of that control will accrue to the business itself.
+
+This study does not endeavor to expand the current body of knowledge regarding malaria's ill effects on individuals and societies; rather, it aims to provide empirical evidence pertaining to a facet of malaria economics with very little in the literature: malaria control from a private-sector investment perspective. Our study adds to the existing literature by showing the effect of specific malaria control interventions on worker absenteeism, and translating that effect into a return on investment.
 
 ## Study area
 
@@ -30,160 +36,14 @@ Sugar has been systematically cultivated in Mozambique since the late 1800s. The
 
 The mill of the Maragra Açucar SA (a subsidary of the Illovo sugar company, henceforth referred to as "Maragra") was nationalized in the 1970s (like all other Mozambican mills), went through a period of low production, and then fell completely out of use by 1984. It re-opened in private hands in 1992, and was renovated by a group of international investors in 1998. Today, Maragra accounts for roughly one quarter of Mozambique's overall sugar production (second only to the nearby Xinavane mill run by the Hulett Sugar Tongaat company) [@sutton]. With a favorably close location to the port of Maputo, ample land, approximately 5,000 employees (of which three quarters are seasonal), and a mill with the capacity to process not only all the sugarcane grown on Maragra's land, but also the cane of the many nearby smallholders [@OLaughlin2016], Maragra has so far been able to weather the 2016 Mozambican crisis and concurrent collapse in global sugar prices. 
 
-Maragra is located in the district of Manhiça, a semi-rural area in Southern Mozambique
+Maragra (figure 1, panels iii and iv) is located in the district of Manhiça (figure 1, panel ii), a semi-rural area in the south of Mozambique (figure 1, panel i). 80 kilometers north of the Mozambican capital of Maputo, the district is low-lying, consisting largely of savannah and wetlands along the Incomati River. Most of the areas 160,000 residents [@Sacoor2013] work as subsistence farmers. Migration from the area to South Africa for the purpose of employment in the profitable construction industry is common, especially among men [@Nhacolo_2006], as is migration to the area (from other parts of Mozambique) for seasonal work on the sugarcane plantations at Maragra and the slightly larger facility in Xinavane (at the district's border with Magude) [@OLaughlin2016]. 
 
 ```{r, fig.width = 6, fig.align='center', fig.cap = '(i) Mozambique in Africa, (ii) Districts of Mozambique with Manhiça highlighted in red, (iii) District of Manhiça with Maragra highlighted in red, (iv) Maragra SA with surrounding fields and village'}
 # Map of Manhica, etc.
-# Libraries
-library(tidyverse)
-library(raster)
-library(tidyr)
-library(ggplot2)
-library(RColorBrewer)
-library(broom)
-library(ggthemes)
-
-# Get each countries shapefile
-countries <- c('Mozambique')
-iso3s <- c('MOZ')
-for(i in 1:length(countries)){
-  message('Fetching data for ', countries[i])
-  x <- getData(name = 'GADM', level = 2, country = iso3s[i])
-  assign(tolower(countries[i]),
-         x,
-         envir = .GlobalEnv)
-}
-
-# Define which districts are "special" -------------
-specials <- 'Manhiça'
-
-# Mozambique
-mozambique@data$special <- FALSE
-mozambique@data$special[mozambique@data$NAME_2 %in% specials] <- TRUE
-
-# Combine all data into a "long" / "tidy" format
-make_long <- function(x, region = "NAME_2"){
-  shp_df <- broom::tidy(x, region = region)
-  return(shp_df)
-}
-mozambique_long <- make_long(mozambique) %>% mutate(country = 'Mozambique')
-combined <- mozambique_long
-combined$special <- combined$id %in% specials
-# combined$special[!combined$special] <- NA
-# Get a map of africa to use as a background
-# from the cism package!
-africa <- cism::africa
-africa_long <- make_long(africa, region = 'COUNTRY')
-africa_long$special <- africa_long$id %in% countries
-
-g1 <-
-  ggplot() +
-  geom_polygon(data = africa_long,
-               aes(x = long,
-                   y = lat,
-                   group = group),
-               fill = grey(0.6),
-               alpha = 1,
-               color = 'white',
-               lwd = 0.3) +
-  geom_polygon(data = combined,
-               aes(x = long,
-                   y = lat,
-                   group = group),
-               fill = grey(0.3)) +
-  geom_polygon(data = combined %>% filter(!is.na(special) & special),
-               aes(x = long,
-                   y = lat,
-                   group = group,
-                   fill = special)) +
-  scale_fill_manual(name = '',
-                    values = c('darkorange'),
-                    na.value = NA) +
-  coord_cartesian() +
-  ggthemes::theme_map() +
-  theme(legend.position = 'none') +
-  # redraw country lines
-  geom_polygon(data = africa_long,
-               aes(x = long,
-                   y = lat,
-                   group = group),
-               fill = NA,
-               alpha = 1,
-               color = 'white',
-               lwd = 0.3) + coord_map() +
-  labs(title = 'i.')
-country_map <- function(the_country = 'Gabon'){
-  ggplot(data = combined %>% filter(country == the_country),
-         aes(x = long,
-             y = lat,
-             group = group,
-             fill = special)) +
-    geom_polygon(#alpha = 0.8,
-                 lwd = 0.3,
-                 color = grey(0.6)) +
-    theme_map() +
-    coord_map() + 
-    scale_fill_manual(name = '', values = c('darkgrey', 'darkred')) +
-    theme(legend.position = 'none')
-}
-g2 <- country_map('Mozambique') +
-  labs(title = 'ii.')
-
-mar <- data.frame(lat = -25.4498802, long = 32.777661)
-man3_fortified <- cism::man3_fortified
-g3 <- ggplot(data = man3_fortified,
-             aes(x = long,
-                 y = lat)) +
-  geom_polygon(aes(group = group),
-               # alpha = 0.8,
-                 lwd = 0.3,
-                 color = grey(0.6)) +
-  geom_point(data = mar,
-             aes(x = long,
-                 y = lat),
-             color = 'red') +
-  geom_point(data = mar,
-             aes(x = long,
-                 y = lat),
-             color = 'red',
-             size = 4, 
-             pch = 1) +
-  geom_point(data = mar,
-             aes(x = long,
-                 y = lat),
-             color = 'red',
-             size = 6, 
-             pch = 1) +
-  geom_point(data = mar,
-             aes(x = long,
-                 y = lat),
-             color = 'red',
-             size = 9, 
-             pch = 1) +
-    theme_map() +
-    coord_map() + 
-    theme(legend.position = 'none') +
-  labs(title = 'iii')
-
-library(ggmap)
-# if('.hdf.RData' %in% dir()){
-#   load('.hdf.RData')
-# } else {
-  hdf <- ggmap::get_map(location = c(lon = mar$long, lat = mar$lat), maptype = 'satellite', zoom = 14)
-#   save(hdf, file = '.hdf.RData')
-# }
-
-g4 <- ggmap::ggmap(hdf) +
-  theme_map() +
-  labs(title = 'iv')
-
-Rmisc::multiplot(g1, g2, g3, g4, cols = 2)
+Rmisc::multiplot(plotlist = map_list, cols = 2)
 ```
 
+Poverty is rife in southern Mozambique, and its associated illnesses take their toll on the population. The community prevalence of HIV/AIDS is as high as 40% [@Gonzlez2012]; even in a more recent study suggesting a much lower prevalence of 22%, the risk of infection is still twice that of nearby areas [@Mocumbi2017]. Recent years have seen a three-fold increase in tuberculosis [@GarcaBasteiro2017]. Malaria, which has the greatest mortality burden due to the fact that the young are especially vulnerable to its effects, is perennial, though worse during the rainy season (December - April) [@Sate2003]. Adult malaria is essentially universal, albeit much of it asymptomatic [@Mayor2007]. In regards to worker health, malaria is Maragra's primary concern, being so important as to justify the existence of both an on-site testing laboratory and clinic, as well as a malaria control department.
 
-
-Details on Manhica
-
-Details on Mozambique
 
 

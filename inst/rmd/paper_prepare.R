@@ -160,5 +160,151 @@ if('prepared_data.RData' %in% dir()){
   }
   names(fe_models) <- groups
   
+  # Plots of maps
+  # Libraries
+  library(tidyverse)
+  library(raster)
+  library(tidyr)
+  library(ggplot2)
+  library(RColorBrewer)
+  library(broom)
+  library(ggthemes)
+  
+  # Get each countries shapefile
+  countries <- c('Mozambique')
+  iso3s <- c('MOZ')
+  for(i in 1:length(countries)){
+    message('Fetching data for ', countries[i])
+    x <- getData(name = 'GADM', level = 2, country = iso3s[i])
+    assign(tolower(countries[i]),
+           x,
+           envir = .GlobalEnv)
+  }
+  
+  # Define which districts are "special" -------------
+  specials <- 'Manhiça'
+  
+  # Mozambique
+  mozambique@data$special <- FALSE
+  mozambique@data$special[mozambique@data$NAME_2 %in% specials] <- TRUE
+  
+  # Combine all data into a "long" / "tidy" format
+  make_long <- function(x, region = "NAME_2"){
+    shp_df <- broom::tidy(x, region = region)
+    return(shp_df)
+  }
+  mozambique_long <- make_long(mozambique) %>% mutate(country = 'Mozambique')
+  combined <- mozambique_long
+  combined$special <- combined$id %in% specials
+  # combined$special[!combined$special] <- NA
+  # Get a map of africa to use as a background
+  # from the cism package!
+  africa <- cism::africa
+  africa_long <- make_long(africa, region = 'COUNTRY')
+  africa_long$special <- africa_long$id %in% countries
+  
+  g1 <-
+    ggplot() +
+    geom_polygon(data = africa_long,
+                 aes(x = long,
+                     y = lat,
+                     group = group),
+                 fill = grey(0.6),
+                 alpha = 1,
+                 color = 'white',
+                 lwd = 0.3) +
+    geom_polygon(data = combined,
+                 aes(x = long,
+                     y = lat,
+                     group = group),
+                 fill = grey(0.3)) +
+    geom_polygon(data = combined %>% filter(!is.na(special) & special),
+                 aes(x = long,
+                     y = lat,
+                     group = group,
+                     fill = special)) +
+    scale_fill_manual(name = '',
+                      values = c('darkorange'),
+                      na.value = NA) +
+    coord_cartesian() +
+    ggthemes::theme_map() +
+    theme(legend.position = 'none') +
+    # redraw country lines
+    geom_polygon(data = africa_long,
+                 aes(x = long,
+                     y = lat,
+                     group = group),
+                 fill = NA,
+                 alpha = 1,
+                 color = 'white',
+                 lwd = 0.3) + coord_map() +
+    labs(title = 'i.')
+  country_map <- function(the_country = 'Gabon'){
+    ggplot(data = combined %>% filter(country == the_country),
+           aes(x = long,
+               y = lat,
+               group = group,
+               fill = special)) +
+      geom_polygon(#alpha = 0.8,
+        lwd = 0.3,
+        color = grey(0.6)) +
+      theme_map() +
+      coord_map() + 
+      scale_fill_manual(name = '', values = c('darkgrey', 'darkred')) +
+      theme(legend.position = 'none')
+  }
+  g2 <- country_map('Mozambique') +
+    labs(title = 'ii.')
+  
+  mar <- data.frame(lat = -25.4498802, long = 32.777661)
+  man3_fortified <- cism::man3_fortified
+  g3 <- ggplot(data = man3_fortified,
+               aes(x = long,
+                   y = lat)) +
+    geom_polygon(aes(group = group),
+                 # alpha = 0.8,
+                 lwd = 0.3,
+                 color = grey(0.6)) +
+    geom_point(data = mar,
+               aes(x = long,
+                   y = lat),
+               color = 'red') +
+    geom_point(data = mar,
+               aes(x = long,
+                   y = lat),
+               color = 'red',
+               size = 4, 
+               pch = 1) +
+    geom_point(data = mar,
+               aes(x = long,
+                   y = lat),
+               color = 'red',
+               size = 6, 
+               pch = 1) +
+    geom_point(data = mar,
+               aes(x = long,
+                   y = lat),
+               color = 'red',
+               size = 9, 
+               pch = 1) +
+    theme_map() +
+    coord_map() + 
+    theme(legend.position = 'none') +
+    labs(title = 'iii')
+  
+  library(ggmap)
+  # if('.hdf.RData' %in% dir()){
+  #   load('.hdf.RData')
+  # } else {
+  hdf <- ggmap::get_map(location = c(lon = mar$long, lat = mar$lat), maptype = 'satellite', zoom = 14)
+  #   save(hdf, file = '.hdf.RData')
+  # }
+  
+  g4 <- ggmap::ggmap(hdf) +
+    theme_map() +
+    labs(title = 'iv')
+  
+  map_list <- list(g1,g2,g3,g4)
+  
   save.image(file = 'prepared_data.RData')
 }
