@@ -1,6 +1,5 @@
 ---
-title: Return on investment of private sector malaria control at a large sugar
-  facility in Southern Mozambique
+title: Is malaria control profitable? Return on investment of privately-managed residential fumigations at a large sugarcane processing facility in Southern Mozambique
 date: ''
 output: 
   pdf_document:

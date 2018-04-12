@@ -31,10 +31,10 @@ This paper provides new empirical evidence regarding the effect and return on in
     \parbox{\textwidth}{%
         \subsection*{Research Highlights}
         \begin{itemize}
-          \item Large, individual-level worker absenteeism data from malaria endemic zone
-          \item Quantifies effect of indoor residual spraying on absenteeism
-          \item Estimates cost-effectiveness of malaria control from investment standpoint
-          \item Results suggest that private sector could play a significant role in malaria elimination
+          \item This paper analyzes large, individual-level worker absenteeism data from malaria endemic zone. 
+          \item We quantify the effect of indoor residual spraying on absenteeism and clinical malaria. 
+          \item We estimate cost-effectiveness of malaria control from an investment standpoint. 
+          \item Results show ledger profitability, suggesting that the private sector could play a significant role in malaria elimination.  
         \end{itemize}
         \vspace{2mm}
     }%
