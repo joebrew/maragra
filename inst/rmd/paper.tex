@@ -28,6 +28,46 @@
             pdfborder={0 0 0},
             breaklinks=true}
 \urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
 \usepackage{graphicx,grffile}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -183,7 +223,6 @@ Southern Mozambique}
 Joe Brew\footremember{isglobal}{Barcelona Institute for Global Health: c/ Rosselló, 132, 5è 2a. 08036, Barcelona, Spain, Spain}\footremember{cism}{Centro de Investigação em Saúde de Manhiça: Vila da Manhiça, Bairro Cambeve, Rua 12, Distrito da Manhiça, CP 1929, Maputo, Mozambique, Mozambique}\footremember{vu}{VU University Amsterdam: De Boelelaan 1105, 1081 HV Amsterdam, Netherlands, Netherlands} \footnote{Corresponding Author}
 Kizito Gondo\footremember{ma}{Maragra Açucar SA, Subsidiary of Illovo Sugar Ltd: CP 2789, Maputo, Mozambique, Mozambique}
 Elton Dorkin\footrecall{ma}
-Eduardo Nhamahanga\footrecall{ma}
 Menno Pradhan\footrecall{vu}\footremember{uva}{University of Amsterdam: REC E, Roetersstraat 11, Amsterdam, Netherlands, Netherlands}
 Laia Cirera\footrecall{isglobal}\footrecall{cism}
 Ranjeeta Thomas\footremember{icl}{Imperial College London: South Kensington Campus, London SW7 2AZ, U.K., UK}
@@ -253,7 +292,7 @@ saving, investment (Shretta et al., 2016), risk perception,
 productivity, absenteeism (Nonvignon et al., 2016), human capital
 accumulation (Castel-Branco, 2014), mortality, and costs of care (Sachs
 and Malaney, 2002), malaria likely has a negative effect on GDP and
-growth (McCarthy et al., 2000) (Orem et al., 2012). Because of the
+growth (McCarthy et al., 2000a) (Orem et al., 2012). Because of the
 relative affordability of most intereventions and the enormous societal
 costs of malaria, most forms of malaria control are cost-effective when
 a public welfare perspective is assumed, such as when a government
@@ -342,12 +381,84 @@ program in reducing absences, and translate this reduction into cost
 savings. Our discussion covers potential implications from this study in
 terms of policy and investment, as well as the paper's limitations.
 
-\subsection{Background Literature}\label{background-literature}
+The literature on the effect of sugarcane cultivation on malaria risk is
+mixed. While some studies have found that the prevalence of malaria
+vectors in sugarcane areas to be similar to that of uncultivated areas
+(and less than in areas dedicated to other forms of more water-inensive
+agriculture, such as rice) (Ijumba et al., 2002), other studies have
+found significant increases in factors associated with malaria
+transmission at large-scale sugarcane facilities relative to
+traditional, small-scale farming and non-irrigated farming (Jaleta et
+al., 2013). Regardless of the effect the presence of a sugarcane farm
+\emph{per se} on local malaria epidemiology, the time spent outdoors by
+sugarcane workers, the fact that many workers are migrants, and their
+sometimes precarious housing situations, suggest that sugarcane farmers
+are likely at increased risk of malaria infection (O'Laughlin, 2016).
+This is important, given that even among occupations with far less
+inherent exposure to mosquitoes (such as health professionals), malaria
+is one of the primary causes of work absenteeism in malaria-endemic
+countries (Burton et al., 1999). There is also some concern regarding
+the effect of large-scale insecticide use - common at essentially all
+Sub-Saharan African sugarcane farms - on insecticide resistance among
+moquitoes in the area. A study in Belize found that mosquito populations
+on the edge of sugarcane fields had higher tolerance to insecticide than
+similar populations in the core of fields or outside of the periphery
+(Dusfour et al., 2009). Sugarcane areas may offer the standing water
+necessary for mosquito breeding, but also perhaps attract mosquitoes
+which would otherwise be elsewhere, due to compounds in sugarcane pollen
+(Wondwosen et al., 2018).
 
-\todo{Will add 3-5 paragraphs of background lit review}
+Regardless of the academic literature on the risk of workers becoming
+infected with malaria, the companies running large agricultural
+operations in malaria-endemic regions generally consider the disease to
+be an important enough threat to workers' health to merit some form of
+investment in malaria control (Pluess et al., 2009). Insecticide
+fumigation, bednet distribution, test-and-treat clinics, and occasional
+educational campaigns are common forms of corporate social
+responsibility to combat malaria. A World Bank study on Nigerian
+sugarcane cutters found that the simple availability of testing and
+treatment increased productivity by 10\% in the weeks following the
+provision of services, the conclusion being that both the treatment and
+the test result were effective in increasing productivity, the latter
+simply increasing the information available which could influence
+personal labor allocation decisions (Dillon et al., 2014).
 
-Our study adds to the existing literature in several ways.
-\improvement{Will add details here.}
+Malaria may disincentivize investment in business in malaria zones. In a
+vicious cycle, businesses already in malaria zones may not be
+incentivized to invest in malaria control, perhaps because this is seen
+as the domain of the public sector (Curtis et al., 2003), or perhaps due
+to not knowing the extent to which the benefits in health of that
+control will accrue to the business itself.
+
+The evidence of malaria's negative effects on both health and wealth, at
+both the individual (Cole and Neumayer, 2006) and collective (McCarthy
+et al., 2000b) levels, as well as in both the short (Asenso-Okyere and
+Dzator, 1997) (Ajani and Ashagidigbi, 2010) and long (Hong, 2011) (Sachs
+and Malaney, 2002) terms, are amply described in the public health and
+economics literature (Phillips, 1998). That said, very little exists in
+the literature examining the costs and benefits of malaria control from
+a private ledger perspective (ie, the point of view a business
+investor). Unlike a government or individual, a private firm investing
+in malaria control may be most interested not in its long-term
+macroeconomic effects, nor its short-term personal health effects, but
+rather on the impact on productivity (and the extent to which that
+producitivty's benefits accrue to the firm), absenteeism, and the
+opportunity costs of expenditures in malaria control. In other words,
+though the large magnitude of malaria control's benefits are well known,
+the portion of those benefits accrued by a private firm investing in
+malaria control is unknown.
+
+This study does not endeavor to expand the current body of knowledge
+regarding malaria's ill effects on individuals and societies; rather, it
+aims to provide empirical evidence pertaining to a facet of malaria
+economics with very little in the literature: malaria control from a
+private-sector investment perspective. Our study adds to the existing
+literature by showing the effect of specific malaria control
+interventions on worker absenteeism, and translating that effect into a
+return on investment. Unlike previous studies on the effectiveness of
+malaria control interventions, our's focuses solely on one firm carrying
+out one intervention, takes advantage of individual-level data, and
+analyzes results from a ledger perspective.
 
 \subsection{Study area}\label{study-area}
 
@@ -366,6 +477,15 @@ levels fell from 320,000 annual tons to fewer than 15,000 by 1992. After
 the end of the civil war, foreign investment revived the sugar industry,
 and by 2011 production had surpassed its 1972 peak.
 
+\begin{figure}[H]
+
+{\centering \includegraphics{figures/unnamed-chunk-13-1} 
+
+}
+
+\caption{(i) Mozambique in Africa, (ii) Districts of Mozambique with Manhiça highlighted in red, (iii) District of Manhiça with Maragra highlighted in red, (iv) Maragra SA with surrounding fields and village}\label{fig:unnamed-chunk-13}
+\end{figure}
+
 The mill of the Maragra Açucar SA (a subsidary of the Illovo sugar
 company, henceforth referred to as ``Maragra'') was nationalized in the
 1970s (like all other Mozambican mills), went through a period of low
@@ -381,22 +501,58 @@ on Maragra's land, but also the cane of the many nearby smallholders
 (O'Laughlin, 2016), Maragra has so far been able to weather the 2016
 Mozambican crisis and concurrent collapse in global sugar prices.
 
-Maragra (figure 1, panels iii and iv) is located in the district of
-Manhiça (figure 1, panel ii), a semi-rural area in the south of
-Mozambique (figure 1, panel i).
+Maragra (figure 1, panel iii) is located in the district of Manhiça
+(figure 1, panel ii), a semi-rural area in the south of Mozambique
+(figure 1, panel i). 80 kilometers north of the Mozambican capital of
+Maputo, the district is low-lying, consisting largely of savannah and
+wetlands along the Incomati River. Most of the areas 160,000 residents
+(Sacoor et al., 2013) work as subsistence farmers. Migration from the
+area to South Africa for the purpose of employment in the profitable
+construction industry is common, especially among men (Nhacolo et al.,
+2006), as is migration to the area (from other parts of Mozambique) for
+seasonal work on the sugarcane plantations at Maragra and the slightly
+larger facility in Xinavane (at the district's border with Magude)
+(O'Laughlin, 2016).
+
+Poverty is rife in southern Mozambique, and its associated illnesses
+take their toll on the population. The community prevalence of HIV/AIDS
+is as high as 40\% (González et al., 2012); even in a more recent study
+suggesting a much lower prevalence of 22\%, the risk of infection is
+still twice that of nearby areas (Mocumbi et al., 2017). Recent years
+have seen a three-fold increase in tuberculosis (García-Basteiro et al.,
+2017). Malaria, which has the greatest mortality burden due to the fact
+that the young are especially vulnerable to its effects, is perennial,
+though worse during the rainy season (December - March) (Saúte et al.,
+2003). Adult malaria is essentially universal, albeit much of it
+asymptomatic (Mayor et al., 2007). In regards to worker health, malaria
+is Maragra's primary concern, being so important as to justify the
+existence of both an on-site testing laboratory and clinic, as well as a
+malaria control department.
+
+Maragra workers are mostly seasonal, working for the firm approximately
+half of the year during harvest time, and cultivating crops, working in
+construction, or going unemployed (or working elsewhere) during the
+other half. Though many workers live ``on-site'' (ie, within the
+delineated property of the firm itself), a sizeable minority resides in
+the environs (figure 1, panel iv). Maragra provides indoor residual
+spraying (IRS) using ACT (alpha-cypermethrin) and DDT
+(Dichlorodiphenyltrichloroethane) depending on stocks (a preference
+apparently exists for the former, but it is not always available). IRS
+activities, managed by Maragra's Malaria Control program, are ongoing
+throughout the year (Figure 1, panel i). Nearly all on-site houses are
+sprayed, though the time between fumigations is irregular (Figure 2,
+panel ii). Off-site houses may also receive IRS (managed and carried out
+by the National Malaria Control Program), but the status and timing of
+these fumigations is not known at the individual level.
 
 \begin{figure}[H]
 
-{\centering \includegraphics{figures/unnamed-chunk-13-1} 
+{\centering \includegraphics{figures/unnamed-chunk-14-1} 
 
 }
 
-\caption{(i) Mozambique in Africa, (ii) Districts of Mozambique with Manhiça highlighted in red, (iii) District of Manhiça with Maragra highlighted in red, (iv) Maragra SA with surrounding fields and village}\label{fig:unnamed-chunk-13}
+\caption{i. Fumigation activities carried out by Maragra Malaria Control during study period, ii. Distribution of average time between sprayings of households}\label{fig:unnamed-chunk-14}
 \end{figure}
-
-Details on Manhica
-
-Details on Mozambique
 
 \section{Methods}\label{methods}
 
@@ -467,33 +623,43 @@ strategy}\label{conceptual-framework-and-identification-strategy}
 We sought to understand the effect of IRS on individual workers'
 likelihood of absence from work as well as their likelihood of clinical
 malaria. To estimate this effect, we estimated separate models for
-absence and illness. We employed interrupted time series (Lopez Bernal
-et al., 2016) and a linear probability approach using the following
-econometric model.
+absence and illness. We employed linear mixed effects models (Minalu et
+al., 2011) (Liu et al., 2010) (with individual worker fixed effects, and
+random effects for other covariates) in lieu of interrupted time series
+(Lopez Bernal et al., 2016) so as to explicitly adjust for confounders
+(Bell and Jones, 2014). We divide into 4 different models for different
+worker types, so as to account for the potential time-varying effects of
+worker type on risk of malaria. Our econometric model is relatively
+straightforward:
 
 \[
-\hat{Y_{it}} = \beta_{0} +  (\beta_{1}) (\text{Season}_{t}) + (\beta_2{IRS}*\beta_3{IRS_t}) + ... + \epsilon
+\hat{Y_{it}} = \beta_{0} +  (\beta_{1}) (\text{Season}_{it}) + (\beta_2{IRS}*\beta_3{IRS_it}) + ... + \epsilon_{it}
 \]
 
 \(\hat{Y}\) is the rate of absence. \(\beta_{1}\) represents the
 clinical malaria incidence at that time in the entire district of
 Manhiça. Our demographic confounders (represented by \(...\)) are sex,
 age, and worker department (field, factory, or administrative). Our
-intervention was not a simple yes/no, but rather the product of whether
-the residence of the worker in question was treated in the last year,
-and, if so, the time since treatment (represented above as the
-interaction term, where where \(_t\) represents time elapsed since
-commencement of the most recent IRS campaign). We define the malaria
-season as any time during which the clinical incidence of malaria in the
-district of Manhiça was at or greater than the median clinical incidence
-of malaria for the entire study period. These weeks are flagged as red
-in Figure 1, Panel A. By using clinical incidence of the area of
-residence of the workers (as opposed to more typical proxies for malaria
-risk, such as only rainy vs.~non rainy season), our seasonality estimate
-is a closer approximation of true malaria risk, incorporating lagged
-effects such as the incubation period of the parasite, as well as any
-inherent non-linear effects of weather. In addition, we adjust for daily
-precipitation
+intervention whether the residence of the worker in question was treated
+in the last year, and, if so, the time since treatment (represented
+above as the interaction term, where where \(_t\) represents time
+elapsed since commencement of the most recent IRS campaign). We define
+the malaria season as any time during which the clinical incidence of
+malaria in the district of Manhiça was at or greater than the median
+clinical incidence of malaria for the entire study period. These weeks
+are flagged as red in Figure 1, Panel A. By using clinical incidence of
+the area of residence of the workers (as opposed to more typical proxies
+for malaria risk, such as only rainy vs.~non rainy season), our
+seasonality estimate is a closer approximation of true malaria risk,
+incorporating lagged effects such as the incubation period of the
+parasite, as well as any inherent non-linear effects of weather. In
+addition, we adjust for daily precipitation
+
+Details will go here about externalities (neighborhood effects, positive
+spillover to district, negative spillover from district, how large firm
+may mean that most positive externalities are absorbed by the firm, and
+not many negative externalities, but maybe with a smaller firm it
+wouldn't work as well)\todo{NOT DONE YET.}
 
 \subsection{Estimating return on
 investment}\label{estimating-return-on-investment}
@@ -521,38 +687,98 @@ approval}\label{reproducibility-and-ethical-approval}
 All data processing and analysis were carried out in R (R Core Team,
 2017) and all analysis code is freely available online (Brew, 2017).
 Ethical approval for this project was obtained from the Institutional
-Ethics Review Board for Health at the CISM prior to data collection.
+Ethics Review Board for Health at the CISM (CIBS-CISM) prior to data
+collection.
 
 \subsection{Descriptive statistics}\label{descriptive-statistics}
 
-Age, types of workers, bla bla bla.
-\todo{Will add a table here and some overview}
+We collected absenteeism and demographic data data on 3362 workers from
+2012 through 2016. Workers were approximately 60\% male, and more than
+80\% fieldworkers (predominantly cane-cutters). Most were in their 20s
+and 30s and employed on temporary contracts. Table 1 shows overall
+worker details.
+
+\begin{table}[ht]
+\centering
+\begin{tabular}{rlll}
+  \hline
+Variable &   & Workers & (\%) \\ 
+  \hline
+Department & Administrative & 157 & 4.67 \\ 
+   & Factory & 459 & 13.65 \\ 
+   & Field & 2746 & 81.68 \\ 
+  Sex & F & 1305 & 38.82 \\ 
+   & M & 2057 & 61.18 \\ 
+  Status & Permanent & 500 & 14.87 \\ 
+   & Temporary & 2862 & 85.13 \\ 
+  Age & 20 & 985 & 29.30 \\ 
+   & 30 & 1244 & 37.00 \\ 
+   & 40 & 665 & 19.78 \\ 
+   & 50 & 347 & 10.32 \\ 
+   & 60 & 117 & 3.48 \\ 
+   & 70 &   4 & 0.12 \\ 
+   \hline
+\end{tabular}
+\caption{Overall worker characteristics} 
+\end{table}
+
+The overall absenteeism rate during the study period was 5.56\% among
+all workers. The number of malaria cases registered at the company
+clinic during that time was 1873, for an approximate annualized clinical
+incidence of 110 cases per 1,000.
+
+Temporary workers tended to be younger and male; female temporary
+workers being on average 5-10 years older than their male counterparts.
+Permanent workers had a bi-modal age distribution, the older peak
+explained by the greater density of males in administrative roles.
+Females accounted for 43\% of temporary workers but only 16\% of
+permanent workers (figure x).
+
+\begin{figure}[H]
+
+{\centering \includegraphics{figures/unnamed-chunk-17-1} 
+
+}
+
+\caption{Age distribution by sex and worker status}\label{fig:unnamed-chunk-17}
+\end{figure}
+
+During the study period, weather followed typical seasonal trends for
+the area, albeit slightly drier than previous periods.
+
+\begin{figure}[H]
+
+{\centering \includegraphics{figures/unnamed-chunk-18-1} 
+
+}
+
+\caption{i. Monthly total precipitation in the Maniça district; ii. Average monthly temperature (bars) during the study period, as well as monthly maximum (red) and minimum (blue) temperatures}\label{fig:unnamed-chunk-18}
+\end{figure}
 
 \section{Results}\label{results}
 
 In Southern Mozambique, malaria peaks during the summer months (December
-through March) most years (Figure 1, panel A), and worker absenteeism
-rates track malaria incidence closely, following the same seasonal
-patterns (Figure 1, panel B). Both all-cause absenteeism and sick
-absenteeism have declined in recent years at Maragra (Figure 1, panel
-C), with the latter declining at a faster rate than the former. The fact
-that the rate of confirmed cases at the company clinic is largely
-non-seasonal (Figure 1, panels E and F) suggests that a significant
-portion of workers either seek care for malaria elsewhere (for example,
-government health posts, of which several are nearby and in some many
-cases closer to workers' residence than the company clinic) or do not
-seek care during malaria infection. Accordingly, we focus our analysis
-on all-cause absenteeism rather than sickness absenteeism or malaria
-diagnostics, with the assumption that much of illness is captured by
-absenteeism but not by the clinical data.
+through March) most years (Figure 4, panel A), and worker absenteeism at
+Maragra rates track malaria incidence closely, following the same
+seasonal patterns (figure 4, panel B). Both all-cause absenteeism and
+sick absenteeism have declined in recent years at Maragra (figure 4,
+panel C), with the latter declining at a faster rate than the former.
+The fact that the rate of confirmed cases at the company clinic is
+largely non-seasonal (figure 4, panels E and F) suggests that a
+significant portion of workers either seek care for malaria elsewhere
+(for example, government health posts, of which several are nearby and
+in some many cases closer to workers' residence than the company clinic)
+or do not seek care during malaria infection. Accordingly, we focus our
+analysis on all-cause absenteeism rather than sickness absenteeism or
+malaria diagnostics, with the assumption that much of illness is
+captured by absenteeism but not by the clinical data.
 
 \begin{figure}
 \centering
-\includegraphics{figures/unnamed-chunk-14-1.pdf}
+\includegraphics{figures/unnamed-chunk-19-1.pdf}
 \caption{Clinical malaria (district of Manhiça), all-cause absenteeism
-among Maragra workers, sick absenteeism among Maragra workers, estimated
-rainfall, positive cases at company clinic, and test positivity rate at
-company clinic}
+among Maragra workers, sick absenteeism among Maragra workers, positive
+cases at company clinic, and test positivity rate at company clinic}
 \end{figure}
 
 \textbf{Fumigations}: During the period from January 1st, 2012 through
@@ -592,49 +818,88 @@ Malaria season & Low & 5.2\% & 7\% & 5.4\% & 3.3\% \\
 \caption{Absenteeism rate by year and worker characteristics} 
 \end{table}
 
-\textbf{Costs}: The malaria control program at Maragra has an annual
-operating budget of approximately XX, which includes the purchase of
-insecticide, the wages of IRS sprayers and drivers, transportation,
-record-keeping, and general administrative costs. Assuming linearity in
-costs, the program spends approximately XX per agregado sprayed. With
-each agregado containing an average of 2.2 workers, this translates to a
-cost of XX per worker protected per season. Much of the benefit of IRS
-goes to non-worker residents of sprayed agregados (who constitute a
-majority), but this benefit is purposefully ignored for this analysis.
+\textbf{Effect of IRS on clinical malaria}: xxx.
+\todo{Not done yet. In fact, not even sure if I should do this section at all, since it's basically just a distraction.}
 
-Given the likelihood that clinical data does not fully capture all
-malaria cases (and most likely captures only a small fraction of actual
-infections, given the high rates of acumulated adult immunity
-{[}Mayor2007{]}), we do not quantify the costs of malaria infection to
-the company. Rather, we first estimate the reduction in absenteeism
-attributible to IRS, and then quantify the savings associated with
-prevented absences. Additionally, we calculate the clinical savings of
-IRS by first estimating the share of absences which are associated with
-an episode of clinical malaria, and then applying the clinical cost per
-case to the equivalent share of prevented absences. We intentionally
-ignore the savings accrued by the public health system, as well as the
-likely utility gains in secondary realms such as school absenteeism,
-producitivity, etc.
+\textbf{Costs of program}: The malaria control program at Maragra has an
+annual operating budget of approximately \$112,000, which includes the
+purchase of insecticide, the wages of IRS sprayers and drivers,
+transportation, record-keeping, and general administrative costs.
+Assuming linearity in costs, the program spends approximately \$19 per
+building sprayed. With each agregado containing an average of 2.2
+workers. Much of the benefit of IRS goes to non-worker residents of
+sprayed agregados (who constitute a majority), but this benefit is
+purposefully ignored for this analysis.
 
-\textbf{Effect of IRS on absenteeism}: IRS is associated with a
-year-long, significant reduction in absenteeism during the malaria
-season (figure 2). As one would expect if the mechanism by which IRS
-reduces absence is through reduced malaria infection, the effect of IRS
-during the low transmission season is significant, but far less
-substantial in effect size.
+\textbf{Cost of malaria}: Given the likelihood that clinical data does
+not fully capture all malaria cases (and most likely captures only a
+small fraction of actual infections, given the high rates of acumulated
+adult immunity {[}Mayor2007{]}), we do not quantify the costs of malaria
+infection to the company. Rather, we first estimate the reduction in
+absenteeism attributible to IRS, and then quantify the savings
+associated with prevented absences. Additionally, we calculate the
+clinical savings of IRS by first estimating the share of absences which
+are associated with an episode of clinical malaria, and then applying
+the clinical cost per case to the equivalent share of prevented
+absences. We intentionally ignore the savings accrued by the public
+health system, as well as the likely utility gains in secondary realms
+such as school absenteeism, producitivity, etc.
+
+\textbf{Effect of IRS on absenteeism}: Immediately following IRS, a
+worker's likelihood of absence drops significantly (figure x, panel i).
+As one would expect if the mechanism by which IRS reduces absence is
+through reduced malaria infection, the effect of IRS during the low
+transmission season is significant, but far less substantial in effect
+size (figure x, panel ii).
 
 \begin{figure}
 \centering
-\includegraphics{figures/unnamed-chunk-17-1.pdf}
-\caption{Estimated effect of IRS on absenteeism by season}
+\includegraphics{figures/unnamed-chunk-22-1.pdf}
+\caption{i. Absenteeism before and after IRS administration for all
+workers who ever received IRS; ii. The same, but segregated by malaria
+and non-malaria seasons}
 \end{figure}
 
-We create 4 worker fixed effects models. Different models for field vs
-not field, permanent vs temporary.
+In order to assess the effect of IRS on absenteeism, we created 4 worker
+fixed effects models for the 4 principal worker types (permanent field
+worker, temporary field worker, permanent non-field worker, temporary
+non-field worker). The reason for segregating models rather than
+incorporating worker type as a fixed effect was that it seemed plausible
+that the effect of the treatment (IRS) on the outcome would be different
+(and vary differently over time) depending on these worker types. For
+instance, it is reasonable to assume that IRS' effect would be
+differential for a temporary worker (who likely lives in the fumigated
+house less than 100\% of the year) than for a permanent worker.
+
+Given that IRS is carried out on a continuous rolling basis, we used
+relative worker time (as opposed to calendar) as the time component of
+our model - that is, each workers' days until and since IRS were
+standardized so that day 0 (date of fumigation) was the interruption
+point. This has the advantage of incorporating into the model a variety
+of potential time-varying confounders in a quasi-randomized fashion,
+thereby making it unecessary to adjust for them specifically. Our model
+took into account workers' residential location (on or off site) - even
+though off site workers by definition could not be administered IRS by
+Maragra - so as to capture other seasonal effects from those workers.
+\todo{This is not very eloquent yet and needs to be improved.}
+
+The model results (table 3) suggest a significant decrease in
+absenteeism following the administration of IRS. The effect is
+ambivalent among temporary workers, whereas among permanent workers the
+administration of IRS decreases absenteeism betwen 2.5 and 8.4
+percentage points in the 2-9 month following administration. These
+effects are consistent with IRS decreasing absence through the medium of
+malaria, since (a) the effect is not as strong in the first month
+(potentially during the parasite incubation phase), the effect is
+stronger on field workers (who are more socioeconomically the
+demographic at greater risk of malaria than their administrative
+counterparts), and the effect is ambivalent among temporary workers
+(since the protective effect of IRS is only a function of the amount of
+time that the worker spends in the fumigated house).
 
 \begin{table}
 
-\caption{\label{tab:unnamed-chunk-18}Models with worker fixed effects}
+\caption{\label{tab:unnamed-chunk-23}Models with worker fixed effects}
 \centering
 \begin{tabular}[t]{ll}
 \toprule
@@ -642,90 +907,347 @@ Term & Estimate\\
 \midrule
 \addlinespace[1.5em]
 \multicolumn{2}{l}{\textbf{Permanent field worker}}\\
-\hspace{1em}Off site & 9.142 (P<0.001)\\
-\hspace{1em}On site & 11.424 (P<0.001)\\
 \hspace{1em}Malaria season & 3.424 (P<0.001)\\
-\hspace{1em}Months since IRS: 01 & 3.831 (P<0.001)\\
-\hspace{1em}Months since IRS: 02-04 & 4.199 (P<0.001)\\
-\hspace{1em}Months since IRS: 05-09 & -3.194 (P<0.001)\\
-\hspace{1em}Months since IRS: 10+ & -5.794 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & -4.534 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 02-04 & -8.392 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 05-09 & -3.85 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 10+ & 4.504 (P=0.002)\\
+\hspace{1em}Months since IRS: 01 & 3.83 (P<0.001)\\
+\hspace{1em}Months since IRS: 02-04 & 4.206 (P<0.001)\\
+\hspace{1em}Months since IRS: 05-09 & -3.175 (P<0.001)\\
+\hspace{1em}Months since IRS: 10+ & -5.775 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: 01 & -4.529 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: 02-04 & -8.398 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: 05-09 & -3.859 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: 10+ & 4.507 (P=0.002)\\
 \addlinespace[1.5em]
 \multicolumn{2}{l}{\textbf{Permanent not field worker}}\\
-\hspace{1em}Off site & 10.862 (P<0.001)\\
-\hspace{1em}On site & 9.555 (P<0.001)\\
-\hspace{1em}Malaria season & 2.077 (P<0.001)\\
-\hspace{1em}Months since IRS: 01 & -2.083 (P<0.001)\\
-\hspace{1em}Months since IRS: 02-04 & 3.904 (P<0.001)\\
-\hspace{1em}Months since IRS: 05-09 & -0.834 (P=0.084)\\
-\hspace{1em}Months since IRS: 10+ & -0.268 (P=0.742)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & 2.735 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 02-04 & -5.768 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 05-09 & -2.441 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 10+ & 4.497 (P<0.001)\\
+\hspace{1em}Malaria season & 2.076 (P<0.001)\\
+\hspace{1em}Months since IRS: 01 & -2.078 (P<0.001)\\
+\hspace{1em}Months since IRS: 02-04 & 3.911 (P<0.001)\\
+\hspace{1em}Months since IRS: 05-09 & -0.822 (P=0.089)\\
+\hspace{1em}Months since IRS: 10+ & -0.25 (P=0.758)\\
+\hspace{1em}Malaria season:Months since IRS: 01 & 2.723 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: 02-04 & -5.785 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: 05-09 & -2.447 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: 10+ & 4.501 (P<0.001)\\
 \addlinespace[1.5em]
 \multicolumn{2}{l}{\textbf{Temporary field worker}}\\
-\hspace{1em}Off site & 0.985 (P<0.001)\\
-\hspace{1em}On site & 1.078 (P<0.001)\\
-\hspace{1em}Malaria season & -0.017 (P=0.461)\\
-\hspace{1em}Months since IRS: 01 & -0.4 (P<0.001)\\
-\hspace{1em}Months since IRS: 02-04 & -0.547 (P<0.001)\\
-\hspace{1em}Months since IRS: 05-09 & -0.554 (P<0.001)\\
-\hspace{1em}Months since IRS: 10+ & -0.992 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & -0.092 (P=0.62)\\
-\hspace{1em}Malaria season:Months since IRS: 02-04 & 0.172 (P=0.256)\\
-\hspace{1em}Malaria season:Months since IRS: 05-09 & 0.062 (P=0.657)\\
-\hspace{1em}Malaria season:Months since IRS: 10+ & 0.068 (P=0.771)\\
+\hspace{1em}Malaria season & -0.005 (P=0.833)\\
+\hspace{1em}Months since IRS: 01 & -0.429 (P<0.001)\\
+\hspace{1em}Months since IRS: 02-04 & -0.575 (P<0.001)\\
+\hspace{1em}Months since IRS: 05-09 & -0.586 (P<0.001)\\
+\hspace{1em}Months since IRS: 10+ & -1.025 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: 01 & -0.066 (P=0.725)\\
+\hspace{1em}Malaria season:Months since IRS: 02-04 & 0.166 (P=0.274)\\
+\hspace{1em}Malaria season:Months since IRS: 05-09 & 0.063 (P=0.654)\\
+\hspace{1em}Malaria season:Months since IRS: 10+ & 0.062 (P=0.789)\\
 \addlinespace[1.5em]
 \multicolumn{2}{l}{\textbf{Temporary not field worker}}\\
-\hspace{1em}Off site & 4.136 (P<0.001)\\
-\hspace{1em}On site & 3.834 (P<0.001)\\
-\hspace{1em}Malaria season & -0.292 (P=0.16)\\
-\hspace{1em}Months since IRS: 01 & -1.456 (P=0.389)\\
-\hspace{1em}Months since IRS: 02-04 & 0.608 (P=0.574)\\
-\hspace{1em}Months since IRS: 05-09 & -0.869 (P=0.405)\\
-\hspace{1em}Months since IRS: 10+ & 10.583 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & 6.045 (P=0.002)\\
-\hspace{1em}Malaria season:Months since IRS: 02-04 & 0.604 (P=0.667)\\
-\hspace{1em}Malaria season:Months since IRS: 05-09 & -1.482 (P=0.284)\\
-\hspace{1em}Malaria season:Months since IRS: 10+ & -10.636 (P<0.001)\\
+\hspace{1em}Malaria season & -0.22 (P=0.294)\\
+\hspace{1em}Months since IRS: 01 & -1.466 (P=0.389)\\
+\hspace{1em}Months since IRS: 02-04 & 0.571 (P=0.6)\\
+\hspace{1em}Months since IRS: 05-09 & -1.018 (P=0.334)\\
+\hspace{1em}Months since IRS: 10+ & 10.606 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: 01 & 6.093 (P=0.002)\\
+\hspace{1em}Malaria season:Months since IRS: 02-04 & 0.476 (P=0.736)\\
+\hspace{1em}Malaria season:Months since IRS: 05-09 & -1.505 (P=0.277)\\
+\hspace{1em}Malaria season:Months since IRS: 10+ & -10.785 (P<0.001)\\
 \bottomrule
 \end{tabular}
 \end{table}
 
+\subsection{Externalities}\label{externalities}
+
+\textbf{Translating absences to costs}
+
+xxx\todo{Not done yet. This will be relatively straightforward arithmetic, but I want to first make sure that the models are rock solid (since all of the "translation" hinges on them).}
+
 \subsection{Return on investment}\label{return-on-investment}
 
-Details here on ROI calculation outcomes
 \todo{Not done yet. In conversation with Eduardo from MC about getting more accurate costs}
+
+\textbf{Savings}
+
+\begin{itemize}
+\tightlist
+\item
+  In percentage point terms, reduction from 13\% to 8\%.\\
+\item
+  5 annually prevented absences per worker.\\
+\item
+  8,000 workers: 40,000 prevented absences, wage of 3 USD
+\item
+  TOTAL: 120,000 USD in productivity-only savings.
+\end{itemize}
+
+\textbf{Costs}
+
+\begin{itemize}
+\tightlist
+\item
+  8 IRS workers, 1500 USD yearly = 12,000 USD\\
+\item
+  ACT + DDT: 50,000 USD
+\item
+  Facilities, vehicles, gas: 50,000 USD\\
+\item
+  TOTAL: 112,000 USD in IRS-only costs
+\end{itemize}
+
+\textbf{7\% ROI} (ignoring clinical costs)
+
+\newpage
 
 \subsection{Robustness and
 generalizability}\label{robustness-and-generalizability}
 
 Two principal concerns call into question the results of our analysis.
-First, the application of IRS to a workers house may be endogenous. To
-check for this bla bla bla
-\todo{As per Menno's suggestion, will add details here pertaining to whether IRS predicts absenteeism before it is applied}.
-The second concern is that our quantification of consists is distorted
-by the fact that we treat IRS operations as essentially linear in
-nature, when in reality economies of scale, in-kind purchases and other
-factors likely make the true cost-per-spraying
-convex.\todo{Will address this with some sensitivity analysis}
+First, the application of IRS to a workers house may be
+endogenous.\todo{Is this the right term here? We're not dealing with an "unobserved" factor per se, rather we're dealing with a situation in which the cause might influence the effect, and the effect might influence the cause, ie a feedback loop.}
+It is reasonable to suspect that the application of IRS to households is
+not random, but rather that IRS was applied more frequently to houses
+which had already seen a malaria case. In this case, our estimated
+effect of IRS on absenteeism would likely be underestimated, with the
+post-IRS absenteeism rates actually having declined from a greater
+pre-IRS absenteeism rate than otherwise suggested.
+
+To check for this, we estimate the odds of absenteeism as a function of
+receiving IRS \emph{during the 10 day period prior to receiving IRS}. If
+IRS application is indeed endogenous, we would expect absenteeism to be
+elevated during this period (since the increase in absenteeism would be
+theoretically responsible for the application of IRS), a situation which
+would require further statistical adjustment. If, on the other hand,
+there is no endogeneity, we would expect absenteeism in the 10 day
+period prior to IRS administration to be similar to other pre-IRS
+absenteeism (adjusting for seasonality).
+
+What follows are several variations of a model to assess whether IRS
+application predicts pre-IRS absenteeism. In the final version of the
+paper, we'll use whichever model is most appropriate, but this is left
+here for discussion purposes. I've also included the code, so as to
+inform the discussion. In the below models, \texttt{pre\_irs} refers to
+the 10 day period prior to IRS administration. The models estimate the
+odds of absence (ie, the estimates and confidence intervals are in the
+form of odds ratios).
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{ro_data <-}\StringTok{ }\NormalTok{ab_panel }\OperatorTok{%>%}\StringTok{ }\KeywordTok{left_join}\NormalTok{(irs, }\DataTypeTok{by =} \KeywordTok{c}\NormalTok{(}\StringTok{"date"}\NormalTok{, }\StringTok{"unidade"}\NormalTok{)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{filter}\NormalTok{(days_since }\OperatorTok{<}\StringTok{ }
+\StringTok{    }\DecValTok{0}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{pre_irs =} \KeywordTok{between}\NormalTok{(days_since, }\OperatorTok{-}\DecValTok{10}\NormalTok{, }\OperatorTok{-}\DecValTok{1}\NormalTok{)) }\OperatorTok{%>%}\StringTok{ }\CommentTok{# mutate(time_period = lendable::time_period_extract(date)) %>%}
+\CommentTok{# mutate(time_period = as.character(time_period)) %>%}
+\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{time_period =} \KeywordTok{make_season}\NormalTok{(}\DataTypeTok{date =}\NormalTok{ date)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{absent_sick =} \KeywordTok{ifelse}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(absent_sick), }
+    \OtherTok{FALSE}\NormalTok{, absent_sick)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{left_join}\NormalTok{(workers }\OperatorTok{%>%}\StringTok{ }\NormalTok{dplyr}\OperatorTok{::}\KeywordTok{select}\NormalTok{(oracle_number, }
+\NormalTok{    sex, department, permanent_or_temporary), }\DataTypeTok{by =} \StringTok{"oracle_number"}\NormalTok{)}
+
+
+\NormalTok{make_model <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(}\DataTypeTok{formula =} \StringTok{"absent ~ pre_irs + time_period"}\NormalTok{) \{}
+\NormalTok{    ro_model <-}\StringTok{ }\KeywordTok{glm}\NormalTok{(}\KeywordTok{as.formula}\NormalTok{(formula), }\DataTypeTok{data =}\NormalTok{ ro_data, }\DataTypeTok{family =} \KeywordTok{binomial}\NormalTok{(}\StringTok{"logit"}\NormalTok{))}
+\NormalTok{    coefs <-}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ro_model))}
+\NormalTok{    ci <-}\StringTok{ }\KeywordTok{confint}\NormalTok{(ro_model)}
+\NormalTok{    ci <-}\StringTok{ }\KeywordTok{exp}\NormalTok{(ci)}
+\NormalTok{    out <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{Variable =} \KeywordTok{names}\NormalTok{(coefs), }\DataTypeTok{Estimate =}\NormalTok{ coefs, }\DataTypeTok{Lower =}\NormalTok{ ci[, }
+        \DecValTok{1}\NormalTok{], }\DataTypeTok{Upper =}\NormalTok{ ci[, }\DecValTok{2}\NormalTok{])}
+    \KeywordTok{row.names}\NormalTok{(out) <-}\StringTok{ }\OtherTok{NULL}
+\NormalTok{    out}\OperatorTok{$}\StringTok{`}\DataTypeTok{P value}\StringTok{`}\NormalTok{ <-}\StringTok{ }\KeywordTok{coef}\NormalTok{(}\KeywordTok{summary}\NormalTok{(ro_model))[, }\DecValTok{4}\NormalTok{]}
+\NormalTok{    out}\OperatorTok{$}\NormalTok{Significant <-}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(out}\OperatorTok{$}\StringTok{`}\DataTypeTok{P value}\StringTok{`} \OperatorTok{<=}\StringTok{ }\FloatTok{0.001}\NormalTok{, }\StringTok{"xxx"}\NormalTok{, }\KeywordTok{ifelse}\NormalTok{(out}\OperatorTok{$}\StringTok{`}\DataTypeTok{P value}\StringTok{`} \OperatorTok{<=}\StringTok{ }
+\StringTok{        }\FloatTok{0.01}\NormalTok{, }\StringTok{"xx"}\NormalTok{, }\KeywordTok{ifelse}\NormalTok{(out}\OperatorTok{$}\StringTok{`}\DataTypeTok{P value}\StringTok{`} \OperatorTok{<=}\StringTok{ }\FloatTok{0.05}\NormalTok{, }\StringTok{"x"}\NormalTok{, }\StringTok{""}\NormalTok{)))}
+    \KeywordTok{return}\NormalTok{(}\KeywordTok{kable}\NormalTok{(out, }\DataTypeTok{format =} \StringTok{"latex"}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{kable_styling}\NormalTok{() }\OperatorTok{%>%}\StringTok{ }\KeywordTok{row_spec}\NormalTok{(}\DataTypeTok{row =} \KeywordTok{which}\NormalTok{(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"pre_irs"}\NormalTok{, }
+\NormalTok{        out}\OperatorTok{$}\NormalTok{Variable)), }\DataTypeTok{background =} \StringTok{"yellow"}\NormalTok{))}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# BASIC FORMULA}
+\KeywordTok{make_model}\NormalTok{(}\StringTok{"absent ~ pre_irs + time_period"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|r|r|r|r|l}
+\hline
+Variable & Estimate & Lower & Upper & P value & Significant\\
+\hline
+(Intercept) & 0.0498463 & 0.0474720 & 0.0523031 & 0.0000000 & xxx\\
+\hline
+\rowcolor{yellow}  pre\_irsTRUE & 0.8050236 & 0.7002405 & 0.9211332 & 0.0019204 & xx\\
+\hline
+time\_periodMalaria season & 3.1215538 & 2.9408258 & 3.3145230 & 0.0000000 & xxx\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# BASIC FORMULA WITH INTERACTIONS}
+\KeywordTok{make_model}\NormalTok{(}\StringTok{"absent ~ pre_irs*time_period"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|r|r|r|r|l}
+\hline
+Variable & Estimate & Lower & Upper & P value & Significant\\
+\hline
+(Intercept) & 0.0496594 & 0.0472551 & 0.0521477 & 0.0000000 & xxx\\
+\hline
+\rowcolor{yellow}  pre\_irsTRUE & 0.8741393 & 0.6918180 & 1.0889051 & 0.2443527\\
+\hline
+time\_periodMalaria season & 3.1397591 & 2.9537482 & 3.3386865 & 0.0000000 & xxx\\
+\hline
+\rowcolor{yellow}  pre\_irsTRUE:time\_periodMalaria season & 0.8804465 & 0.6645722 & 1.1740347 & 0.3797816\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX}
+\KeywordTok{make_model}\NormalTok{(}\StringTok{"absent ~ pre_irs*time_period + sex"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|r|r|r|r|l}
+\hline
+Variable & Estimate & Lower & Upper & P value & Significant\\
+\hline
+(Intercept) & 0.0350661 & 0.0325983 & 0.0376818 & 0.0000000 & xxx\\
+\hline
+\rowcolor{yellow}  pre\_irsTRUE & 0.8880020 & 0.7026608 & 1.1064043 & 0.3043502\\
+\hline
+time\_periodMalaria season & 3.1716504 & 2.9834194 & 3.3729726 & 0.0000000 & xxx\\
+\hline
+sexM & 1.5960091 & 1.4919474 & 1.7085243 & 0.0000000 & xxx\\
+\hline
+\rowcolor{yellow}  pre\_irsTRUE:time\_periodMalaria season & 0.8579023 & 0.6473160 & 1.1443754 & 0.2910119\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT}
+\KeywordTok{make_model}\NormalTok{(}\StringTok{"absent ~ pre_irs*time_period + sex + department"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|r|r|r|r|l}
+\hline
+Variable & Estimate & Lower & Upper & P value & Significant\\
+\hline
+(Intercept) & 0.0564718 & 0.0510602 & 0.0623971 & 0.0000000 & xxx\\
+\hline
+\rowcolor{yellow}  pre\_irsTRUE & 0.9242121 & 0.7310398 & 1.1520107 & 0.4962745\\
+\hline
+time\_periodMalaria season & 3.1302404 & 2.9439618 & 3.3294967 & 0.0000000 & xxx\\
+\hline
+sexM & 1.1923874 & 1.1059966 & 1.2861150 & 0.0000048 & xxx\\
+\hline
+departmentFactory & 1.0828452 & 1.0009732 & 1.1717926 & 0.0476615 & x\\
+\hline
+departmentField & 0.5767584 & 0.5330008 & 0.6243185 & 0.0000000 & xxx\\
+\hline
+\rowcolor{yellow}  pre\_irsTRUE:time\_periodMalaria season & 0.8145012 & 0.6141075 & 1.0872550 & 0.1585481\\
+\hline
+\end{tabular}
+\end{table}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT AND}
+\CommentTok{# STATUS}
+\KeywordTok{make_model}\NormalTok{(}\StringTok{"absent ~ pre_irs*time_period + sex + department + permanent_or_temporary"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{table}[H]
+\centering
+\begin{tabular}{l|r|r|r|r|l}
+\hline
+Variable & Estimate & Lower & Upper & P value & Significant\\
+\hline
+(Intercept) & 0.0617511 & 0.0558057 & 0.0682626 & 0.0000000 & xxx\\
+\hline
+\rowcolor{yellow}  pre\_irsTRUE & 1.0466179 & 0.8252949 & 1.3092306 & 0.6983498\\
+\hline
+time\_periodMalaria season & 2.9528835 & 2.7744446 & 3.1438877 & 0.0000000 & xxx\\
+\hline
+sexM & 1.2300194 & 1.1386295 & 1.3293865 & 0.0000002 & xxx\\
+\hline
+departmentFactory & 1.0837360 & 1.0014970 & 1.1731018 & 0.0462328 & x\\
+\hline
+departmentField & 1.3324160 & 1.2272323 & 1.4470610 & 0.0000000 & xxx\\
+\hline
+permanent\_or\_temporaryTemporary & 0.0839961 & 0.0744587 & 0.0944456 & 0.0000000 & xxx\\
+\hline
+\rowcolor{yellow}  pre\_irsTRUE:time\_periodMalaria season & 0.6682310 & 0.5016567 & 0.8956885 & 0.0063480 & xx\\
+\hline
+\end{tabular}
+\end{table}
+
+The second concern is that our quantification of return on investment is
+distorted by the fact that we treat IRS operations as essentially linear
+in nature, when in reality economies of scale, in-kind purchases and
+other factors likely make the true cost-per-spraying convex. We address
+this by creating three scenarios: (1) a ``start-up'' scenario in which
+we take into account all costs incurred by starting a program from
+scratch, (2) a ``normal'' scenario in which we match the assumptions
+with those used in this paper (ie, account for ``wear-and-tear''
+depreciation but not vehicle purchase, etc.) and a (3) ``absorbed
+costs'' scenario which ignores all costs which are not directly incurred
+by the program\ldots{}. xxx\ldots{}
+\todo{Will address this with some sensitivity analysis}
 
 \section{Discussion}\label{discussion}
 
-Overall stuff
+\todo{This entire section will not be done until methods/results are finalized.}
+
+\begin{itemize}
+\item
+  Overview of findings
+\item
+  How this contributes to the literature
+\item
+  Implications for policy and for businesses
+\end{itemize}
 
 \subsection{Limitations}\label{limitations}
 
-\subsection{Implications}\label{implications}
+\begin{itemize}
+\tightlist
+\item
+  No analysis yet of different worker types (agricultural
+  vs.~industrial).
+\item
+  Have not yet ventured at all into side-analyses (effect on employment,
+  tonnage, etc.).
+\item
+  Sick absenteeism seems to track absenteeism poorly: lack of clarity
+  regarding pathways.
+\item
+  Large sample size, but all from same place: questionable
+  generalizability.
+\end{itemize}
 
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}
 
 \hypertarget{refs}{}
+\hypertarget{ref-Ajani2010}{}
+Ajani, O., Ashagidigbi, W., 2010. Effect of malaria on rural households'
+farm income in oyo state, nigeria. African Journal of Biomedical
+Research 11. \url{https://doi.org/10.4314/ajbr.v11i3.50723}
+
+\hypertarget{ref-AsensoOkyere1997}{}
+Asenso-Okyere, W., Dzator, J.A., 1997. Household cost of seeking malaria
+care. a retrospective study of two districts in ghana. Social Science \&
+Medicine 45, 659--667.
+\url{https://doi.org/10.1016/s0277-9536(96)00383-8}
+
 \hypertarget{ref-Ashley2018}{}
 Ashley, E.A., Phyo, A.P., Woodrow, C.J., 2018. Malaria. The Lancet.
 \url{https://doi.org/10.1016/s0140-6736(18)30324-6}
@@ -734,6 +1256,12 @@ Ashley, E.A., Phyo, A.P., Woodrow, C.J., 2018. Malaria. The Lancet.
 Azemar, C., Desbordes, R., 2009. Public governance, health and foreign
 direct investment in sub-saharan africa. Journal of African Economies
 18, 667--709. \url{https://doi.org/10.1093/jae/ejn028}
+
+\hypertarget{ref-Bell2014}{}
+Bell, A., Jones, K., 2014. Explaining fixed effects: Random effects
+modeling of time-series cross-sectional and panel data. Political
+Science Research and Methods 3, 133--153.
+\url{https://doi.org/10.1017/psrm.2014.7}
 
 \hypertarget{ref-Bennett_2017}{}
 Bennett, A., Avanceña, A.L.V., Wegbreit, J., Cotter, C., Roberts, K.,
@@ -754,6 +1282,12 @@ sugarcane factory workers. GitHub repository.
 Brundtland, G.H., 1999. WHO on Health and Economic Productivity 25,
 396--402.
 
+\hypertarget{ref-Burton1999}{}
+Burton, W.N., Conti, D.J., Chen, C.-Y., Schultz, A.B., Edington, D.W.,
+1999. The role of health risk factors and disease on worker
+productivity. Journal of Occupational \& Environmental Medicine 41,
+863--877. \url{https://doi.org/10.1097/00043764-199910000-00007}
+
 \hypertarget{ref-Buur2012}{}
 Buur, L., Tembe, C.M., Baloi, O., 2012. The white gold: The role of
 government and state in rehabilitating the sugar industry in mozambique.
@@ -766,11 +1300,49 @@ porosity in mozambique: Social losses, private gains. Review of African
 Political Economy 41, S26--S48.
 \url{https://doi.org/10.1080/03056244.2014.976363}
 
+\hypertarget{ref-Cole2006}{}
+Cole, M.A., Neumayer, E., 2006. The impact of poor health on total
+factor productivity. The Journal of Development Studies 42, 918--938.
+\url{https://doi.org/10.1080/00220380600774681}
+
+\hypertarget{ref-Curtis2003}{}
+Curtis, C., Maxwell, C., Lemnge, M., Kilama, W., Steketee, R.W., Hawley,
+W.A., Bergevin, Y., Campbell, C.C., Sachs, J., Teklehaimanot, A.,
+Ochola, S., Guyatt, H., Snow, R.W., 2003. Scaling-up coverage with
+insecticide-treated nets against malaria in africa: Who should pay? The
+Lancet Infectious Diseases 3, 304--307.
+\url{https://doi.org/10.1016/s1473-3099(03)00612-1}
+
+\hypertarget{ref-Dillon2014}{}
+Dillon, A., Friedman, J., Serneels, P., 2014. Health information,
+treatment, and worker productivity: Experimental evidence from malaria
+testing and treatment among nigerian sugarcane cutters. The World Bank.
+\url{https://doi.org/10.1596/1813-9450-7120}
+
+\hypertarget{ref-Dusfour2009}{}
+Dusfour, I., Achee, N.L., Briceno, I., King, R., Grieco, J.P., 2009.
+Comparative data on the insecticide resistance of anopheles~albimanus in
+relation to agricultural practices in northern belize, CA. Journal of
+Pest Science 83, 41--46. \url{https://doi.org/10.1007/s10340-009-0268-7}
+
+\hypertarget{ref-GarcaBasteiro2017}{}
+García-Basteiro, A.L., Ribeiro, R.M., Brew, J., Sacoor, C., Valencia,
+S., Bulo, H., Cobelens, F., Macete, E., 2017. Tuberculosis on the rise
+in southern mozambique (19972012). European Respiratory Journal 49,
+1601683. \url{https://doi.org/10.1183/13993003.01683-2016}
+
 \hypertarget{ref-German2013}{}
 German, L., Schoneveld, G., Mwangi, E., 2013. Contemporary processes of
 large-scale land acquisition in sub-saharan africa: Legal deficiency or
 elite capture of the rule of law? World Development 48, 1--18.
 \url{https://doi.org/10.1016/j.worlddev.2013.03.006}
+
+\hypertarget{ref-Gonzlez2012}{}
+González, R., Munguambe, K., Aponte, J., Bavo, C., Nhalungo, D., Macete,
+E., Alonso, P., Menéndez, C., Naniche, D., 2012. High HIV prevalence in
+a southern semi-rural area of mozambique: A community-based survey. HIV
+Medicine 13, 581--588.
+\url{https://doi.org/10.1111/j.1468-1293.2012.01018.x}
 
 \hypertarget{ref-Goodman1999}{}
 Goodman, C., Coleman, P., Mills, A., 1999. Cost-effectiveness of malaria
@@ -785,6 +1357,11 @@ Hanson, K., 2004. Public and private roles in malaria control: The
 contributions of economic analysis. The American Journal of Tropical
 Medicine and Hygiene 71, 168--173.
 
+\hypertarget{ref-Hong2011}{}
+Hong, S.C., 2011. Malaria and economic productivity: A longitudinal
+analysis of the american case. The Journal of Economic History 71,
+654--671. \url{https://doi.org/10.1017/s0022050711001872}
+
 \hypertarget{ref-Howard_2017}{}
 Howard, N., Guinness, L., Rowland, M., Durrani, N., Hansen, K.S., 2017.
 Cost-effectiveness of adding indoor residual spraying to case management
@@ -792,8 +1369,20 @@ in afghan refugee settlements in northwest pakistan during a prolonged
 malaria epidemic. PLOS Neglected Tropical Diseases 11, e0005935.
 \url{https://doi.org/10.1371/journal.pntd.0005935}
 
+\hypertarget{ref-Ijumba2002}{}
+Ijumba, J.N., Mosha, F.W., Lindsay, S.W., 2002. Malaria transmission
+risk variations derived from different agricultural practices in an
+irrigated area of northern tanzania. Medical and Veterinary Entomology
+16, 28--38. \url{https://doi.org/10.1046/j.0269-283x.2002.00337.x}
+
 \hypertarget{ref-estatistica2009}{}
 INE, 2011. Demographic health survey.
+
+\hypertarget{ref-Jaleta2013}{}
+Jaleta, K.T., Hill, S.R., Seyoum, E., Balkew, M., Gebre-Michael, T.,
+Ignell, R., Tekie, H., 2013. Agro-ecosystems impact malaria prevalence:
+Large-scale irrigation drives vector population in western ethiopia.
+Malaria Journal 12, 350. \url{https://doi.org/10.1186/1475-2875-12-350}
 
 \hypertarget{ref-Kaula_2017}{}
 Kaula, H., Buyungo, P., Opigo, J., 2017. Private sector role, readiness
@@ -812,15 +1401,45 @@ long-lasting insecticidal nets and indoor residual spraying
 implementation in mozambique. The American Journal of Tropical Medicine
 and Hygiene 96, 1430--1440. \url{https://doi.org/10.4269/ajtmh.16-0744}
 
+\hypertarget{ref-Liu2010}{}
+Liu, L., Strawderman, R.L., Cowen, M.E., Shih, Y.-C.T., 2010. A flexible
+two-part random effects model for correlated medical costs. Journal of
+Health Economics 29, 110--123.
+\url{https://doi.org/10.1016/j.jhealeco.2009.11.010}
+
 \hypertarget{ref-Lopez_Bernal_2016}{}
 Lopez Bernal, J., Cummins, S., Gasparrini, A., 2016. Interrupted time
 series regression for the evaluation of public health interventions: A
 tutorial. International Journal of Epidemiology dyw098.
 \url{https://doi.org/10.1093/ije/dyw098}
 
+\hypertarget{ref-Mayor2007}{}
+Mayor, A., Aponte, J.J., Fogg, C., Saúte, F., Greenwood, B., Dgedge, M.,
+Menendez, C., Alonso, P.L., 2007.. Malaria Journal 6, 3.
+\url{https://doi.org/10.1186/1475-2875-6-3}
+
 \hypertarget{ref-McCarthy_2000}{}
-McCarthy, D., Wolf, H., Wu, Y., 2000. The growth costs of malaria.
+McCarthy, D., Wolf, H., Wu, Y., 2000a. The growth costs of malaria.
 \url{https://doi.org/10.3386/w7541}
+
+\hypertarget{ref-McCarthy2000}{}
+McCarthy, D., Wolf, H., Wu, Y., 2000b. The growth costs of malaria.
+National Bureau of Economic Research.
+\url{https://doi.org/10.3386/w7541}
+
+\hypertarget{ref-Minalu2011}{}
+Minalu, G., Aerts, M., Coenen, S., Versporten, A., Muller, A.,
+Adriaenssens, N., Beutels, P., Molenberghs, G., Goossens, H., Hens, N.,
+2011. Application of mixed-effects models to study the country-specific
+outpatient antibiotic use in europe: A tutorial on longitudinal data
+analysis. Journal of Antimicrobial Chemotherapy 66, vi79--vi87.
+\url{https://doi.org/10.1093/jac/dkr460}
+
+\hypertarget{ref-Mocumbi2017}{}
+Mocumbi, S., Gafos, M., Munguambe, K., Goodall, R., and, S.M., 2017.
+High HIV prevalence and incidence among women in southern mozambique:
+Evidence from the MDP microbicide feasibility study. PLOS ONE 12,
+e0173243. \url{https://doi.org/10.1371/journal.pone.0173243}
 
 \hypertarget{ref-Moonasar_2016}{}
 Moonasar, D., Maharaj, R., Kunene, S., Candrinho, B., Saute, F.,
@@ -858,6 +1477,17 @@ O'Laughlin, B., 2016. Consuming bodies: Health and work in the cane
 fields in xinavane, mozambique. Journal of Southern African Studies 43,
 625--641. \url{https://doi.org/10.1080/03057070.2016.1190519}
 
+\hypertarget{ref-Phillips98}{}
+Phillips, S.F.M., 1998. Economics and its contribution to the fight
+against malaria. Annals of Tropical Medicine And Parasitology 92,
+391--398. \url{https://doi.org/10.1080/00034989859375}
+
+\hypertarget{ref-Pluess2009}{}
+Pluess, B., Mueller, I., Levi, D., King, G., Smith, T.A., Lengeler, C.,
+2009. Malaria a major health problem within an oil palm plantation
+around popondetta, papua new guinea. Malaria Journal 8, 56.
+\url{https://doi.org/10.1186/1475-2875-8-56}
+
 \hypertarget{ref-Purdy_2013}{}
 Purdy, M., Rublin, D., Wei, K., Robinson, M., 2013. The economic case
 for combating malaria. The American Journal of Tropical Medicine and
@@ -876,6 +1506,20 @@ tanzania and mozambique. Journal of International Development 24,
 \hypertarget{ref-Sachs2002}{}
 Sachs, J., Malaney, P., 2002. The economic and social burden of malaria.
 Nature 415, 680--685. \url{https://doi.org/10.1038/415680a}
+
+\hypertarget{ref-Sacoor2013}{}
+Sacoor, C., Nhacolo, A., Nhalungo, D., Aponte, J.J., Bassat, Q.,
+Augusto, O., Mandomando, I., Sacarlal, J., Lauchande, N., Sigauque, B.,
+Alonso, P., Macete, E., 2013. Profile: Manhica health research centre
+(manhica HDSS). International Journal of Epidemiology 42, 1309--1318.
+\url{https://doi.org/10.1093/ije/dyt148}
+
+\hypertarget{ref-Sate2003}{}
+Saúte, F., Aponte, J., Ahmeda, J., Ascaso, C., Vaz, N., Dgedge, M.,
+Alonso, P., 2003. Malaria in southern mozambique: Incidence of clinical
+malaria in children living in a rural community in manhiça district.
+Transactions of the Royal Society of Tropical Medicine and Hygiene 97,
+655--660. \url{https://doi.org/10.1016/s0035-9203(03)80097-4}
 
 \hypertarget{ref-Shretta2016}{}
 Shretta, R., Avanceña, A.L.V., Hatefi, A., 2016. The economics of
@@ -918,6 +1562,12 @@ WHO, 2015. Malaria profile: Mozambique.
 \hypertarget{ref-Winkler}{}
 Winkler, D., 2013. Potential and Actual FDI Spillovers in Global Value
 Chains.
+
+\hypertarget{ref-Wondwosen2018}{}
+Wondwosen, B., Birgersson, G., Tekie, H., Torto, B., Ignell, R., Hill,
+S.R., 2018. Sweet attraction: Sugarcane pollen-associated volatiles
+attract gravid anopheles arabiensis. Malaria Journal 17.
+\url{https://doi.org/10.1186/s12936-018-2245-1}
 
 
 \end{document}

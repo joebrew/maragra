@@ -45,6 +45,15 @@ options(xtable.comment = FALSE)
 
 ```{r}
 source('paper_prepare.R')
+irs$months_since <- irs$days_since %/% 30
+
+# Define function for making season
+make_season <- function(date){
+  out <- ifelse(as.numeric(format(date, '%m')) %in% c(11:12, 1:3),
+                   'Malaria season', 'Off season')
+  out <- factor(out, levels = c('Off season', 'Malaria season'))
+  return(out)
+}
 ```
 
 ```{r}
@@ -67,8 +76,10 @@ writeLines(paste0('---\noutput: html_document\n---\n\n',
 close(file_connection)
 
 ```
+
 ```{r child='children.Rmd', echo = FALSE}
 ```
+
 ```{r, results='hide'}
 file.remove('children.Rmd')
 ```

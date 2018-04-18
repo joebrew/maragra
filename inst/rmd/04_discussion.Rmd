@@ -1,10 +1,22 @@
   
 # Discussion
 
-Overall stuff
+\todo{This entire section will not be done until methods/results are finalized.}
+
+- Overview of findings
+
+- How this contributes to the literature
+
+- Implications for policy and for businesses
 
 ## Limitations
 
 
-## Implications
+- No analysis yet of different worker types (agricultural vs. industrial).
+- Have not yet ventured at all into side-analyses (effect on employment, tonnage, etc.).
+- Sick absenteeism seems to track absenteeism poorly: lack of clarity regarding pathways.
+- Large sample size, but all from same place: questionable generalizability.  
+
+
+
 

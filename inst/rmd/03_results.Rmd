@@ -2,11 +2,11 @@
 # Results
 
 
-In Southern Mozambique, malaria peaks during the summer months (December through March) most years (Figure 1, panel A), and worker absenteeism rates track malaria incidence closely, following the same seasonal patterns (Figure 1, panel B). Both all-cause absenteeism and sick absenteeism have declined in recent years at Maragra (Figure 1, panel C), with the latter declining at a faster rate than the former. The fact that the rate of confirmed cases at the company clinic is largely non-seasonal (Figure 1, panels E and F) suggests that a significant portion of workers either seek care for malaria elsewhere (for example, government health posts, of which several are nearby and in some many cases closer to workers' residence than the company clinic) or do not seek care during malaria infection. Accordingly, we focus our analysis on all-cause absenteeism rather than sickness absenteeism or malaria diagnostics, with the assumption that much of illness is captured by absenteeism but not by the clinical data.
+In Southern Mozambique, malaria peaks during the summer months (December through March) most years (Figure 4, panel A), and worker absenteeism at Maragra rates track malaria incidence closely, following the same seasonal patterns (figure 4, panel B). Both all-cause absenteeism and sick absenteeism have declined in recent years at Maragra (figure 4, panel C), with the latter declining at a faster rate than the former. The fact that the rate of confirmed cases at the company clinic is largely non-seasonal (figure 4, panels E and F) suggests that a significant portion of workers either seek care for malaria elsewhere (for example, government health posts, of which several are nearby and in some many cases closer to workers' residence than the company clinic) or do not seek care during malaria infection. Accordingly, we focus our analysis on all-cause absenteeism rather than sickness absenteeism or malaria diagnostics, with the assumption that much of illness is captured by absenteeism but not by the clinical data.
 
 
 
-```{r, fig.cap = 'Clinical malaria (district of Manhiça), all-cause absenteeism among Maragra workers, sick absenteeism among Maragra workers, estimated rainfall, positive cases at company clinic, and test positivity rate at company clinic', fig.height=5, fig.width=8}
+```{r, fig.cap = 'Clinical malaria (district of Manhiça), all-cause absenteeism among Maragra workers, sick absenteeism among Maragra workers, positive cases at company clinic, and test positivity rate at company clinic', fig.height=5, fig.width=8}
 # BES incidence
 g1 <- 
   ggplot(data = bes %>%
@@ -87,7 +87,7 @@ g5 <- clinic_agg %>%
   theme_maragra(base_size = 9) +
   labs(x = 'Date',
        y = 'Cases',
-       title = 'E: Monthly malaria cases\nat company clinic') 
+       title = 'D: Monthly malaria cases\nat company clinic') 
 
 g6 <- clinic_agg %>%
   filter(date >= '2013-01-01', date <= '2016-12-31') %>%
@@ -103,8 +103,10 @@ g6 <- clinic_agg %>%
   theme_maragra(base_size = 9) +
   labs(x = 'Date',
        y = 'Cases',
-       title = 'F: Monthly malaria test positivity rate\nat company clinic') 
-Rmisc::multiplot(g1, g2, g3, g4, g5, g6, layout = matrix(1:6, nrow=2, byrow=TRUE)) 
+       title = 'E: Monthly malaria test positivity rate\nat company clinic') 
+Rmisc::multiplot(g1, g2, g3,
+                 # g4, 
+                 g5, g6, layout = matrix(c(1, 1, 2, 3, 4, 5), nrow=2, byrow=TRUE)) 
 ```
 
 
@@ -193,55 +195,87 @@ print(xtable::xtable(ab_table,
 ```
 
 
-**Costs**: The malaria control program at Maragra has an annual operating budget of approximately XX, which includes the purchase of insecticide, the wages of IRS sprayers and drivers, transportation, record-keeping, and general administrative costs. Assuming linearity in costs, the program spends approximately XX per agregado sprayed. With each agregado containing an average of 2.2 workers, this translates to a cost of XX per worker protected per season. Much of the benefit of IRS goes to non-worker residents of sprayed agregados (who constitute a majority), but this benefit is purposefully ignored for this analysis.  
-
-Given the likelihood that clinical data does not fully capture all malaria cases (and most likely captures only a small fraction of actual infections, given the high rates of acumulated adult immunity [Mayor2007]), we do not quantify the costs of malaria infection to the company. Rather, we first estimate the reduction in absenteeism attributible to IRS, and then quantify the savings associated with prevented absences. Additionally, we calculate the clinical savings of IRS by first estimating the share of absences which are associated with an episode of clinical malaria, and then applying the clinical cost per case to the equivalent share of prevented absences. We intentionally ignore the savings accrued by the public health system, as well as the likely utility gains in secondary realms such as school absenteeism, producitivity, etc. 
-
-
-**Effect of IRS on absenteeism**: IRS is associated with a year-long, significant reduction in absenteeism during the malaria season (figure 2). As one would expect if the mechanism by which IRS reduces absence is through reduced malaria infection, the effect of IRS during the low transmission season is significant, but far less substantial in effect size.
+**Effect of IRS on clinical malaria**: xxx. \todo{Not done yet. In fact, not even sure if I should do this section at all, since it's basically just a distraction.}
 
 
 
-```{r, fig.height = 3.5, fig.width = 6, fig.cap = 'Estimated effect of IRS on absenteeism by season'}
-# Predict for visualization
-dummy <- expand.grid(season = sort(unique(model_data$season)),
-                     months_since = sort(unique(model_data$months_since)),
-                     on_site = TRUE)
-predictions <- predict(fit, dummy, se.fit = TRUE, interval = 'confidence', level = 0.99)
-dummy$predicted <- predictions$fit[,1]
-dummy$lwr <- predictions$fit[,2]
-dummy$upr <- predictions$fit[,3]
-ggplot(data = dummy %>%
-         filter(months_since != 'Never') %>%
-         mutate(lwr = lwr * 100,
-                upr = upr * 100,
-                predicted = predicted * 100) %>%
-         mutate(season = paste0(Hmisc::capitalize(as.character(season)), ' season')),
+**Costs of program**: The malaria control program at Maragra has an annual operating budget of approximately $112,000, which includes the purchase of insecticide, the wages of IRS sprayers and drivers, transportation, record-keeping, and general administrative costs. Assuming linearity in costs, the program spends approximately $19 per building sprayed. With each agregado containing an average of 2.2 workers. Much of the benefit of IRS goes to non-worker residents of sprayed agregados (who constitute a majority), but this benefit is purposefully ignored for this analysis. 
+
+
+**Cost of malaria**: Given the likelihood that clinical data does not fully capture all malaria cases (and most likely captures only a small fraction of actual infections, given the high rates of acumulated adult immunity [Mayor2007]), we do not quantify the costs of malaria infection to the company. Rather, we first estimate the reduction in absenteeism attributible to IRS, and then quantify the savings associated with prevented absences. Additionally, we calculate the clinical savings of IRS by first estimating the share of absences which are associated with an episode of clinical malaria, and then applying the clinical cost per case to the equivalent share of prevented absences. We intentionally ignore the savings accrued by the public health system, as well as the likely utility gains in secondary realms such as school absenteeism, producitivity, etc. 
+
+
+**Effect of IRS on absenteeism**: Immediately following IRS, a worker's likelihood of absence drops significantly (figure x, panel i). As one would expect if the mechanism by which IRS reduces absence is through reduced malaria infection, the effect of IRS during the low transmission season is significant, but far less substantial in effect size (figure x, panel ii).
+
+
+```{r, fig.height = 3.5, fig.width = 6, fig.cap = 'i. Absenteeism before and after IRS administration for all workers who ever received IRS; ii. The same, but segregated by malaria and non-malaria seasons'}
+plot_data <-
+  ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs, c("date", "unidade")) %>%
+  mutate(months_since = days_since %/% 30) %>%
+  filter(!is.na(months_since)) %>%
+  # mutate(time_period = lendable::time_period_extract(date)) %>%
+  # mutate(time_period = as.character(time_period)) %>%
+  mutate(time_period = make_season(date = date)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
+
+x <- plot_data %>%
+  group_by(months_since) %>%
+  summarise(absences = length(which(absent)),
+            sick_absences = length(which(absent_sick)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(sick_absenteeism_rate = sick_absences / eligibles * 100)
+
+g1 <- ggplot(data = x,
        aes(x = months_since,
-           y = predicted,
-           group = 1)) +
-  geom_ribbon(aes(x = months_since,
-                  ymin = lwr,
-                  ymax = upr),
-              fill = 'lightblue',
-              alpha = 0.6) +
-  # geom_line(color = 'blue', alpha = 0.5) +
-  geom_point(color = 'blue', alpha = 0.5) + 
-  geom_line(color = 'blue', alpha = 0.5) +
-  # geom_smooth(se = FALSE,
-  #             color = 'black',
-  #             # span = 10,
-  #             alpha = 0.5) +
-  facet_wrap(~season) +
-  theme_maragra() +
-  theme(axis.text.x = element_text(angle = 90, size = 8)) +
-  labs(x = 'Months since IRS',
-       y = 'Absenteeism (%)')
+           y = absenteeism_rate)) +
+  geom_step(color = 'darkred', alpha = 0.8) +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
+  labs(x = 'Months relative to IRS',
+       y = 'Absenteeism rate') +
+  theme_maragra()
+
+plot_data2 <-
+  ab_panel %>%
+  # filter(oracle_number %in% matched$oracle_number) %>%
+  left_join(irs, by = c("date", "unidade")) %>%
+  mutate(months_since = days_since %/% 30) %>%
+  filter(!is.na(months_since)) %>%
+  # mutate(time_period = lendable::time_period_extract(date)) %>%
+  # mutate(time_period = as.character(time_period)) %>%
+  mutate(time_period = make_season(date = date)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick))
+
+x2 <- plot_data2 %>%
+  group_by(months_since, time_period) %>%
+  summarise(absences = length(which(absent)),
+            sick_absences = length(which(absent_sick)),
+            eligibles = length(absent)) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) %>%
+  mutate(sick_absenteeism_rate = sick_absences / eligibles * 100) %>%
+  mutate(before = months_since < 0)
+
+g2 <- ggplot(data = x2 %>% mutate(time_period = paste0(time_period)),
+       aes(x = months_since,
+           y = absenteeism_rate)) +
+  geom_step(color = 'darkred', alpha = 0.8) +
+  facet_wrap(~time_period, ncol = 1) +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.5) +
+  labs(x = 'Months relative to IRS',
+       y = 'Absenteeism rate') +
+  theme_maragra()
+Rmisc::multiplot(g1, g2, cols = 2)
 ```
 
+In order to assess the effect of IRS on absenteeism, we created 4 worker fixed effects models for the 4 principal worker types (permanent field worker, temporary field worker, permanent non-field worker, temporary non-field worker). The reason for segregating models rather than incorporating worker type as a fixed effect was that it seemed plausible that the effect of the treatment (IRS) on the outcome would be different (and vary differently over time) depending on these worker types. For instance, it is reasonable to assume that IRS' effect would be differential for a temporary worker (who likely lives in the fumigated house less than 100% of the year) than for a permanent worker. 
 
-We create 4 worker fixed effects models. Different models for field vs not field, permanent vs temporary.
+Given that IRS is carried out on a continuous rolling basis, we used relative worker time (as opposed to calendar) as the time component of our model - that is, each workers' days until and since IRS were standardized so that day 0 (date of fumigation) was the interruption point. This has the advantage of incorporating into the model a variety of potential time-varying confounders in a quasi-randomized fashion, thereby making it unecessary to adjust for them specifically. Our model took into account workers' residential location (on or off site) - even though off site workers by definition could not be administered IRS by Maragra - so as to capture other seasonal effects from those workers. \todo{This is not very eloquent yet and needs to be improved.}
 
+The model results (table 3) suggest a significant decrease in absenteeism following the administration of IRS. The effect is ambivalent among temporary workers, whereas among permanent workers the administration of IRS decreases absenteeism betwen 2.5 and 8.4 percentage points in the 2-9 month following administration. These effects are consistent with IRS decreasing absence through the medium of malaria, since (a) the effect is not as strong in the first month (potentially during the parasite incubation phase), the effect is stronger on field workers (who are more socioeconomically the demographic at greater risk of malaria than their administrative counterparts), and the effect is ambivalent among temporary workers (since the protective effect of IRS is only a function of the amount of time that the worker spends in the fumigated house).
 
 
 ```{r, results = 'asis'}
@@ -355,11 +389,102 @@ print(k)
 ```
 
 
+## Externalities
+
+**Translating absences to costs**
+
+xxx\todo{Not done yet. This will be relatively straightforward arithmetic, but I want to first make sure that the models are rock solid (since all of the "translation" hinges on them).}
+
+
 ## Return on investment 
 
-Details here on ROI calculation outcomes \todo{Not done yet. In conversation with Eduardo from MC about getting more accurate costs}
+\todo{Not done yet. In conversation with Eduardo from MC about getting more accurate costs}
 
+**Savings**  
+ 
+- In percentage point terms, reduction from 13% to 8%.  
+- 5 annually prevented absences per worker.   
+- 8,000 workers: 40,000 prevented absences, wage of 3 USD
+- TOTAL: 120,000 USD in productivity-only savings.   
+
+**Costs**  
+
+- 8 IRS workers, 1500 USD yearly = 12,000 USD  
+- ACT + DDT: 50,000 USD 
+- Facilities, vehicles, gas: 50,000 USD  
+- TOTAL: 112,000 USD in IRS-only costs  
+
+**7% ROI** (ignoring clinical costs)
+
+
+\newpage
 
 ## Robustness and generalizability 
 
-Two principal concerns call into question the results of our analysis. First, the application of IRS to a workers house may be endogenous. To check for this  bla bla bla \todo{As per Menno's suggestion, will add details here pertaining to whether IRS predicts absenteeism before it is applied}. The second concern is that our quantification of consists is distorted by the fact that we treat IRS operations as essentially linear in nature, when in reality economies of scale, in-kind purchases and other factors likely make the true cost-per-spraying convex.\todo{Will address this with some sensitivity analysis}
+Two principal concerns call into question the results of our analysis. First, the application of IRS to a workers house may be endogenous.\todo{Is this the right term here? We're not dealing with an "unobserved" factor per se, rather we're dealing with a situation in which the cause might influence the effect, and the effect might influence the cause, ie a feedback loop.} It is reasonable to suspect that the application of IRS to households is not random, but rather that IRS was applied more frequently to houses which had already seen a malaria case. In this case, our estimated effect of IRS on absenteeism would likely be underestimated, with the post-IRS absenteeism rates actually having declined from a greater pre-IRS absenteeism rate than otherwise suggested. 
+
+To check for this, we estimate the odds of absenteeism as a function of receiving IRS _during the 10 day period prior to receiving IRS_. If IRS application is indeed endogenous, we would expect absenteeism to be elevated during this period (since the increase in absenteeism would be theoretically responsible for the application of IRS), a situation which would require further statistical adjustment. If, on the other hand, there is no endogeneity, we would expect absenteeism in the 10 day period prior to IRS administration to be similar to other pre-IRS absenteeism (adjusting for seasonality).
+
+What follows are several variations of a model to assess whether IRS application predicts pre-IRS absenteeism. In the final version of the paper, we'll use whichever model is most appropriate, but this is left here for discussion purposes. I've also included the code, so as to inform the discussion. In the below models, `pre_irs` refers to the 10 day period prior to IRS administration. The models estimate the odds of absence (ie, the estimates and confidence intervals are in the form of odds ratios).
+
+```{r, echo = TRUE}
+ro_data <- ab_panel %>%
+  left_join(irs, by = c('date', 'unidade')) %>%
+  filter(days_since < 0) %>%
+  mutate(pre_irs = between(days_since, -10, -1)) %>%
+  # mutate(time_period = lendable::time_period_extract(date)) %>%
+  # mutate(time_period = as.character(time_period)) %>%
+  mutate(time_period = make_season(date = date)) %>%
+  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) %>%
+  left_join(workers %>%
+              dplyr::select(oracle_number,
+                            sex,
+                            department,
+                            permanent_or_temporary),
+            by = 'oracle_number')
+
+
+make_model <- function(formula = 'absent ~ pre_irs + time_period'){
+  ro_model <- glm(as.formula(formula), 
+                data = ro_data,
+                family = binomial('logit'))
+  coefs <- exp(coef(ro_model))
+  ci <- confint(ro_model)
+  ci <- exp(ci)
+  out <- data.frame(Variable = names(coefs),
+                    Estimate = coefs,
+                    Lower = ci[,1],
+                    Upper = ci[,2])
+  row.names(out) <- NULL
+  out$`P value` <- coef(summary(ro_model))[,4]
+  out$Significant <- ifelse(out$`P value` <= 0.001, 'xxx',
+                            ifelse(out$`P value` <= 0.01, 'xx',
+                                   ifelse(out$`P value` <= 0.05, 'x',
+                                          '')))
+  return(kable(out, format = "latex") %>%
+  kable_styling() %>%
+    row_spec(row = which(grepl('pre_irs', out$Variable)),background = "yellow"))
+}
+```
+
+```{r, echo = TRUE, results = 'asis'}
+
+# BASIC FORMULA
+make_model('absent ~ pre_irs + time_period')
+
+# BASIC FORMULA WITH INTERACTIONS
+make_model('absent ~ pre_irs*time_period')
+
+# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX
+make_model('absent ~ pre_irs*time_period + sex')
+
+# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT
+make_model('absent ~ pre_irs*time_period + sex + department')
+
+
+# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT AND STATUS
+make_model('absent ~ pre_irs*time_period + sex + department + permanent_or_temporary')
+
+```
+
+The second concern is that our quantification of return on investment is distorted by the fact that we treat IRS operations as essentially linear in nature, when in reality economies of scale, in-kind purchases and other factors likely make the true cost-per-spraying convex. We address this by creating three scenarios: (1) a "start-up" scenario in which we take into account all costs incurred by starting a program from scratch, (2) a "normal" scenario in which we match the assumptions with those used in this paper (ie, account for "wear-and-tear" depreciation but not vehicle purchase, etc.) and a (3) "absorbed costs" scenario which ignores all costs which are not directly incurred by the program.... xxx... \todo{Will address this with some sensitivity analysis}

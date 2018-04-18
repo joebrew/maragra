@@ -6,7 +6,7 @@ library(brew)
 library(maragra)
 library(knitr)
 library(RColorBrewer)
-library(lme4)
+# library(lme4)
 library(lfe)
 
 if('prepared_data.RData' %in% dir()){
@@ -152,10 +152,8 @@ if('prepared_data.RData' %in% dir()){
     message(i)
     this_group <- groups[i]
     these_data <- model_data %>% filter(group == this_group)
-    # this_model <- afex::mixed(absent ~ (1|oracle_number) + season * months_since, data = these_data)
-    this_model <- lmer(absent ~ -1 + (1|oracle_number) + on_site + season * months_since, data = these_data)
-    # this_model <- felm(absent ~ season*months_since | oracle_number | 0 | 0, 
-    #                    data = these_data)
+    this_model <- felm(absent ~ season*months_since | oracle_number | 0 | 0,
+                       data = these_data)
     fe_models[[i]] <- this_model
   }
   names(fe_models) <- groups

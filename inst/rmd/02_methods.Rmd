@@ -15,14 +15,16 @@ Worker characteristics, illness and absenteeism data, along with IRS activity da
 
 ## Conceptual framework and identification strategy
 
-We sought to understand the effect of IRS on individual workers' likelihood of absence from work as well as their likelihood of clinical malaria. To estimate this effect, we estimated separate models for absence and illness. We employed interrupted time series [@Lopez_Bernal_2016] and a linear probability approach using the following econometric model.
+We sought to understand the effect of IRS on individual workers' likelihood of absence from work as well as their likelihood of clinical malaria. To estimate this effect, we estimated separate models for absence and illness. We employed linear mixed effects models [@Minalu2011] [@Liu2010] (with individual worker fixed effects, and random effects for other covariates)  in lieu of interrupted time series [@Lopez_Bernal_2016] so as to explicitly adjust for confounders [@Bell2014]. We divide into 4 different models for different worker types, so as to account for the potential time-varying effects of worker type on risk of malaria. Our econometric model is relatively straightforward:
 
 
 $$
-\hat{Y_{it}} = \beta_{0} +  (\beta_{1}) (\text{Season}_{t}) + (\beta_2{IRS}*\beta_3{IRS_t}) + ... + \epsilon
+\hat{Y_{it}} = \beta_{0} +  (\beta_{1}) (\text{Season}_{it}) + (\beta_2{IRS}*\beta_3{IRS_it}) + ... + \epsilon_{it}
 $$
 
-$\hat{Y}$ is the rate of absence. $\beta_{1}$ represents the clinical malaria incidence at that time in the entire district of Manhiça.  Our demographic confounders (represented by $...$) are sex, age, and worker department (field, factory, or administrative). Our intervention was not a simple yes/no, but rather the product of whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment (represented above as the interaction term, where where $_t$ represents time elapsed since commencement of the most recent IRS campaign). We define the malaria season as any time during which the clinical incidence of malaria in the district of Manhiça was at or greater than the median clinical incidence of malaria for the entire study period. These weeks are flagged as red in Figure 1, Panel A.  By using clinical incidence of the area of residence of the workers (as opposed to more typical proxies for malaria risk, such as only rainy vs. non rainy season), our seasonality estimate is a closer approximation of true malaria risk, incorporating lagged effects such as the incubation period of the parasite, as well as any inherent non-linear effects of weather. In addition, we adjust for daily precipitation
+$\hat{Y}$ is the rate of absence. $\beta_{1}$ represents the clinical malaria incidence at that time in the entire district of Manhiça.  Our demographic confounders (represented by $...$) are sex, age, and worker department (field, factory, or administrative). Our intervention whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment (represented above as the interaction term, where where $_t$ represents time elapsed since commencement of the most recent IRS campaign). We define the malaria season as any time during which the clinical incidence of malaria in the district of Manhiça was at or greater than the median clinical incidence of malaria for the entire study period. These weeks are flagged as red in Figure 1, Panel A.  By using clinical incidence of the area of residence of the workers (as opposed to more typical proxies for malaria risk, such as only rainy vs. non rainy season), our seasonality estimate is a closer approximation of true malaria risk, incorporating lagged effects such as the incubation period of the parasite, as well as any inherent non-linear effects of weather. In addition, we adjust for daily precipitation
+
+Details will go here about externalities (neighborhood effects, positive spillover to district, negative spillover from district, how large firm may mean that most positive externalities are absorbed by the firm, and not many negative externalities, but maybe with a smaller firm it wouldn't work as well)\todo{NOT DONE YET.}
 
 
 ## Estimating return on investment
@@ -40,8 +42,127 @@ $R = \dfrac{P_{w} - S_{wa} - S_{wc}}{P_{w}}$
 
 ## Reproducibility and ethical approval
 
-All data processing and analysis were carried out in R [@R] and all analysis code is freely available online [@brewgit]. Ethical approval for this project was obtained from the Institutional Ethics Review Board for Health at the CISM prior to data collection.
+All data processing and analysis were carried out in R [@R] and all analysis code is freely available online [@brewgit]. Ethical approval for this project was obtained from the Institutional Ethics Review Board for Health at the CISM (CIBS-CISM) prior to data collection.
 
 ## Descriptive statistics
 
-Age, types of workers, bla bla bla. \todo{Will add a table here and some overview}
+```{r}
+# Calculate number of workers
+n <- length(unique(ab_panel$oracle_number[ab_panel$date >= '2012-01-01' & ab_panel$date <= '2016-12-31']))
+```
+
+We collected absenteeism and demographic data data on `r n` workers from 2012 through 2016. Workers were approximately 60% male, and more than 80% fieldworkers (predominantly cane-cutters). Most were in their 20s and 30s and employed on temporary contracts. Table 1 shows overall worker details.
+
+```{r, results='asis'}
+x <- workers %>%
+  filter(oracle_number %in% unique(ab_panel$oracle_number))
+x$age <- round(as.numeric(as.Date('2014-01-01') - x$date_of_birth) / 365.25, digits = -1)
+x$status <- x$permanent_or_temporary
+
+
+calculate <- function(var= 'sex',
+                      data){
+  out <- 
+    data %>%
+    group_by_(var) %>%
+    summarise(n = n()) %>%
+    ungroup() %>%
+    mutate(p = round(n / sum(n) * 100, digits = 2)) %>%
+    mutate(variable = '') 
+    names(out)[1] <- ' '
+    out$variable[1] <- Hmisc::capitalize(var)
+    
+    out <- out %>% dplyr::select(variable, ` `, n, p)
+    out$` ` <- as.character(out$` `)
+  return(out)
+}
+out_list <- list()
+vars <- c('department', 
+           'sex',
+           'status',
+           'age')
+for(i in 1:length(vars)){
+  message(i)
+  y <- calculate(var = vars[i], data = x)
+  out_list[[i]] <- y
+}
+demo_table <- bind_rows(out_list)
+names(demo_table) <- c('Variable', ' ', 'Workers', '(%)')
+print(xtable::xtable(demo_table,
+                     caption = 'Overall worker characteristics',
+                     align = c('r', 'r', rep('l', 3))),
+      include.rownames = FALSE)
+
+ov_ab <- round(100 * mean(ab_panel$absent[between(ab_panel$date, as.Date('2012-01-01'), as.Date('2016-12-31'))]), digits = 2)
+
+ov_cl <- length(which(between(clinic$date, as.Date('2012-01-01'), as.Date('2016-12-31'))))
+```
+
+The overall absenteeism rate during the study period was 5.56% among all workers. The number of malaria cases registered at the company clinic during that time was 1873, for an approximate annualized clinical incidence of 110 cases per 1,000. 
+
+Temporary workers tended to be younger and male; female temporary workers being on average 5-10 years older than their male counterparts. Permanent workers had a bi-modal age distribution, the older peak explained by the greater density of males in administrative roles. Females accounted for 43% of temporary workers but only 16% of permanent workers (figure x).
+
+```{r, fig.width = 3, fig.height = 2.5, fig.align='center', fig.cap = 'Age distribution by sex and worker status'}
+x$age <- round(as.numeric(as.Date('2014-01-01') - x$date_of_birth) / 365.25, digits = 2)
+g1 <- ggplot(data = x,
+       aes(x = age,
+           group = sex,
+           fill = sex)) +
+  geom_density(alpha = 0.8) +
+  facet_wrap(~permanent_or_temporary) +
+  theme_maragra() +
+  labs(x = 'Age',
+       y = 'Density') +
+  scale_fill_manual(name = 'Sex',
+                    values = c('lightblue', 'grey'))
+g1
+```
+
+During the study period, weather followed typical seasonal trends for the area, albeit slightly drier than previous periods.
+
+```{r, fig.width = 6, fig.height = 3.5, fig.align='center', fig.cap = 'i. Monthly total precipitation in the Maniça district; ii. Average monthly temperature (bars) during the study period, as well as monthly maximum (red) and minimum (blue) temperatures'}
+x <- weather %>%
+  mutate(month = format(date, '%m')) %>%
+  mutate(year = format(date, '%Y')) %>%
+  mutate(date = as.Date(paste0(year, '-', month, '-01'))) %>%
+  group_by(date) %>%
+  summarise(precipitation = sum(precipitation, na.rm = TRUE),
+            temp_max = max(temp_max, na.rm = TRUE),
+            temp_min = min(temp_min, na.rm = TRUE),
+            temp = mean(temp))
+# x <- gather(x, key, value,precipitation:temp)
+
+g1 <- ggplot(data = x,
+       aes(x = date,
+           y = precipitation)) +
+  geom_bar(stat = 'identity',
+           fill = 'lightblue',
+           size = 0.1) +
+  theme_maragra() +
+  theme(axis.text.x = element_text(angle = 0)) +
+  labs(x = 'Quarter',
+       y = 'Milimeters') +
+  scale_x_date(labels = scales::date_format("%Y"))
+
+g2 <- ggplot(data = x,
+            aes(x = date,
+                y = temp)) +
+  geom_bar(stat = 'identity', fill = 'lightblue', size = 0.1) +
+  geom_point(aes(y = temp_max),
+             color = 'darkred', 
+             alpha = 0.5) +
+  geom_point(aes(y = temp_min),
+             color = 'blue', 
+             alpha = 0.5) +
+  # geom_linerange(aes(ymin = temp_min,
+  #                    ymax = temp_max),
+  #                alpha = 0.6,
+  #                color = 'blue') +
+   theme_maragra() +
+  theme(axis.text.x = element_text(angle = 0)) +
+  labs(x = 'Quarter',
+       y = 'Degrees (Celcius)') +
+  scale_x_date(labels = scales::date_format("%Y"))
+Rmisc::multiplot(g1, g2, cols = 2)
+```
+

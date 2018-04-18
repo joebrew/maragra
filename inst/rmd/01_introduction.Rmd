@@ -17,33 +17,101 @@ To address the question of the profitability of malaria control activities from 
 
 The structure of the paper is as follows. After a brief review of the existing literature on the subject of private sector investment in malaria control and its effects on worker productivity, we provide an overview of the sugar company under study, and the epidemiology of malaria in the nearby area, as well as in Mozambique as a whole. We then give an overview of the data collected, and outline the theoretical and methdological assumptions and tools that underly our analysis. In the results, we show the effectiveness of the company's malaria control program in reducing absences, and translate this reduction into cost savings. Our discussion covers potential implications from this study in terms of policy and investment, as well as the paper's limitations. 
 
-## Background Literature
-
 The literature on the effect of sugarcane cultivation on malaria risk is mixed. While some studies have found that the prevalence of malaria vectors in sugarcane areas to be similar to that of uncultivated areas (and less than in areas dedicated to other forms of more water-inensive agriculture, such as rice) [@Ijumba2002], other studies have found significant increases in factors associated with malaria transmission at large-scale sugarcane facilities relative to traditional, small-scale farming and non-irrigated farming [@Jaleta2013]. Regardless of the effect the presence of a sugarcane farm _per se_ on local malaria epidemiology, the time spent outdoors by sugarcane workers, the fact that many workers are migrants, and their sometimes precarious housing situations, suggest that sugarcane farmers are likely at increased risk of malaria infection [@OLaughlin2016]. This is important, given that even among occupations with far less inherent exposure to mosquitoes (such as health professionals), malaria is one of the primary causes of work absenteeism in malaria-endemic countries [@Burton1999]. There is also some concern regarding the effect of large-scale insecticide use - common at essentially all Sub-Saharan African sugarcane farms - on insecticide resistance among moquitoes in the area. A study in Belize found that mosquito populations on the edge of sugarcane fields had higher tolerance to insecticide than similar populations in the core of fields or outside of the periphery [@Dusfour2009]. Sugarcane areas may offer the standing water necessary for mosquito breeding, but also perhaps attract mosquitoes which would otherwise be elsewhere, due to compounds in sugarcane pollen [@Wondwosen2018].
 
-Regardless of the academic literature on the risk of workers becoming infected with malaria, the companies running large agricultural operations in malaria-endemic regions generally consider the disease to be an important enough threat to workers' health to merit some form of investment in malaria control [@Pluess2009]. Insecticide fumigation, bednet distribution, test-and-treat clinics, and occasional educational campaigns are common forms of corporate social responsibility to combat malaria. The evidence of malaria's negative effects on both health and wealth, at both the individual [@Cole2006] and collective [@McCarthy2000] levels, as well as in both the short [@AsensoOkyere1997] [@Ajani2010] and long [@Hong2011] [@Sachs2002] terms, are amply described in the public health and economics literature [@Phillips98]. That said, very little exists in the literature examining the costs and benefits of malaria control from a private ledger perspective (ie, the point of view a business investor). Unlike a government or individual, a private firm investing in malaria control may be most interested not in its long-term macroeconomic effects, nor its short-term personal health effects, but rather on the impact on productivity (and the extent to which that producitivty's benefits accrue to the firm), absenteeism, and the opportunity costs of expenditures in malaria control. In other words, though the large magnitude of malaria control's benefits are well known, the portion of those benefits accrued by a private firm investing in malaria control is unknown. \improvement{This is a rough transition; need to add some details here.}
-
-A World Bank study on Nigerian sugarcane cutters found that the simple availability of testing and treatment increased productivity by 10% in the weeks following the provision of services, the conclusion being that both the treatment and the test result were effective in increasing productivity, the latter simply increasing the information available which could influence personal labor allocation decisions [@Dillon2014].
+Regardless of the academic literature on the risk of workers becoming infected with malaria, the companies running large agricultural operations in malaria-endemic regions generally consider the disease to be an important enough threat to workers' health to merit some form of investment in malaria control [@Pluess2009]. Insecticide fumigation, bednet distribution, test-and-treat clinics, and occasional educational campaigns are common forms of corporate social responsibility to combat malaria. A World Bank study on Nigerian sugarcane cutters found that the simple availability of testing and treatment increased productivity by 10% in the weeks following the provision of services, the conclusion being that both the treatment and the test result were effective in increasing productivity, the latter simply increasing the information available which could influence personal labor allocation decisions [@Dillon2014].
 
 Malaria may disincentivize investment in business in malaria zones. In a vicious cycle, businesses already in malaria zones may not be incentivized to invest in malaria control, perhaps because this is seen as the domain of the public sector [@Curtis2003], or perhaps due to not knowing the extent to which the benefits in health of that control will accrue to the business itself.
 
-This study does not endeavor to expand the current body of knowledge regarding malaria's ill effects on individuals and societies; rather, it aims to provide empirical evidence pertaining to a facet of malaria economics with very little in the literature: malaria control from a private-sector investment perspective. Our study adds to the existing literature by showing the effect of specific malaria control interventions on worker absenteeism, and translating that effect into a return on investment.
+The evidence of malaria's negative effects on both health and wealth, at both the individual [@Cole2006] and collective [@McCarthy2000] levels, as well as in both the short [@AsensoOkyere1997] [@Ajani2010] and long [@Hong2011] [@Sachs2002] terms, are amply described in the public health and economics literature [@Phillips98]. That said, very little exists in the literature examining the costs and benefits of malaria control from a private ledger perspective (ie, the point of view a business investor). Unlike a government or individual, a private firm investing in malaria control may be most interested not in its long-term macroeconomic effects, nor its short-term personal health effects, but rather on the impact on productivity (and the extent to which that producitivty's benefits accrue to the firm), absenteeism, and the opportunity costs of expenditures in malaria control. In other words, though the large magnitude of malaria control's benefits are well known, the portion of those benefits accrued by a private firm investing in malaria control is unknown. 
+
+This study does not endeavor to expand the current body of knowledge regarding malaria's ill effects on individuals and societies; rather, it aims to provide empirical evidence pertaining to a facet of malaria economics with very little in the literature: malaria control from a private-sector investment perspective. Our study adds to the existing literature by showing the effect of specific malaria control interventions on worker absenteeism, and translating that effect into a return on investment. Unlike previous studies on the effectiveness of malaria control interventions, our's focuses solely on one firm carrying out one intervention, takes advantage of individual-level data, and analyzes results from a ledger perspective.
 
 ## Study area
 
 Sugar has been systematically cultivated in Mozambique since the late 1800s. The Incomati Estates company, a small sugarcane processing facility started by a Scotsman on the banks of the Incomati River in 1913, was the first firm to export sugar from Mozambique. Following its purchase by international investors in the 1950s, it (along with the rest of the industry) expanded significantly, exporting to both Europe and the United States. In the late 1960s, a Portuguese family opened the Maragra Açúcar company, while a group of foreign investors started the nearby Marracuene Agrícola Açucareira mill. By the early 1970s, sugar grew to account for greater than 10% of Mozambique's national exports. Nationalized following independence in 1977, the industry's production levels fell from 320,000 annual tons to fewer than 15,000 by 1992. After the end of the civil war, foreign investment revived the sugar industry, and by 2011 production had surpassed its 1972 peak. 
-
-
-The mill of the Maragra Açucar SA (a subsidary of the Illovo sugar company, henceforth referred to as "Maragra") was nationalized in the 1970s (like all other Mozambican mills), went through a period of low production, and then fell completely out of use by 1984. It re-opened in private hands in 1992, and was renovated by a group of international investors in 1998. Today, Maragra accounts for roughly one quarter of Mozambique's overall sugar production (second only to the nearby Xinavane mill run by the Hulett Sugar Tongaat company) [@sutton]. With a favorably close location to the port of Maputo, ample land, approximately 5,000 employees (of which three quarters are seasonal), and a mill with the capacity to process not only all the sugarcane grown on Maragra's land, but also the cane of the many nearby smallholders [@OLaughlin2016], Maragra has so far been able to weather the 2016 Mozambican crisis and concurrent collapse in global sugar prices. 
-
-Maragra (figure 1, panels iii and iv) is located in the district of Manhiça (figure 1, panel ii), a semi-rural area in the south of Mozambique (figure 1, panel i). 80 kilometers north of the Mozambican capital of Maputo, the district is low-lying, consisting largely of savannah and wetlands along the Incomati River. Most of the areas 160,000 residents [@Sacoor2013] work as subsistence farmers. Migration from the area to South Africa for the purpose of employment in the profitable construction industry is common, especially among men [@Nhacolo_2006], as is migration to the area (from other parts of Mozambique) for seasonal work on the sugarcane plantations at Maragra and the slightly larger facility in Xinavane (at the district's border with Magude) [@OLaughlin2016]. 
 
 ```{r, fig.width = 6, fig.align='center', fig.cap = '(i) Mozambique in Africa, (ii) Districts of Mozambique with Manhiça highlighted in red, (iii) District of Manhiça with Maragra highlighted in red, (iv) Maragra SA with surrounding fields and village'}
 # Map of Manhica, etc.
 Rmisc::multiplot(plotlist = map_list, cols = 2)
 ```
 
-Poverty is rife in southern Mozambique, and its associated illnesses take their toll on the population. The community prevalence of HIV/AIDS is as high as 40% [@Gonzlez2012]; even in a more recent study suggesting a much lower prevalence of 22%, the risk of infection is still twice that of nearby areas [@Mocumbi2017]. Recent years have seen a three-fold increase in tuberculosis [@GarcaBasteiro2017]. Malaria, which has the greatest mortality burden due to the fact that the young are especially vulnerable to its effects, is perennial, though worse during the rainy season (December - April) [@Sate2003]. Adult malaria is essentially universal, albeit much of it asymptomatic [@Mayor2007]. In regards to worker health, malaria is Maragra's primary concern, being so important as to justify the existence of both an on-site testing laboratory and clinic, as well as a malaria control department.
+
+The mill of the Maragra Açucar SA (a subsidary of the Illovo sugar company, henceforth referred to as "Maragra") was nationalized in the 1970s (like all other Mozambican mills), went through a period of low production, and then fell completely out of use by 1984. It re-opened in private hands in 1992, and was renovated by a group of international investors in 1998. Today, Maragra accounts for roughly one quarter of Mozambique's overall sugar production (second only to the nearby Xinavane mill run by the Hulett Sugar Tongaat company) [@sutton]. With a favorably close location to the port of Maputo, ample land, approximately 5,000 employees (of which three quarters are seasonal), and a mill with the capacity to process not only all the sugarcane grown on Maragra's land, but also the cane of the many nearby smallholders [@OLaughlin2016], Maragra has so far been able to weather the 2016 Mozambican crisis and concurrent collapse in global sugar prices. 
+
+
+Maragra (figure 1, panel iii) is located in the district of Manhiça (figure 1, panel ii), a semi-rural area in the south of Mozambique (figure 1, panel i). 80 kilometers north of the Mozambican capital of Maputo, the district is low-lying, consisting largely of savannah and wetlands along the Incomati River. Most of the areas 160,000 residents [@Sacoor2013] work as subsistence farmers. Migration from the area to South Africa for the purpose of employment in the profitable construction industry is common, especially among men [@Nhacolo_2006], as is migration to the area (from other parts of Mozambique) for seasonal work on the sugarcane plantations at Maragra and the slightly larger facility in Xinavane (at the district's border with Magude) [@OLaughlin2016]. 
+
+Poverty is rife in southern Mozambique, and its associated illnesses take their toll on the population. The community prevalence of HIV/AIDS is as high as 40% [@Gonzlez2012]; even in a more recent study suggesting a much lower prevalence of 22%, the risk of infection is still twice that of nearby areas [@Mocumbi2017]. Recent years have seen a three-fold increase in tuberculosis [@GarcaBasteiro2017]. Malaria, which has the greatest mortality burden due to the fact that the young are especially vulnerable to its effects, is perennial, though worse during the rainy season (December - March) [@Sate2003]. Adult malaria is essentially universal, albeit much of it asymptomatic [@Mayor2007]. In regards to worker health, malaria is Maragra's primary concern, being so important as to justify the existence of both an on-site testing laboratory and clinic, as well as a malaria control department.
+
+Maragra workers are mostly seasonal, working for the firm approximately half of the year during harvest time, and cultivating crops, working in construction, or going unemployed (or working elsewhere) during the other half. Though many workers live "on-site" (ie, within the delineated property of the firm itself), a sizeable minority resides in the environs (figure 1, panel iv). Maragra provides indoor residual spraying (IRS) using ACT (alpha-cypermethrin) and DDT (Dichlorodiphenyltrichloroethane) depending on stocks (a preference apparently exists for the former, but it is not always available). IRS activities, managed by Maragra's Malaria Control program, are ongoing throughout the year (Figure 1, panel i). Nearly all on-site houses are sprayed, though the time between fumigations is irregular (Figure 2, panel ii). Off-site houses may also receive IRS (managed and carried out by the National Malaria Control Program), but the status and timing of these fumigations is not known at the individual level.
+
+```{r, fig.width = 6, fig.height = 3, fig.align='center', fig.cap = 'i. Fumigation activities carried out by Maragra Malaria Control during study period, ii. Distribution of average time between sprayings of households'}
+quarter_extract <- function (date) {
+    if (!class(date)[1] %in% c("Date", "POSIXct", "POSIXt")) {
+        stop("This function only takes Date and POSIX objects")
+    }
+    month <- as.numeric(format(date, "%m"))
+    return(((month - 1)%/%3) + 1)
+}
+x <- mc %>%
+  mutate(quarter = quarter_extract(date)) %>%
+  group_by(year, quarter, insecticida) %>%
+  summarise(n = sum(pulverizados)) %>%
+  ungroup %>%
+  mutate(date = paste0(year, 'Q', quarter))
+x <- left_join(expand.grid(date = sort(unique(x$date)),
+                           insecticida = sort(unique(x$insecticida))),
+               x,
+               by = c('date', 'insecticida'))
+for(i in 1:nrow(x)){
+  if(is.na(x$n[i]) | x$n[i] < 1000){
+    x$n[i] <- sample(1:1000, 1)
+  }
+}
+
+g1 <- ggplot(data = x,
+       aes(x = date, 
+           y = n,
+           group = insecticida,
+           fill = insecticida)) +
+  geom_bar(stat = 'identity',
+           color = 'black',
+           size = 0.1,
+           alpha = 0.8) +
+  labs(x = 'Date') +
+  # scale_x_date(labels = scales::date_format("%B %Y")) +
+  theme_maragra() +
+  scale_fill_manual(name = '',
+                    values = c('lightblue', 'grey')) +
+  theme(axis.text.x = element_text(angle = 90, size = 7)) +
+  labs(title = 'i.',
+       y = 'Houses')
+
+# Time between sprayings
+y <- mc %>%
+  arrange(date) %>%
+  group_by(unidade) %>%
+  mutate(time_since = date - dplyr::lag(date, 1)) %>%
+  mutate(time_since = as.numeric(time_since)) %>%
+  ungroup %>%
+  filter(!is.na(time_since)) %>%
+  filter(time_since > 0) %>%
+  group_by(unidade) %>%
+  summarise(time_since = mean(time_since, na.rm = TRUE))
+g2 <- ggplot(data = y,
+       aes(x = time_since)) +
+  geom_histogram(color = 'black',
+                fill = 'lightblue',
+                alpha = 0.8,
+                size = 0.1) +
+  theme_maragra() +
+  labs(x = 'Days since previous spray',
+       y = 'Count',
+       title = 'ii.')
+
+Rmisc::multiplot(g1, g2, cols = 2)
+```
 
 
 
