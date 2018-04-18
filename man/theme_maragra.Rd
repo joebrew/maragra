@@ -4,7 +4,7 @@
 \alias{theme_maragra}
 \title{Theme for ggplots}
 \usage{
-theme_maragra(base_size = 14, font_family = "Computer Modern Roman")
+theme_maragra(base_size = 14)
 }
 \arguments{
 \item{base_size}{The base font size}

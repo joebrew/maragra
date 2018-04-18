@@ -5,13 +5,12 @@
 \title{Make authors}
 \usage{
 make_authors(authors = data.frame(name = c("Joe Brew", "Kizito Gondo",
-  "Elton Dorkin", "Eduardo Nhamahanga", "Menno Pradhan", "Laia Cirera",
-  "Ranjeeta Thomas", "Elisa Sicuri"), email = c("joe@databrew.cc",
-  "KGondo@illovo.co.za", "EDorkin@illovo.co.za", "ENhamahanga@illovo.co.za",
-  "m.p.pradhan@vu.nl", "laia.cirera@isglobal.org",
+  "Elton Dorkin", "Menno Pradhan", "Laia Cirera", "Ranjeeta Thomas",
+  "Elisa Sicuri"), email = c("joe@databrew.cc", "KGondo@illovo.co.za",
+  "EDorkin@illovo.co.za", "m.p.pradhan@vu.nl", "laia.cirera@isglobal.org",
   "ranjeeta.thomas@imperial.ac.uk", "elisa.sicuri@isglobal.org"), affilitation =
-  c("isglobal,cism,vu", "ma", "ma", "ma", "vu,uva", "isglobal,cism", "icl",
-  "isglobal,cism,icl"), footnote = c("Corresponding Author",      rep("", 7)),
+  c("isglobal,cism,vu", "ma", "ma", "vu,uva", "isglobal,cism", "icl",
+  "isglobal,cism,icl"), footnote = c("Corresponding Author", rep("", 6)),
   stringsAsFactors = FALSE), institutions = data.frame(code = c("isglobal",
   "icl", "cism", "vu", "uva", "ma"), institution =
   c("Barcelona Institute for Global Health", "Imperial College London",

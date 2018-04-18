@@ -2,20 +2,17 @@
 #'
 #' Add a theme to a ggplot object
 #' @param base_size The base font size
-#' @oaram font_family The font
 #' @return A ggplot compatible theme call
 #' @import ggthemes
 #' @import grid
 #' @export
 # Borrowed from https://rpubs.com/Koundy/71792
-theme_maragra <- function(base_size=14,
-                          font_family = 'Computer Modern Roman') {
-  (theme_foundation(base_size=base_size,
-                    base_family = font_family)
+theme_maragra <- function(base_size=14) {
+  (theme_foundation(base_size=base_size)
     + theme(plot.title = element_text(#face = "bold",
                                       size = rel(1),
                                       hjust = 0.5),
-            text = element_text(),
+            # text = element_text(),
             panel.background = element_rect(colour = NA),
             plot.background = element_rect(colour = NA),
             panel.border = element_rect(colour = NA),
@@ -37,7 +34,6 @@ theme_maragra <- function(base_size=14,
             plot.margin=unit(c(10,5,5,5),"mm"),
             strip.background=element_rect(colour="#f0f0f0",fill="#f0f0f0"),
             strip.text = element_text(face="bold") +
-            theme(text=element_text(size=16,
-                                      family=font_family))
+            theme(text=element_text(size=16))
     ))
 }
