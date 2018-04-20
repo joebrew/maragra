@@ -144,4 +144,4 @@ Rmisc::multiplot(g1, g2, cols = 2)
 ```
 
 
-
+\newpage

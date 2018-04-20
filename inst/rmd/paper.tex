@@ -28,46 +28,6 @@
             pdfborder={0 0 0},
             breaklinks=true}
 \urlstyle{same}  % don't use monospace font for urls
-\usepackage{color}
-\usepackage{fancyvrb}
-\newcommand{\VerbBar}{|}
-\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
-\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
-% Add ',fontsize=\small' for more characters per line
-\usepackage{framed}
-\definecolor{shadecolor}{RGB}{248,248,248}
-\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
-\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
-\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
-\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
-\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
-\newcommand{\ImportTok}[1]{#1}
-\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
-\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
-\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
-\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
-\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
-\newcommand{\BuiltInTok}[1]{#1}
-\newcommand{\ExtensionTok}[1]{#1}
-\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
-\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
-\newcommand{\RegionMarkerTok}[1]{#1}
-\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
-\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
-\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
-\newcommand{\NormalTok}[1]{#1}
 \usepackage{graphicx,grffile}
 \makeatletter
 \def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
@@ -152,6 +112,9 @@ Southern Mozambique}
 \usepackage{hyperref}
 \usepackage{geometry}
 \usepackage{lipsum}
+
+\usepackage{float}
+\floatplacement{figure}{H}
 
 % \usepackage{todonotes} % for side notes
 % \usepackage[colorinlistoftodos]{todonotes} % for side notes
@@ -519,13 +482,13 @@ levels fell from 320,000 annual tons to fewer than 15,000 by 1992. After
 the end of the civil war, foreign investment revived the sugar industry,
 and by 2011 production had surpassed its 1972 peak.
 
-\begin{figure}[h]
+\begin{figure}[!h]
 
-{\centering \includegraphics{figures/unnamed-chunk-13-1} 
+{\centering \includegraphics{figures/unnamed-chunk-14-1} 
 
 }
 
-\caption{(i) Mozambique in Africa, (ii) Districts of Mozambique with Manhiça highlighted in red, (iii) District of Manhiça with Maragra highlighted in red, (iv) Maragra SA with surrounding fields and village}\label{fig:unnamed-chunk-13}
+\caption{(i) Mozambique in Africa, (ii) Districts of Mozambique with Manhiça highlighted in red, (iii) District of Manhiça with Maragra highlighted in red, (iv) Maragra SA with surrounding fields and village}\label{fig:unnamed-chunk-14}
 \end{figure}
 
 The mill of the Maragra Açucar SA (a subsidary of the Illovo sugar
@@ -589,14 +552,16 @@ panel ii). Off-site houses may also receive IRS (managed and carried out
 by the National Malaria Control Program), but the status and timing of
 these fumigations is not known at the individual level.
 
-\begin{figure}[h]
+\begin{figure}[!h]
 
-{\centering \includegraphics{figures/unnamed-chunk-15-1} 
+{\centering \includegraphics{figures/unnamed-chunk-16-1} 
 
 }
 
-\caption{i. Fumigation activities carried out by Maragra Malaria Control during study period, ii. Distribution of average time between sprayings of households}\label{fig:unnamed-chunk-15}
+\caption{i. Fumigation activities carried out by Maragra Malaria Control during study period, ii. Distribution of average time between sprayings of households}\label{fig:unnamed-chunk-16}
 \end{figure}
+
+\newpage
 
 \section{Methods}\label{methods}
 
@@ -743,6 +708,10 @@ Ethical approval for this project was obtained from the Institutional
 Ethics Review Board for Health at the CISM (CIBS-CISM) prior to data
 collection.
 
+\newpage
+
+\section{Results}\label{results}
+
 \subsection{Descriptive statistics}\label{descriptive-statistics}
 
 We collected absenteeism and demographic data data on 3362 workers from
@@ -788,28 +757,26 @@ explained by the greater density of males in administrative roles.
 Females accounted for 43\% of temporary workers but only 16\% of
 permanent workers (figure x).
 
-\begin{figure}[h]
-
-{\centering \includegraphics{figures/unnamed-chunk-18-1} 
-
-}
-
-\caption{Age distribution by sex and worker status}\label{fig:unnamed-chunk-18}
-\end{figure}
-
-During the study period, weather followed typical seasonal trends for
-the area, albeit slightly drier than previous periods.
-
-\begin{figure}[h]
+\begin{figure}[!h]
 
 {\centering \includegraphics{figures/unnamed-chunk-19-1} 
 
 }
 
-\caption{i. Monthly total precipitation in the Maniça district; ii. Average monthly temperature (bars) during the study period, as well as monthly maximum (red) and minimum (blue) temperatures}\label{fig:unnamed-chunk-19}
+\caption{Age distribution by sex and worker status}\label{fig:unnamed-chunk-19}
 \end{figure}
 
-\section{Results}\label{results}
+During the study period, weather followed typical seasonal trends for
+the area, albeit slightly drier than previous periods.
+
+\begin{figure}[!h]
+
+{\centering \includegraphics{figures/unnamed-chunk-20-1} 
+
+}
+
+\caption{i. Monthly total precipitation in the Maniça district; ii. Average monthly temperature (bars) during the study period, as well as monthly maximum (red) and minimum (blue) temperatures}\label{fig:unnamed-chunk-20}
+\end{figure}
 
 In Southern Mozambique, malaria peaks during the summer months (December
 through March) most years (Figure 5, panel A), and worker absenteeism at
@@ -829,7 +796,7 @@ captured by absenteeism but not by the clinical data.
 
 \begin{figure}
 \centering
-\includegraphics{figures/unnamed-chunk-20-1.pdf}
+\includegraphics{figures/unnamed-chunk-21-1.pdf}
 \caption{Clinical malaria (district of Manhiça), all-cause absenteeism
 among Maragra workers, sick absenteeism among Maragra workers, positive
 cases at company clinic, and test positivity rate at company clinic}
@@ -882,13 +849,13 @@ with any rainfall saw more absenteeism than days with no rainfall
 was associated with greater absenteeism (Figure 6, panel B) (correlation
 coefficient of 0.25).
 
-\begin{figure}[h]
+\begin{figure}[!h]
 
-{\centering \includegraphics{figures/unnamed-chunk-25-1} 
+{\centering \includegraphics{figures/unnamed-chunk-26-1} 
 
 }
 
-\caption{Rainfall and absenteeism: association of any rainfall with absenteeism rate (left) and association of rainfall amount and absenteeism (right)}\label{fig:unnamed-chunk-25}
+\caption{Rainfall and absenteeism: association of any rainfall with absenteeism rate (left) and association of rainfall amount and absenteeism (right)}\label{fig:unnamed-chunk-26}
 \end{figure}
 
 The extent to which rainfall's effect on absenteeism is confounded by
@@ -923,20 +890,17 @@ absences. We intentionally ignore the savings accrued by the public
 health system, as well as the likely utility gains in secondary realms
 such as school absenteeism, producitivity, etc.
 
-\textbf{Effect of IRS on absenteeism}: Immediately following IRS, a
-worker's likelihood of absence drops significantly (figure x, panel i).
-As one would expect if the mechanism by which IRS reduces absence is
-through reduced malaria infection, the effect of IRS during the low
-transmission season is significant, but far less substantial in effect
-size (figure x, panel ii).
+\subsection{Analysis}\label{analysis}
 
-\begin{figure}
-\centering
-\includegraphics{figures/unnamed-chunk-26-1.pdf}
-\caption{i. Absenteeism before and after IRS administration for all
-workers who ever received IRS; ii. The same, but segregated by malaria
-and non-malaria seasons}
-\end{figure}
+\subsubsection{Effect of IRS on
+absenteeism}\label{effect-of-irs-on-absenteeism}
+
+Immediately following IRS, a worker's likelihood of absence drops
+significantly (appendix figure, panel A). As one would expect if the
+mechanism by which IRS reduces absence is through reduced malaria
+infection, the effect of IRS during the low transmission season is
+significant, but far less substantial in effect size (appendix figure,
+panel B).
 
 In order to assess the effect of IRS on absenteeism, we created 4 worker
 fixed effects models for the 4 principal worker types (permanent field
@@ -1028,8 +992,8 @@ Term & Estimate\\
 \end{tabular}
 \end{table}
 
-The model results for sickness only absenteeism suggest that IRS has a
-significant effect on permanent field workers. The effect is
+The model results for sickness only absenteeism (table 5) suggest that
+IRS has a significant effect on permanent field workers. The effect is
 directionally similar among temporary fieldworkers (but does not reach
 the level of significance). Among non-fieldworkers, the effect of IRS is
 mixed.
@@ -1086,7 +1050,7 @@ Term & Estimate\\
 \end{tabular}
 \end{table}
 
-\subsection{Externalities}\label{externalities}
+\subsubsection{Externalities}\label{externalities}
 
 This section is in progress. Looking at neighborhood effects,
 core-periphery effects, etc.
@@ -1153,50 +1117,10 @@ theoretically responsible for the application of IRS), a situation which
 would require further statistical adjustment. If, on the other hand,
 there is no endogeneity, we would expect absenteeism in the 10 day
 period prior to IRS administration to be similar to other pre-IRS
-absenteeism (adjusting for seasonality).
+absenteeism (adjusting for
+seasonality).\todo{Should add model specification formula here.}
 
-What follows are several variations of a model to assess whether IRS
-application predicts pre-IRS absenteeism. In the final version of the
-paper, we'll use whichever model is most appropriate, but this is left
-here for discussion purposes. I've also included the code, so as to
-inform the discussion. In the below models, \texttt{pre\_irs} refers to
-the 10 day period prior to IRS administration. The models estimate the
-odds of absence (ie, the estimates and confidence intervals are in the
-form of odds ratios).
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\NormalTok{ro_data <-}\StringTok{ }\NormalTok{ab_panel }\OperatorTok{%>%}\StringTok{ }\KeywordTok{left_join}\NormalTok{(irs, }\DataTypeTok{by =} \KeywordTok{c}\NormalTok{(}\StringTok{"date"}\NormalTok{, }\StringTok{"unidade"}\NormalTok{)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{filter}\NormalTok{(days_since }\OperatorTok{<}\StringTok{ }
-\StringTok{    }\DecValTok{0}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{pre_irs =} \KeywordTok{between}\NormalTok{(days_since, }\OperatorTok{-}\DecValTok{10}\NormalTok{, }\OperatorTok{-}\DecValTok{1}\NormalTok{)) }\OperatorTok{%>%}\StringTok{ }\CommentTok{# mutate(time_period = lendable::time_period_extract(date)) %>%}
-\CommentTok{# mutate(time_period = as.character(time_period)) %>%}
-\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{time_period =} \KeywordTok{make_season}\NormalTok{(}\DataTypeTok{date =}\NormalTok{ date)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{absent_sick =} \KeywordTok{ifelse}\NormalTok{(}\KeywordTok{is.na}\NormalTok{(absent_sick), }
-    \OtherTok{FALSE}\NormalTok{, absent_sick)) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{left_join}\NormalTok{(workers }\OperatorTok{%>%}\StringTok{ }\NormalTok{dplyr}\OperatorTok{::}\KeywordTok{select}\NormalTok{(oracle_number, }
-\NormalTok{    sex, department, permanent_or_temporary), }\DataTypeTok{by =} \StringTok{"oracle_number"}\NormalTok{)}
-
-
-\NormalTok{make_model <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(}\DataTypeTok{formula =} \StringTok{"absent ~ pre_irs + time_period"}\NormalTok{) \{}
-\NormalTok{    ro_model <-}\StringTok{ }\KeywordTok{glm}\NormalTok{(}\KeywordTok{as.formula}\NormalTok{(formula), }\DataTypeTok{data =}\NormalTok{ ro_data, }\DataTypeTok{family =} \KeywordTok{binomial}\NormalTok{(}\StringTok{"logit"}\NormalTok{))}
-\NormalTok{    coefs <-}\StringTok{ }\KeywordTok{exp}\NormalTok{(}\KeywordTok{coef}\NormalTok{(ro_model))}
-\NormalTok{    ci <-}\StringTok{ }\KeywordTok{confint}\NormalTok{(ro_model)}
-\NormalTok{    ci <-}\StringTok{ }\KeywordTok{exp}\NormalTok{(ci)}
-\NormalTok{    out <-}\StringTok{ }\KeywordTok{data.frame}\NormalTok{(}\DataTypeTok{Variable =} \KeywordTok{names}\NormalTok{(coefs), }\DataTypeTok{Estimate =}\NormalTok{ coefs, }\DataTypeTok{Lower =}\NormalTok{ ci[, }
-        \DecValTok{1}\NormalTok{], }\DataTypeTok{Upper =}\NormalTok{ ci[, }\DecValTok{2}\NormalTok{])}
-    \KeywordTok{row.names}\NormalTok{(out) <-}\StringTok{ }\OtherTok{NULL}
-\NormalTok{    out}\OperatorTok{$}\StringTok{`}\DataTypeTok{P value}\StringTok{`}\NormalTok{ <-}\StringTok{ }\KeywordTok{coef}\NormalTok{(}\KeywordTok{summary}\NormalTok{(ro_model))[, }\DecValTok{4}\NormalTok{]}
-\NormalTok{    out}\OperatorTok{$}\NormalTok{Significant <-}\StringTok{ }\KeywordTok{ifelse}\NormalTok{(out}\OperatorTok{$}\StringTok{`}\DataTypeTok{P value}\StringTok{`} \OperatorTok{<=}\StringTok{ }\FloatTok{0.001}\NormalTok{, }\StringTok{"xxx"}\NormalTok{, }\KeywordTok{ifelse}\NormalTok{(out}\OperatorTok{$}\StringTok{`}\DataTypeTok{P value}\StringTok{`} \OperatorTok{<=}\StringTok{ }
-\StringTok{        }\FloatTok{0.01}\NormalTok{, }\StringTok{"xx"}\NormalTok{, }\KeywordTok{ifelse}\NormalTok{(out}\OperatorTok{$}\StringTok{`}\DataTypeTok{P value}\StringTok{`} \OperatorTok{<=}\StringTok{ }\FloatTok{0.05}\NormalTok{, }\StringTok{"x"}\NormalTok{, }\StringTok{""}\NormalTok{)))}
-    \KeywordTok{return}\NormalTok{(}\KeywordTok{kable}\NormalTok{(out, }\DataTypeTok{format =} \StringTok{"latex"}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }\KeywordTok{kable_styling}\NormalTok{() }\OperatorTok{%>%}\StringTok{ }\KeywordTok{row_spec}\NormalTok{(}\DataTypeTok{row =} \KeywordTok{which}\NormalTok{(}\KeywordTok{grepl}\NormalTok{(}\StringTok{"pre_irs"}\NormalTok{, }
-\NormalTok{        out}\OperatorTok{$}\NormalTok{Variable)), }\DataTypeTok{background =} \StringTok{"yellow"}\NormalTok{))}
-\NormalTok{\}}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{# BASIC FORMULA}
-\KeywordTok{make_model}\NormalTok{(}\StringTok{"absent ~ pre_irs + time_period"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
+The below shows our robustness check for all cause absenteeism.
 
 \begin{table}[H]
 \centering
@@ -1204,21 +1128,28 @@ form of odds ratios).
 \hline
 Variable & Estimate & Lower & Upper & P value & Significant\\
 \hline
-(Intercept) & 0.0498463 & 0.0474720 & 0.0523031 & 0.0000000 & xxx\\
+(Intercept) & 0.0661899 & 0.0614958 & 0.0711710 & 0.0000000 & xxx\\
 \hline
-\rowcolor{yellow}  pre\_irsTRUE & 0.8050236 & 0.7002405 & 0.9211332 & 0.0019204 & xx\\
+\rowcolor{yellow}  10 days prior to IRS & 0.9229176 & 0.7300243 & 1.1503819 & 0.4886243\\
 \hline
-time\_periodMalaria season & 3.1215538 & 2.9408258 & 3.3145230 & 0.0000000 & xxx\\
+Malaria season & 3.1173457 & 2.9319429 & 3.3156586 & 0.0000000 & xxx\\
+\hline
+departmentFactory & 1.0944261 & 1.0118141 & 1.1841680 & 0.0245210 & x\\
+\hline
+departmentField & 0.5426841 & 0.5036184 & 0.5850353 & 0.0000000 & xxx\\
+\hline
+\rowcolor{yellow}  10 days prior to IRS:Malaria season & 0.8172244 & 0.6161822 & 1.0908542 & 0.1653822\\
 \hline
 \end{tabular}
 \end{table}
 
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{# BASIC FORMULA WITH INTERACTIONS}
-\KeywordTok{make_model}\NormalTok{(}\StringTok{"absent ~ pre_irs*time_period"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
+The below shows our robustness check for sick only absenteeism. Unlike
+with all cause absenteeism, during malaria season, being in the period
+10 days prior to IRS is associated with statistically greater likelihood
+of being absent for illness. In other words, it appears that there is
+somewhat of a feedback loop: when a worker misses work due to illness,
+his/her likelihood of getting IRS doubles in the next 10
+days.\todo{What to do about this???}
 
 \begin{table}[H]
 \centering
@@ -1226,102 +1157,17 @@ time\_periodMalaria season & 3.1215538 & 2.9408258 & 3.3145230 & 0.0000000 & xxx
 \hline
 Variable & Estimate & Lower & Upper & P value & Significant\\
 \hline
-(Intercept) & 0.0496594 & 0.0472551 & 0.0521477 & 0.0000000 & xxx\\
+(Intercept) & 0.0098162 & 0.0079914 & 0.0119339 & 0.0000000 & xxx\\
 \hline
-\rowcolor{yellow}  pre\_irsTRUE & 0.8741393 & 0.6918180 & 1.0889051 & 0.2443527\\
+\rowcolor{yellow}  10 days prior to IRS & 0.6780540 & 0.3484288 & 1.1791509 & 0.2069281\\
 \hline
-time\_periodMalaria season & 3.1397591 & 2.9537482 & 3.3386865 & 0.0000000 & xxx\\
+Malaria season & 1.1637020 & 0.9827900 & 1.3767569 & 0.0777162 & \\
 \hline
-\rowcolor{yellow}  pre\_irsTRUE:time\_periodMalaria season & 0.8804465 & 0.6645722 & 1.1740347 & 0.3797816\\
+departmentFactory & 1.3068546 & 1.0428447 & 1.6460818 & 0.0214002 & x\\
 \hline
-\end{tabular}
-\end{table}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX}
-\KeywordTok{make_model}\NormalTok{(}\StringTok{"absent ~ pre_irs*time_period + sex"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{l|r|r|r|r|l}
+departmentField & 0.6713828 & 0.5396839 & 0.8403182 & 0.0004142 & xxx\\
 \hline
-Variable & Estimate & Lower & Upper & P value & Significant\\
-\hline
-(Intercept) & 0.0350661 & 0.0325983 & 0.0376818 & 0.0000000 & xxx\\
-\hline
-\rowcolor{yellow}  pre\_irsTRUE & 0.8880020 & 0.7026608 & 1.1064043 & 0.3043502\\
-\hline
-time\_periodMalaria season & 3.1716504 & 2.9834194 & 3.3729726 & 0.0000000 & xxx\\
-\hline
-sexM & 1.5960091 & 1.4919474 & 1.7085243 & 0.0000000 & xxx\\
-\hline
-\rowcolor{yellow}  pre\_irsTRUE:time\_periodMalaria season & 0.8579023 & 0.6473160 & 1.1443754 & 0.2910119\\
-\hline
-\end{tabular}
-\end{table}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT}
-\KeywordTok{make_model}\NormalTok{(}\StringTok{"absent ~ pre_irs*time_period + sex + department"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{l|r|r|r|r|l}
-\hline
-Variable & Estimate & Lower & Upper & P value & Significant\\
-\hline
-(Intercept) & 0.0564718 & 0.0510602 & 0.0623971 & 0.0000000 & xxx\\
-\hline
-\rowcolor{yellow}  pre\_irsTRUE & 0.9242121 & 0.7310398 & 1.1520107 & 0.4962745\\
-\hline
-time\_periodMalaria season & 3.1302404 & 2.9439618 & 3.3294967 & 0.0000000 & xxx\\
-\hline
-sexM & 1.1923874 & 1.1059966 & 1.2861150 & 0.0000048 & xxx\\
-\hline
-departmentFactory & 1.0828452 & 1.0009732 & 1.1717926 & 0.0476615 & x\\
-\hline
-departmentField & 0.5767584 & 0.5330008 & 0.6243185 & 0.0000000 & xxx\\
-\hline
-\rowcolor{yellow}  pre\_irsTRUE:time\_periodMalaria season & 0.8145012 & 0.6141075 & 1.0872550 & 0.1585481\\
-\hline
-\end{tabular}
-\end{table}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\CommentTok{# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT AND}
-\CommentTok{# STATUS}
-\KeywordTok{make_model}\NormalTok{(}\StringTok{"absent ~ pre_irs*time_period + sex + department + permanent_or_temporary"}\NormalTok{)}
-\end{Highlighting}
-\end{Shaded}
-
-\begin{table}[H]
-\centering
-\begin{tabular}{l|r|r|r|r|l}
-\hline
-Variable & Estimate & Lower & Upper & P value & Significant\\
-\hline
-(Intercept) & 0.0617511 & 0.0558057 & 0.0682626 & 0.0000000 & xxx\\
-\hline
-\rowcolor{yellow}  pre\_irsTRUE & 1.0466179 & 0.8252949 & 1.3092306 & 0.6983498\\
-\hline
-time\_periodMalaria season & 2.9528835 & 2.7744446 & 3.1438877 & 0.0000000 & xxx\\
-\hline
-sexM & 1.2300194 & 1.1386295 & 1.3293865 & 0.0000002 & xxx\\
-\hline
-departmentFactory & 1.0837360 & 1.0014970 & 1.1731018 & 0.0462328 & x\\
-\hline
-departmentField & 1.3324160 & 1.2272323 & 1.4470610 & 0.0000000 & xxx\\
-\hline
-permanent\_or\_temporaryTemporary & 0.0839961 & 0.0744587 & 0.0944456 & 0.0000000 & xxx\\
-\hline
-\rowcolor{yellow}  pre\_irsTRUE:time\_periodMalaria season & 0.6682310 & 0.5016567 & 0.8956885 & 0.0063480 & xx\\
+\rowcolor{yellow}  10 days prior to IRS:Malaria season & 2.2225088 & 1.0747201 & 4.8587934 & 0.0360020 & x\\
 \hline
 \end{tabular}
 \end{table}
@@ -1338,6 +1184,8 @@ depreciation but not vehicle purchase, etc.) and a (3) ``absorbed
 costs'' scenario which ignores all costs which are not directly incurred
 by the program\ldots{}. xxx\ldots{}
 \todo{Will address this with some sensitivity analysis}
+
+\newpage
 
 \section{Discussion}\label{discussion}
 
@@ -1376,6 +1224,32 @@ by the program\ldots{}. xxx\ldots{}
   Large sample size, but all from same place: questionable
   generalizability.
 \end{itemize}
+
+\newpage
+
+\section{Appendix}\label{appendix}
+
+\subsection{Unadjusted absenteeism by time since
+IRS}\label{unadjusted-absenteeism-by-time-since-irs}
+
+\begin{figure}
+\centering
+\includegraphics{figures/unnamed-chunk-33-1.pdf}
+\caption{i. Absenteeism before and after IRS administration for all
+workers who ever received IRS; ii. The same, but segregated by malaria
+and non-malaria seasons}
+\end{figure}
+
+\subsection{Unadjusted sick absenteeism by time since
+IRS}\label{unadjusted-sick-absenteeism-by-time-since-irs}
+
+\begin{figure}
+\centering
+\includegraphics{figures/unnamed-chunk-34-1.pdf}
+\caption{i. Sick absenteeism before and after IRS administration for all
+workers who ever received IRS; ii. The same, but segregated by malaria
+and non-malaria seasons}
+\end{figure}
 
 \section*{References}\label{references}
 \addcontentsline{toc}{section}{References}

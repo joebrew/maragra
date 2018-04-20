@@ -1,0 +1,63 @@
+---
+output: html_document
+---
+
+
+
+```{r child = '00_title_page.Rmd'}
+```
+
+---
+output: html_document
+---
+
+
+
+```{r child = '01_introduction.Rmd'}
+```
+
+---
+output: html_document
+---
+
+
+
+```{r child = '02_methods.Rmd'}
+```
+
+---
+output: html_document
+---
+
+
+
+```{r child = '03_results.Rmd'}
+```
+
+---
+output: html_document
+---
+
+
+
+```{r child = '04_discussion.Rmd'}
+```
+
+---
+output: html_document
+---
+
+
+
+```{r child = '05_appdendix.Rmd'}
+```
+
+---
+output: html_document
+---
+
+
+
+```{r child = '06_references.Rmd'}
+```
+
