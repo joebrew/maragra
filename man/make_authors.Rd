@@ -5,12 +5,11 @@
 \title{Make authors}
 \usage{
 make_authors(authors = data.frame(name = c("Joe Brew", "Kizito Gondo",
-  "Elton Dorkin", "Menno Pradhan", "Laia Cirera", "Ranjeeta Thomas",
-  "Elisa Sicuri"), email = c("joe@databrew.cc", "KGondo@illovo.co.za",
-  "EDorkin@illovo.co.za", "m.p.pradhan@vu.nl", "laia.cirera@isglobal.org",
-  "ranjeeta.thomas@imperial.ac.uk", "elisa.sicuri@isglobal.org"), affilitation =
-  c("isglobal,cism,vu", "ma", "ma", "vu,uva", "isglobal,cism", "icl",
-  "isglobal,cism,icl"), footnote = c("Corresponding Author", rep("", 6)),
+  "Elton Dorkin", "Menno Pradhan", "Laia Cirera", "Elisa Sicuri"), email =
+  c("joe@databrew.cc", "KGondo@illovo.co.za", "EDorkin@illovo.co.za",
+  "m.p.pradhan@vu.nl", "laia.cirera@isglobal.org", "elisa.sicuri@isglobal.org"),
+  affilitation = c("isglobal,cism,vu", "ma", "ma", "vu,uva", "isglobal,cism",
+  "isglobal,cism,icl"), footnote = c("Corresponding Author", rep("", 5)),
   stringsAsFactors = FALSE), institutions = data.frame(code = c("isglobal",
   "icl", "cism", "vu", "uva", "ma"), institution =
   c("Barcelona Institute for Global Health", "Imperial College London",
@@ -37,7 +36,9 @@ make_authors(authors = data.frame(name = c("Joe Brew", "Kizito Gondo",
 
 \item{include_country}{Whether to include the country; only relevant if include_address is FALSE}
 
-\item{seperator}{What to put between author names: usually a comma or line break}
+\item{seperator}{What to put between author names: usually a comma or line break
+Ranjeeta Thomas',
+ranjeeta.thomas@imperial.ac.uk',}
 }
 \value{
 Latex text

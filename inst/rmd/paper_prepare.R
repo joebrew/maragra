@@ -141,22 +141,36 @@ if('prepared_data.RData' %in% dir()){
     mutate(group = paste0(permanent_or_temporary, ' ',
                           tolower(field)))
   fe_models <- list()
+  sick_models <- list()
   groups <- sort(unique(model_data$group))
   # library(lmerTest)
   
   # Add a month column
   model_data$month_number <- add_zero(format(model_data$date, '%m'), 2)
   
+  # Get a malaria season var
+  model_data <- 
+    model_data %>%
+    mutate(calendar_month = as.numeric(format(date, '%m'))) %>%
+    mutate(calendar_year = as.numeric(format(date, '%Y'))) %>%
+    mutate(malaria_year = ifelse(calendar_month < 6,
+                                 paste0(calendar_year-1, '-', calendar_year),
+                                 paste0(calendar_year, '-', calendar_year+1)))
+  
   # library(nlme)
   for (i in 1:length(groups)){
     message(i)
     this_group <- groups[i]
     these_data <- model_data %>% filter(group == this_group)
-    this_model <- felm(absent ~ season*months_since | oracle_number | 0 | 0,
+    this_model <- felm(absent ~ season*months_since + precipitation | oracle_number + malaria_year | 0 | 0,
+                       data = these_data)
+    this_sick_model <- felm(absent_sick ~ season*months_since + precipitation | oracle_number + malaria_year| 0 | 0,
                        data = these_data)
     fe_models[[i]] <- this_model
+    sick_models[[i]] <- this_sick_model
   }
   names(fe_models) <- groups
+  names(sick_models) <- groups
   
   # Plots of maps
   # Libraries

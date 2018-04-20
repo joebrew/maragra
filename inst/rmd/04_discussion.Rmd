@@ -4,10 +4,11 @@
 \todo{This entire section will not be done until methods/results are finalized.}
 
 - Overview of findings
-
 - How this contributes to the literature
-
 - Implications for policy and for businesses
+- Spillover effects !
+- How absenteeism might be _underestimating_ true effect, since at the margin a sick worker might go to work (ie, not be absent), but be less productive
+
 
 ## Limitations
 

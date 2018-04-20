@@ -2,7 +2,7 @@
 # Results
 
 
-In Southern Mozambique, malaria peaks during the summer months (December through March) most years (Figure 4, panel A), and worker absenteeism at Maragra rates track malaria incidence closely, following the same seasonal patterns (figure 4, panel B). Both all-cause absenteeism and sick absenteeism have declined in recent years at Maragra (figure 4, panel C), with the latter declining at a faster rate than the former. The fact that the rate of confirmed cases at the company clinic is largely non-seasonal (figure 4, panels E and F) suggests that a significant portion of workers either seek care for malaria elsewhere (for example, government health posts, of which several are nearby and in some many cases closer to workers' residence than the company clinic) or do not seek care during malaria infection. Accordingly, we focus our analysis on all-cause absenteeism rather than sickness absenteeism or malaria diagnostics, with the assumption that much of illness is captured by absenteeism but not by the clinical data.
+In Southern Mozambique, malaria peaks during the summer months (December through March) most years (Figure 5, panel A), and worker absenteeism at Maragra rates track malaria incidence closely, following the same seasonal patterns (figure 4, panel B). Both all-cause absenteeism and sick absenteeism have declined in recent years at Maragra (figure 5, panel C), with the latter declining at a faster rate than the former. The fact that the rate of confirmed cases at the company clinic is largely non-seasonal (figure 5, panels E and F) suggests that a significant portion of workers either seek care for malaria elsewhere (for example, government health posts, of which several are nearby and in some many cases closer to workers' residence than the company clinic) or do not seek care during malaria infection. Accordingly, we focus our analysis on all-cause absenteeism rather than sickness absenteeism or malaria diagnostics, with the assumption that much of illness is captured by absenteeism but not by the clinical data.
 
 
 
@@ -112,7 +112,7 @@ Rmisc::multiplot(g1, g2, g3,
 
 ```{r}
 fumigations <- mc %>%
-  filter(date >= '2012-01-01',
+  filter(date >= '2013-01-01',
          date <= '2016-12-31')
 n_fumigations <- nrow(fumigations)
 n_buildings <- sum(fumigations$casas_cobertas, na.rm = TRUE)
@@ -122,9 +122,22 @@ people_observed <- length(unique(model_data$oracle_number))
 pr <- function(x){prettyNum(x, big.mark = ',')}
 ```
 
-**Fumigations**: During the period from January 1st, 2012 through December 31st, 2016, the Maragra Malaria Control Unit carried out `r pr(n_fumigations)` episodes of fumigation of residential "agregados" (household combinations), for a total of `r pr(n_buildings)` building-fumigation combinations. The total number of unique agregados sprayed during this period was `r pr(unique_agregados)`. Among the `r pr(people_observed)` workers for whom we have reliable absenteeism and residential data, `r pr(people_sprayed)` had their homes fumigated at least once (the majority of workers live off of the facility).
+**Fumigations**: During the period from January 1st, 2013 through December 31st, 2016, the Maragra Malaria Control Unit carried out `r pr(n_fumigations)` episodes of fumigation of residential "agregados" (household combinations), for a total of `r pr(n_buildings)` building-fumigation combinations. The total number of unique agregados sprayed during this period was `r pr(unique_agregados)`. Among the `r pr(people_observed)` workers for whom we have reliable absenteeism and residential data, `r pr(people_sprayed)` had their homes fumigated at least once (the majority of workers live off of the facility).
+
+```{r}
+dry_days <- length(which(weather$precipitation > 0))
+n_days <- length(weather$precipitation)
+p_dry <- round(dry_days / n_days * 100)
+amount_rain <- round(mean(weather$precipitation[weather$precipitation > 0], na.rm = T), digits = 2)
+x <- weather %>%
+  group_by(month = format(date, '%m')) %>%
+  summarise(precipitation = mean(precipitation, na.rm = TRUE))
+```
+
+
 
 **Absences**: We observed `r pr(nrow(ab_panel))` unique worker-days among the `r pr(people_observed)` workers. The all-period average absenteeism rate was `r round(100 * sum(ab_panel$absent) / nrow(ab_panel), digits = 2)`%, though this rate varied widely as a function of worker department, sex, residence, and season (table 1).
+
 
 ```{r, results='asis'}
 calculate <- function(var){
@@ -195,7 +208,73 @@ print(xtable::xtable(ab_table,
 ```
 
 
-**Effect of IRS on clinical malaria**: xxx. \todo{Not done yet. In fact, not even sure if I should do this section at all, since it's basically just a distraction.}
+```{r}
+ov_ab <- round(100 * mean(ab_panel$absent[between(ab_panel$date, as.Date('2012-01-01'), as.Date('2016-12-31'))]), digits = 2)
+
+ov_cl <- length(which(between(clinic$date, as.Date('2012-01-01'), as.Date('2016-12-31'))))
+```
+
+**Precipitation**: Of the `r n_days` days observed, `r dry_days` had no rainfall at all (ie, approximately two-thirds). On days for which there was any rainfall at all, the average amount was approximately `r amount_rain` centimeters. Rain was most common in December and January (average of 5-5.5 cm daily) and least common in August and September (average of 0.5 cm daily). Days with any rainfall saw more absenteeism than days with no rainfall (Figure 6, panel A) and among days with any rainfall, more precipitation was associated with greater absenteeism (Figure 6, panel B) (correlation coefficient of 0.25).
+
+```{r, fig.cap = 'Rainfall and absenteeism: association of any rainfall with absenteeism rate (left) and association of rainfall amount and absenteeism (right)', fig.height=3.5, fig.width=7, fig.align='center'}
+bi_data <- model_data %>%
+  group_by(date) %>%
+  mutate(any_rain = mean(precipitation, na.rm = TRUE) > 0) %>%
+  ungroup %>%
+  filter(!is.na(any_rain)) %>%
+  mutate(any_rain = ifelse(any_rain, 'Some rain', 'No rain')) %>%
+  group_by(any_rain, date) %>%
+  summarise(absenteeism = mean(absent) * 100)
+bi_data_simple <- bi_data %>%
+  group_by(any_rain) %>%
+  summarise(absenteeism = mean(absenteeism))
+p1 <- ggplot(data = bi_data,
+       aes(x = any_rain,
+           y = absenteeism)) +
+  geom_jitter(alpha = 0.3, size = 0.5) +
+  geom_violin(alpha = 0.4, fill = 'lightblue') +
+  scale_y_log10() +
+  theme_maragra() +
+  geom_bar(data = bi_data_simple,
+             aes(x = any_rain,
+                 y = absenteeism),
+             stat = 'identity',
+             fill = 'grey',
+             alpha = 0.8,
+           width = 0.2) +
+  geom_label(data = bi_data_simple,
+             aes(x = any_rain,
+                 y = absenteeism,
+                 label = round(absenteeism, digits = 2)),
+             color = 'red') +
+  labs(x = '',
+       y = 'Absenteeism rate (log scale)',
+       title = 'A')
+
+plot_data <- model_data %>%
+  group_by(date) %>%
+  summarise(precipitation = mean(precipitation, na.rm = TRUE),
+            absenteeism = mean(absent)) %>%
+  ungroup %>%
+  filter(precipitation > 0.1)
+p2 <- ggplot(data = plot_data,
+       aes(x = precipitation,
+           y = absenteeism * 100)) +
+  geom_point(alpha = 0.3, size = 0.5) +
+  scale_x_log10() +
+  geom_smooth() +
+  # scale_y_log10() +
+  theme_maragra() +
+  labs(x = 'Daily precipitation (log scale)',
+       y = 'Absenteeism rate', 
+       title = 'B')
+Rmisc::multiplot(p1, p2, cols = 2)
+```
+
+The extent to which rainfall's effect on absenteeism is confounded by its effect on malaria is discussed in the model results section.
+
+
+**Effect of IRS on clinical malaria**: The number of malaria cases registered at the company clinic during that time was 1873, for an approximate annualized clinical incidence of 110 cases per 1,000. \todo{Not done yet. In fact, not even sure if I should do this section at all, since it's basically just a distraction.}
 
 
 
@@ -271,14 +350,13 @@ g2 <- ggplot(data = x2 %>% mutate(time_period = paste0(time_period)),
 Rmisc::multiplot(g1, g2, cols = 2)
 ```
 
-In order to assess the effect of IRS on absenteeism, we created 4 worker fixed effects models for the 4 principal worker types (permanent field worker, temporary field worker, permanent non-field worker, temporary non-field worker). The reason for segregating models rather than incorporating worker type as a fixed effect was that it seemed plausible that the effect of the treatment (IRS) on the outcome would be different (and vary differently over time) depending on these worker types. For instance, it is reasonable to assume that IRS' effect would be differential for a temporary worker (who likely lives in the fumigated house less than 100% of the year) than for a permanent worker. 
+In order to assess the effect of IRS on absenteeism, we created 4 worker fixed effects models for the 4 principal worker types (permanent field worker, temporary field worker, permanent non-field worker, temporary non-field worker) for both outcoms (all cause absenteeism vs. sickness absenteeism). The reason for segregating models rather than incorporating worker type as a fixed effect was that it seemed plausible that the effect of the treatment (IRS) on the outcome would be different (and vary differently over time) depending on these worker types. For instance, it is reasonable to assume that IRS' effect would be differential for a temporary worker (who likely lives in the fumigated house less than 100% of the year) than for a permanent worker. 
 
 Given that IRS is carried out on a continuous rolling basis, we used relative worker time (as opposed to calendar) as the time component of our model - that is, each workers' days until and since IRS were standardized so that day 0 (date of fumigation) was the interruption point. This has the advantage of incorporating into the model a variety of potential time-varying confounders in a quasi-randomized fashion, thereby making it unecessary to adjust for them specifically. Our model took into account workers' residential location (on or off site) - even though off site workers by definition could not be administered IRS by Maragra - so as to capture other seasonal effects from those workers. \todo{This is not very eloquent yet and needs to be improved.}
 
-The model results (table 3) suggest a significant decrease in absenteeism following the administration of IRS. The effect is ambivalent among temporary workers, whereas among permanent workers the administration of IRS decreases absenteeism betwen 2.5 and 8.4 percentage points in the 2-9 month following administration. These effects are consistent with IRS decreasing absence through the medium of malaria, since (a) the effect is not as strong in the first month (potentially during the parasite incubation phase), the effect is stronger on field workers (who are more socioeconomically the demographic at greater risk of malaria than their administrative counterparts), and the effect is ambivalent among temporary workers (since the protective effect of IRS is only a function of the amount of time that the worker spends in the fumigated house).
 
 
-```{r, results = 'asis'}
+```{r}
 clean_up_model <- function(x){
   # extract coefficients
   coefs <- data.frame(coef(summary(x)))
@@ -313,85 +391,75 @@ clean_up_model <- function(x){
                                     ), ')')) %>%
     dplyr::select(Term, Estimate)
   x <- x %>% filter(!grepl('sd_', Term))
+  x <- x %>% filter(!grepl('10+', Term, fixed = TRUE))
   return(x)
 }
 
-out_list <- list()
-for(i in 1:length(fe_models)){
-  message(i)
-  this_model <- names(fe_models)[i]
-  the_model <- fe_models[[which(names(fe_models) == this_model)]]
-  the_model <- clean_up_model(the_model)
-  names(the_model)[2] <- this_model
-  out_list[[i]] <- the_model
-}
-
-# df <- out_list[[1]]
-# for(i in 2:length(out_list)){
-#   df <- left_join(df, out_list[[i]])
-# }
-# print(xtable::xtable(df, caption = 'Regression outputs'), size="\\fontsize{5pt}{6pt}\\selectfont",
-#       include.rownames = FALSE)
-
-df <- out_list[[1]]
-namer <- names(df)[2]
-names(df)[2] <- 'Estimate'
-
-for(i in 2:length(out_list)){
-  temp <- out_list[[i]]
-  namer[i] <- names(temp)[2]
-  names(temp)[2] <- 'Estimate'
-  df <- bind_rows(df, temp)
-}
-
-library(kableExtra)
-breaker <- nrow(out_list[[1]])
-lengther <- length(out_list)
-breaks <- c(0, breaker * 1:(lengther))
-k <- kable(df, format = "latex", caption = "Models with worker fixed effects", booktabs = T) %>%
-  kable_styling()
-for (i in 1:(length(breaks)-1)){
-  message(i)
-  k <- k %>%
-    group_rows(namer[i], 
-               breaks[i] + 1,
-               breaks[i] + breaker,
-               latex_gap_space = "1.5em") 
-}
-print(k)
-
+make_models_table <- function(model_list, the_caption = "Models with worker fixed effects"){
   
-# # Combine them all
-# out_list <- list()
-# for (i in 1:length(models)){
-#   this_model <- letters[i]
-#   the_model <- models[[this_model]]
-#   the_model <- clean_up_model(the_model)
-#   names(the_model)[2] <- paste0('Model ', i)
-#   out_list[[i]] <- the_model
-# }
-# df <- out_list[[length(models)]]
-# # Order the Terms
-# df_order <- c()
-# for(i in 1:length(models)){
-#   df_order <- c(df_order, out_list[[i]]$Term)
-# }
-# df_order <- unique(df_order)
-# df <- left_join(data.frame(Term = df_order),
-#                 df)
-# for(i in (length(models) - 1):1){
-#   message(i)
-#     df <- left_join(df, out_list[[i]])
-# }
-# df <- df[,unique(c('Term', sort(names(df))))]
-# print(xtable::xtable(df, caption = 'Regression outputs'), size="\\fontsize{5pt}{6pt}\\selectfont")
+  out_list <- list()
+  for(i in 1:length(model_list)){
+    message(i)
+    this_model <- names(model_list)[i]
+    the_model <- model_list[[which(names(model_list) == this_model)]]
+    the_model <- clean_up_model(the_model)
+    names(the_model)[2] <- this_model
+    out_list[[i]] <- the_model
+  }
 
+  df <- out_list[[1]]
+  namer <- names(df)[2]
+  names(df)[2] <- 'Estimate'
+  
+  for(i in 2:length(out_list)){
+    temp <- out_list[[i]]
+    namer[i] <- names(temp)[2]
+    names(temp)[2] <- 'Estimate'
+    df <- bind_rows(df, temp)
+  }
+  
+  library(kableExtra)
+  breaker <- nrow(out_list[[1]])
+  lengther <- length(out_list)
+  breaks <- c(0, breaker * 1:(lengther))
+  k <- kable(df, format = "latex", caption = the_caption, booktabs = T) %>%
+    kable_styling()
+  for (i in 1:(length(breaks)-1)){
+    message(i)
+    k <- k %>%
+      group_rows(namer[i], 
+                 breaks[i] + 1,
+                 breaks[i] + breaker,
+                 latex_gap_space = "1.5em") 
+  }
+  print(k)
+}
+```
+
+
+
+The model results for all cause absenteeism (table 4) suggest a significant decrease in absenteeism following the administration of IRS. The effect is ambivalent among temporary workers, whereas among permanent workers the administration of IRS decreases absenteeism betwen 2.5 and 8.4 percentage points in the 2-9 month following administration. These effects are consistent with IRS decreasing absence through the medium of malaria, since (a) the effect is not as strong in the first month (potentially during the parasite incubation phase), the effect is stronger on field workers (who are more socioeconomically the demographic at greater risk of malaria than their administrative counterparts), and the effect is ambivalent among temporary workers (since the protective effect of IRS is only a function of the amount of time that the worker spends in the fumigated house).
+
+
+
+```{r, results = 'asis'}
+make_models_table(model_list = fe_models, the_caption = "All cause absenteeism: model results")
+```
+
+
+The model results for sickness only absenteeism (table 5) suggest that IRS has a significant effect on permanent field workers. The effect is directionally similar among temporary fieldworkers (but does not reach the level of significance). Among non-fieldworkers, the effect of IRS is mixed.
+
+```{r, results = 'asis'}
+make_models_table(model_list = sick_models, the_caption = "Sick absenteeism only: model results")
 ```
 
 
 ## Externalities
 
-**Translating absences to costs**
+This section is in progress. Looking at neighborhood effects, core-periphery effects, etc.
+
+
+## Translating absences to costs
 
 xxx\todo{Not done yet. This will be relatively straightforward arithmetic, but I want to first make sure that the models are rock solid (since all of the "translation" hinges on them).}
 
@@ -423,11 +491,11 @@ xxx\todo{Not done yet. This will be relatively straightforward arithmetic, but I
 
 Two principal concerns call into question the results of our analysis. First, the application of IRS to a workers house may be endogenous.\todo{Is this the right term here? We're not dealing with an "unobserved" factor per se, rather we're dealing with a situation in which the cause might influence the effect, and the effect might influence the cause, ie a feedback loop.} It is reasonable to suspect that the application of IRS to households is not random, but rather that IRS was applied more frequently to houses which had already seen a malaria case. In this case, our estimated effect of IRS on absenteeism would likely be underestimated, with the post-IRS absenteeism rates actually having declined from a greater pre-IRS absenteeism rate than otherwise suggested. 
 
-To check for this, we estimate the odds of absenteeism as a function of receiving IRS _during the 10 day period prior to receiving IRS_. If IRS application is indeed endogenous, we would expect absenteeism to be elevated during this period (since the increase in absenteeism would be theoretically responsible for the application of IRS), a situation which would require further statistical adjustment. If, on the other hand, there is no endogeneity, we would expect absenteeism in the 10 day period prior to IRS administration to be similar to other pre-IRS absenteeism (adjusting for seasonality).
+To check for this, we estimate the odds of absenteeism as a function of receiving IRS _during the 10 day period prior to receiving IRS_. If IRS application is indeed endogenous, we would expect absenteeism to be elevated during this period (since the increase in absenteeism would be theoretically responsible for the application of IRS), a situation which would require further statistical adjustment. If, on the other hand, there is no endogeneity, we would expect absenteeism in the 10 day period prior to IRS administration to be similar to other pre-IRS absenteeism (adjusting for seasonality).\todo{Should add model specification formula here.}
 
-What follows are several variations of a model to assess whether IRS application predicts pre-IRS absenteeism. In the final version of the paper, we'll use whichever model is most appropriate, but this is left here for discussion purposes. I've also included the code, so as to inform the discussion. In the below models, `pre_irs` refers to the 10 day period prior to IRS administration. The models estimate the odds of absence (ie, the estimates and confidence intervals are in the form of odds ratios).
+The below shows our robustness check for all cause absenteeism.
 
-```{r, echo = TRUE}
+```{r, echo = FALSE}
 ro_data <- ab_panel %>%
   left_join(irs, by = c('date', 'unidade')) %>%
   filter(days_since < 0) %>%
@@ -442,6 +510,7 @@ ro_data <- ab_panel %>%
                             department,
                             permanent_or_temporary),
             by = 'oracle_number')
+# ro_data$time_period <- as.character(ro_data$time_period)
 
 
 make_model <- function(formula = 'absent ~ pre_irs + time_period'){
@@ -461,30 +530,41 @@ make_model <- function(formula = 'absent ~ pre_irs + time_period'){
                             ifelse(out$`P value` <= 0.01, 'xx',
                                    ifelse(out$`P value` <= 0.05, 'x',
                                           '')))
+  out$Variable <- as.character(out$Variable)
+  out$Variable <- gsub('pre_irsTRUE', '10 days prior to IRS', out$Variable)
+  out$Variable <- gsub('time_period', '', out$Variable)
   return(kable(out, format = "latex") %>%
   kable_styling() %>%
-    row_spec(row = which(grepl('pre_irs', out$Variable)),background = "yellow"))
+    row_spec(row = which(grepl('prior', out$Variable)),background = "yellow"))
 }
 ```
 
-```{r, echo = TRUE, results = 'asis'}
+```{r, echo = FALSE, results = 'asis'}
 
-# BASIC FORMULA
-make_model('absent ~ pre_irs + time_period')
+# # BASIC FORMULA
+# make_model('absent ~ pre_irs + time_period')
 
-# BASIC FORMULA WITH INTERACTIONS
-make_model('absent ~ pre_irs*time_period')
+# # BASIC FORMULA WITH INTERACTIONS
+# make_model('absent ~ pre_irs*time_period')
 
-# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX
-make_model('absent ~ pre_irs*time_period + sex')
+# # BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX
+# make_model('absent ~ pre_irs*time_period + sex')
+# 
+# # BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT
+# make_model('absent ~ pre_irs*time_period + sex + department')
+# 
+# 
+# # BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT AND STATUS
+# make_model('absent ~ pre_irs*time_period + sex + department + permanent_or_temporary')
 
-# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT
-make_model('absent ~ pre_irs*time_period + sex + department')
+# Adjust for seasonality and department
+make_model('absent ~ pre_irs*time_period + department')
+```
 
+The below shows our robustness check for sick only absenteeism. Unlike with all cause absenteeism, during malaria season, being in the period 10 days prior to IRS is associated with statistically greater likelihood of being absent for illness. In other words, it appears that there is somewhat of a feedback loop: when a worker misses work due to illness, his/her likelihood of getting IRS doubles in the next 10 days.\todo{What to do about this???}
 
-# BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT AND STATUS
-make_model('absent ~ pre_irs*time_period + sex + department + permanent_or_temporary')
-
+```{r}
+make_model('absent_sick ~ pre_irs*time_period + department')
 ```
 
 The second concern is that our quantification of return on investment is distorted by the fact that we treat IRS operations as essentially linear in nature, when in reality economies of scale, in-kind purchases and other factors likely make the true cost-per-spraying convex. We address this by creating three scenarios: (1) a "start-up" scenario in which we take into account all costs incurred by starting a program from scratch, (2) a "normal" scenario in which we match the assumptions with those used in this paper (ie, account for "wear-and-tear" depreciation but not vehicle purchase, etc.) and a (3) "absorbed costs" scenario which ignores all costs which are not directly incurred by the program.... xxx... \todo{Will address this with some sensitivity analysis}

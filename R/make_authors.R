@@ -2,13 +2,14 @@
 #'
 #' Cat the authors in latex-ready format
 #' @return Latex text
+#' @export
+
 #' @param authors A dataframe with columns: name, email, affiliation, footnote
 #' @param institutions A dataframe with columns: code, institution, address
 #' @param cat_it Whether to cat (as opposed to return)
 #' @param include_address Whether to include the address
 #' @param include_country Whether to include the country; only relevant if include_address is FALSE
 #' @param seperator What to put between author names: usually a comma or line break
-#' @export
 
 make_authors <- function(
 
@@ -18,7 +19,7 @@ make_authors <- function(
                                 # 'Eduardo Nhamahanga',
                                 'Menno Pradhan',
                                 'Laia Cirera',
-                                'Ranjeeta Thomas',
+                                #'Ranjeeta Thomas',
                                 'Elisa Sicuri'),
                        email = c('joe@databrew.cc',
                                  'KGondo@illovo.co.za',
@@ -26,7 +27,7 @@ make_authors <- function(
                                  # 'ENhamahanga@illovo.co.za',
                                  'm.p.pradhan@vu.nl',
                                  'laia.cirera@isglobal.org',
-                                 'ranjeeta.thomas@imperial.ac.uk',
+                                 #'ranjeeta.thomas@imperial.ac.uk',
                                  'elisa.sicuri@isglobal.org'),
                        affilitation = c("isglobal,cism,vu",
                                         'ma',
@@ -34,10 +35,10 @@ make_authors <- function(
                                         # 'ma',
                                         "vu,uva",
                                         'isglobal,cism',
-                                        "icl",
+                                       # "icl",
                                         "isglobal,cism,icl"),
                        footnote = c("Corresponding Author",
-                                    rep('', 6)),
+                                    rep('', 5)),
                        stringsAsFactors = FALSE),
 
   institutions = data.frame(code = c('isglobal',

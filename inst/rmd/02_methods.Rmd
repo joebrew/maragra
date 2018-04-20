@@ -5,24 +5,24 @@
 
 In collaboration with the sugar processing facility, we collected data for the period from January 2010 through December 2016. Data came from four sources: (i) the Human Resources' roster of worker details and absences, (ii) the facility's on-site clinic's medical and laboratory records, (iii) the facility's on-site malaria control program's records pertaining to the dates, chemicals, and location of IRS activities, and (iv) interviews with company employees pertaining to costs, data limitations, etc. Digitization and collection of data took place during the period from March 2016 through May 2017. Supplementary data pertaining to worker characteristics was obtained from through the Centro de Investigação em Saude de Manhiça's (CISM) demographic census, which covered workers from the district, but not those who migrated from other parts of the country [@Nhacolo_2006]. 
 
-Data pertaining to district-wide malaria incidence was obtained from Mozambique’s Boletim Epidemiológico Semanal (BES), which is the system by which the National Malaria Control Program monitors incidence at the district level throghout the entire country, and reports
-the number of confirmed weekly malaria cases at government health facilities. Using these case numbers, combined with population estimates from the National Statistical Institute (INE), we estimate each day's annualized weekly malaria incidence rate (cases per 1000 population at risk), interpolated from the weekly figures. We retrieved weather data for all Mozambican stations from NOAA. We estimated the meteorological conditions at the centroid of Manhiça using a simple interpolation method whereby the district's weather conditions were estimated to be a function of all Mozambican weather stations' reported conditions, inversely weighted by kilometers from district centroid. 
+Data pertaining to district-wide malaria incidence was obtained from Mozambique’s Boletim Epidemiológico Semanal (BES), which is the system by which the National Malaria Control Program monitors incidence at the district level throghout the entire country, and reports the number of confirmed weekly malaria cases at government health facilities. Using these case numbers, combined with population estimates from the National Statistical Institute (INE), we estimate each day's annualized weekly malaria incidence rate (cases per 1000 population at risk), interpolated from the weekly figures. We retrieved weather data for all Mozambican stations from NOAA. We estimated the meteorological conditions at the centroid of Manhiça using a simple interpolation method whereby the district's weather conditions were estimated to be a function of all Mozambican weather stations' reported conditions, inversely weighted by kilometers from district centroid. 
 
-Maragra regularly employs IRS at on-site worker households in order to reduce those workers' (and their families') risk of malaria infection. Workers living off-site (our control group) also may have received IRS at some point during the study period (from government programs). Even though we do not have reliable person-level data on IRS carried out by the government, off-site workers are a suitable control in the sense that they represent "business as usual" (ie, what would happen if the company carried out no IRS and relied solely on public interventions). Using company HR and clinical records, we were able to identify absences and episodes of clinical malaria among all workers, as well as identify the time since the most recent IRS episode before the onsent of absence or illness.
+Maragra regularly employs IRS at on-site worker households in order to reduce those workers' (and their families') risk of malaria infection. IRS works by killing the malaria vector (mosquito), thereby preventing infection of the household occupants. When administered correctly, IRS is a low-risk intervention to its recipients, and is assumed not to affect absenteeism in the short-term (to the extent that it may cause negative side-effects, these are generally long-term). It is preventive only, and does not cure current malaria infection, nor does it affect the parasite load of mosquitoes. Workers living off-site (our control group) also may have received IRS at some point during the study period (from government programs). Even though we do not have reliable person-level data on IRS carried out by the government, off-site workers are a suitable control in the sense that they represent "business as usual" (ie, what would happen if the company carried out no IRS and relied solely on public interventions). Using company HR and clinical records, we were able to identify absences and episodes of clinical malaria among all workers, as well as identify the time since the most recent IRS episode before the onsent of absence or illness.
 
 Worker characteristics, illness and absenteeism data, along with IRS activity data, were systematically stored, collected, and used at the individual level by Maragra, and therefore of generally high quality. Because cost data was less systematically collected by Maragra, and because many costs could not be precisely quantified due to the abundance of in-kind and cross-departmental expenditures, we had to rely on rough estimations based on a mix of interviews, reciepts, and interpolations. Since our program cost data is not as reliable as our worker characteristic and outcome data, we were conservative in our estimates, and generally tried to err on the side of program activities and materials costing _more_ than what was reported, when doubt was aired. Cost data consisted of three types: (i) wages of malaria control employees, (ii) transporation and vehicle costs for IRS teams, and (iii) acquisition costs of purchasing IRS chemicals for fumigation (ACT and DDT), the latter two being combined into malaria control "programme" costs. 
 
 
 ## Conceptual framework and identification strategy
 
-We sought to understand the effect of IRS on individual workers' likelihood of absence from work as well as their likelihood of clinical malaria. To estimate this effect, we estimated separate models for absence and illness. We employed linear mixed effects models [@Minalu2011] [@Liu2010] (with individual worker fixed effects, and random effects for other covariates)  in lieu of interrupted time series [@Lopez_Bernal_2016] so as to explicitly adjust for confounders [@Bell2014]. We divide into 4 different models for different worker types, so as to account for the potential time-varying effects of worker type on risk of malaria. Our econometric model is relatively straightforward:
-
+We sought to understand the effect of IRS on individual workers' likelihood of absence from work as well as their likelihood of clinical malaria. To estimate this effect, we estimated separate models for absence and illness. We employed linear mixed effects models [@Minalu2011] [@Liu2010] (with individual worker fixed effects, and random effects for other covariates)  in lieu of interrupted time series [@Lopez_Bernal_2016] so as to explicitly adjust for confounders [@Bell2014]. We divide into 4 different models for different worker types, so as to account for the potential time-varying effects of worker type on risk of malaria. Our model specification is as follows
 
 $$
-\hat{Y_{it}} = \beta_{0} +  (\beta_{1}) (\text{Season}_{it}) + (\beta_2{IRS}*\beta_3{IRS_it}) + ... + \epsilon_{it}
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * (\hat{\beta}_2{IRS_{it}}*\hat{\beta}_3{IRStime_{it}}) + \alpha_i + \delta_t + \upsilon_{it}
 $$
 
-$\hat{Y}$ is the rate of absence. $\beta_{1}$ represents the clinical malaria incidence at that time in the entire district of Manhiça.  Our demographic confounders (represented by $...$) are sex, age, and worker department (field, factory, or administrative). Our intervention whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment (represented above as the interaction term, where where $_t$ represents time elapsed since commencement of the most recent IRS campaign). We define the malaria season as any time during which the clinical incidence of malaria in the district of Manhiça was at or greater than the median clinical incidence of malaria for the entire study period. These weeks are flagged as red in Figure 1, Panel A.  By using clinical incidence of the area of residence of the workers (as opposed to more typical proxies for malaria risk, such as only rainy vs. non rainy season), our seasonality estimate is a closer approximation of true malaria risk, incorporating lagged effects such as the incubation period of the parasite, as well as any inherent non-linear effects of weather. In addition, we adjust for daily precipitation
+$\hat{Y}_{it}$ is the rate of absence. $\beta_{1}$ is the binary "season" variable, imputed from overall district clinical incidence. Our intervention is whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment, represented, respectively, by $\beta_{2}$ and $\beta_{3}$. $\alpha_i$ reprsents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term.
+
+We define the malaria season as any time during which the clinical incidence of malaria in the district of Manhiça was at or greater than the median clinical incidence of malaria for the entire study period. These weeks are flagged as red in Figure 1, Panel A.  By using clinical incidence of the area of residence of the workers (as opposed to more typical proxies for malaria risk, such as only rainy vs. non rainy season), our seasonality estimate is a closer approximation of true malaria risk, incorporating lagged effects such as the incubation period of the parasite, as well as any inherent non-linear effects of weather. In addition, we adjust for daily precipitation; though its lagged effect on malaria incidence is likely captured by the seasonality term, we include rainfall since it's immediate effect (through its impact on transportation and working conditions) may also affect absenteeism.
 
 Details will go here about externalities (neighborhood effects, positive spillover to district, negative spillover from district, how large firm may mean that most positive externalities are absorbed by the firm, and not many negative externalities, but maybe with a smaller firm it wouldn't work as well)\todo{NOT DONE YET.}
 
@@ -51,11 +51,13 @@ All data processing and analysis were carried out in R [@R] and all analysis cod
 n <- length(unique(ab_panel$oracle_number[ab_panel$date >= '2012-01-01' & ab_panel$date <= '2016-12-31']))
 ```
 
-We collected absenteeism and demographic data data on `r n` workers from 2012 through 2016. Workers were approximately 60% male, and more than 80% fieldworkers (predominantly cane-cutters). Most were in their 20s and 30s and employed on temporary contracts. Table 1 shows overall worker details.
+We collected absenteeism and demographic data data on `r n` workers from 2012 through 2016. Workers were approximately 60% male, and more than 80% fieldworkers (predominantly cane-cutters). Most were in their 20s and 30s and employed on temporary contracts. Table 1 shows overall worker details divided by "Treatment" versus "Control" status. "Treatment" is considered the time beginning at IRS administration and ending one year later; "Control" is considered time observed either prior to IRS administration (and greater than 1 year after previous IRS administration) or among workers who never received IRS. Because of the temporal nature of these categories, many workers belong to both treatment and control groups, albeit at different times.
 
 ```{r, results='asis'}
-x <- workers %>%
-  filter(oracle_number %in% unique(ab_panel$oracle_number))
+# x <- ab_panel %>%
+#   left_join(workers %>%
+#               dplyr::select(oracle_number, date_of_birth, permanent_or_temporary, sex))
+x <- model_data
 x$age <- round(as.numeric(as.Date('2014-01-01') - x$date_of_birth) / 365.25, digits = -1)
 x$status <- x$permanent_or_temporary
 
@@ -65,14 +67,17 @@ calculate <- function(var= 'sex',
   out <- 
     data %>%
     group_by_(var) %>%
-    summarise(n = n()) %>%
+    summarise(`Treatment workers` = length(unique(oracle_number[!days_since %in% c('Never', 'Before')])),
+              `Treatment days` = length(oracle_number[!days_since %in% c('Never', 'Before')]),
+              `Control workers` = length(unique(oracle_number[days_since %in% c('Never', 'Before')])),
+              `Control days` = length(oracle_number[days_since %in% c('Never', 'Before')])) %>%
     ungroup() %>%
-    mutate(p = round(n / sum(n) * 100, digits = 2)) %>%
+    # mutate(p = round(n / sum(n) * 100, digits = 2)) %>%
     mutate(variable = '') 
     names(out)[1] <- ' '
     out$variable[1] <- Hmisc::capitalize(var)
     
-    out <- out %>% dplyr::select(variable, ` `, n, p)
+    out <- out %>% dplyr::select(variable, ` `, `Treatment workers`, `Treatment days`, `Control workers`, `Control days`)
     out$` ` <- as.character(out$` `)
   return(out)
 }
@@ -87,22 +92,17 @@ for(i in 1:length(vars)){
   out_list[[i]] <- y
 }
 demo_table <- bind_rows(out_list)
-names(demo_table) <- c('Variable', ' ', 'Workers', '(%)')
+names(demo_table)[1:2] <- c('Variable', ' ')
 print(xtable::xtable(demo_table,
                      caption = 'Overall worker characteristics',
-                     align = c('r', 'r', rep('l', 3))),
+                     align = c('r', 'r', rep('l', 5))),
       include.rownames = FALSE)
 
-ov_ab <- round(100 * mean(ab_panel$absent[between(ab_panel$date, as.Date('2012-01-01'), as.Date('2016-12-31'))]), digits = 2)
-
-ov_cl <- length(which(between(clinic$date, as.Date('2012-01-01'), as.Date('2016-12-31'))))
 ```
-
-The overall absenteeism rate during the study period was 5.56% among all workers. The number of malaria cases registered at the company clinic during that time was 1873, for an approximate annualized clinical incidence of 110 cases per 1,000. 
 
 Temporary workers tended to be younger and male; female temporary workers being on average 5-10 years older than their male counterparts. Permanent workers had a bi-modal age distribution, the older peak explained by the greater density of males in administrative roles. Females accounted for 43% of temporary workers but only 16% of permanent workers (figure x).
 
-```{r, fig.width = 3, fig.height = 2.5, fig.align='center', fig.cap = 'Age distribution by sex and worker status'}
+```{r, fig.width = 5, fig.height = 3.5, fig.align='center', fig.cap = 'Age distribution by sex and worker status'}
 x$age <- round(as.numeric(as.Date('2014-01-01') - x$date_of_birth) / 365.25, digits = 2)
 g1 <- ggplot(data = x,
        aes(x = age,
