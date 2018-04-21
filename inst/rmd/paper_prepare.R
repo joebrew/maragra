@@ -140,11 +140,7 @@ if('prepared_data.RData' %in% dir()){
     #                          ))
     mutate(group = paste0(permanent_or_temporary, ' ',
                           tolower(field)))
-  fe_models <- list()
-  sick_models <- list()
-  groups <- sort(unique(model_data$group))
-  # library(lmerTest)
-  
+
   # Add a month column
   model_data$month_number <- add_zero(format(model_data$date, '%m'), 2)
   
@@ -157,6 +153,94 @@ if('prepared_data.RData' %in% dir()){
                                  paste0(calendar_year-1, '-', calendar_year),
                                  paste0(calendar_year, '-', calendar_year+1)))
   
+  # Get geographic info for externality analysis
+  # Get latitude / longitude into model_data
+  model_data <- model_data %>%
+    left_join(census %>%
+                filter(!duplicated(unidade)) %>%
+                dplyr::select(unidade,
+                              longitude_aura,
+                              latitude_aura),
+              by = 'unidade') %>%
+    dplyr::select(-days_since) %>%
+    left_join(irs %>%
+                dplyr::select(date, unidade, days_since),
+              by = c('date', 'unidade'))
+  
+  # Create a supposed protection level based on time since IRS
+  protection <- 
+    data_frame(months_since = c('No IRS', '01', '02-04', '05-09', '10+'),
+               protection = c(0, 1, 3, 2, 1))
+  model_data <- left_join(model_data,
+                          protection,
+                          by = 'months_since')
+  
+  # Estimate a protection factor based on the weighted protection 
+  # scores of nearby houses
+  library(sp)
+  dates <- sort(unique(model_data$date))
+  out_list <- list()
+  
+  weighter <- function(x){
+    x[x == 0] <- 0.01
+    out <- (1 / x)^1.2
+    # out[is.infinite(out)] <- 0
+    return(out)
+  }
+  counter <- 0
+  for(i in 1:length(dates)){
+    this_date <- dates[i]
+    message(this_date, ' : ', i, ' of ', length(dates))
+    this_model_data <- model_data %>% 
+      filter(!is.na(longitude_aura), 
+             !is.na(latitude_aura),
+             date == this_date,
+             census_name_match_score <= 0.2)
+    this_model_data_spatial <- this_model_data
+    coordinates(this_model_data_spatial) <- ~longitude_aura+latitude_aura
+    proj4string(this_model_data_spatial) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+    # Loop through each house, getting the nearby ones
+    distances <- spDists(x = this_model_data_spatial)
+    
+    # Go through each house and get the distances, protection
+    for(j in 1:nrow(this_model_data_spatial)){
+      sub_distances <- distances[j,]
+      x <- this_model_data_spatial$protection
+      w <- weighter(sub_distances)
+      
+      positivity <- stats::weighted.mean(x = x,
+                                         w = w,
+                                         na.rm = TRUE)
+      counter <- counter + 1
+      id <- this_model_data_spatial$oracle_number[j]
+      # message('-----', id, ': ', positivity)
+      
+      # Update model_data
+      out_data <- data_frame(oracle_number = id,
+                             date = this_date,
+                             herd = positivity)
+      out_list[[counter]] <- out_data
+    }
+  }
+  
+  # Combine all of the time-place risk factor scores into one dataframe
+  protection_df <- bind_rows(out_list)
+  protection_df <- protection_df %>%
+    group_by(oracle_number, date) %>%
+    summarise(herd = mean(herd, na.rm = TRUE))
+  
+  # Join to model data
+  model_data <- left_join(model_data, protection_df,
+                 by = c('oracle_number', 'date'))
+  
+  
+  fe_models <- list()
+  sick_models <- list()
+  protection_models <- list()
+  groups <- sort(unique(model_data$group))
+  # library(lmerTest)
+  
+  save.image('~/Desktop/temp.RData')
   # library(nlme)
   for (i in 1:length(groups)){
     message(i)
@@ -165,12 +249,16 @@ if('prepared_data.RData' %in% dir()){
     this_model <- felm(absent ~ season*months_since + precipitation | oracle_number + malaria_year | 0 | 0,
                        data = these_data)
     this_sick_model <- felm(absent_sick ~ season*months_since + precipitation | oracle_number + malaria_year| 0 | 0,
+                            data = these_data)
+    this_protection_model <- felm(absent ~ season*months_since + precipitation + herd | oracle_number + malaria_year | 0 | 0,
                        data = these_data)
     fe_models[[i]] <- this_model
     sick_models[[i]] <- this_sick_model
+    protection_models[[i]] <- this_protection_model
   }
   names(fe_models) <- groups
   names(sick_models) <- groups
+  names(protection_models) <- groups
   
   # Plots of maps
   # Libraries
@@ -319,4 +407,92 @@ if('prepared_data.RData' %in% dir()){
   map_list <- list(g1,g2,g3,g4)
   
   save.image(file = 'prepared_data.RData')
+}
+
+clean_up_model <- function(x){
+  # extract coefficients
+  coefs <- data.frame(coef(summary(x)))
+  # use normal distribution to approximate p-value
+  coefs$p.z <- 2 * (1 - pnorm(abs(coefs$t.value)))
+  ps <- coefs$p.z
+  x = broom::tidy(x)
+  for(j in 2:(ncol(x) -1)){
+    x[,j] <- x[,j] * 100
+  }
+  x$term <- gsub('seasonhigh', 'Malaria season', x$term)    
+  x$term <- gsub('seasonlow', 'Low malaria season', x$term)
+  x$term <- gsub('months_since', 'Months since IRS: ', x$term)
+  x$term <- gsub('department', 'Department: ', x$term)
+  x$term <- gsub('precipitation', 'Precipitation (mm) ', x$term)
+  x$term <- gsub('maragra_fabricaTRUE', 'Living at factory', x$term)
+  x$term <- gsub('sexM', 'Male', x$term)
+  x$term <- gsub('permanent_or_temporaryTemporary', 'Temp contract', x$term)
+  x$term <- gsub('rainyTRUE', 'Rainy day', x$term)
+  x$term <- gsub('on_siteTRUE', 'On site', x$term)
+  x$term <- gsub('on_siteFALSE', 'Off site', x$term)
+  x$term <- gsub('fieldNot field worker', 'Not field worker', x$term)
+  names(x) <- Hmisc::capitalize(names(x))
+  names(x) <- gsub('.', ' ', names(x), fixed = TRUE)
+  x$`P value` <- NA
+  x$`P value`[1:length(ps)] <- ps
+  x <- x %>% 
+    mutate(Estimate = paste0(round(Estimate, 3), ' (P',
+                             ifelse(`P value` <= 0.001,
+                                    '<0.001',
+                                    paste0('=', round(`P value`, 3))
+                             ), ')')) %>%
+    dplyr::select(Term, Estimate)
+  x <- x %>% filter(!grepl('sd_', Term))
+  x <- x %>% filter(!grepl('10+', Term, fixed = TRUE))
+  return(x)
+}
+
+make_models_table <- function(model_list, the_caption = "Models with worker fixed effects"){
+  
+  out_list <- list()
+  for(i in 1:length(model_list)){
+    message(i)
+    this_model <- names(model_list)[i]
+    the_model <- model_list[[which(names(model_list) == this_model)]]
+    the_model <- clean_up_model(the_model)
+    names(the_model)[2] <- this_model
+    out_list[[i]] <- the_model
+  }
+  
+  df <- out_list[[1]]
+  namer <- names(df)[2]
+  names(df)[2] <- 'Estimate'
+  
+  for(i in 2:length(out_list)){
+    temp <- out_list[[i]]
+    namer[i] <- names(temp)[2]
+    names(temp)[2] <- 'Estimate'
+    df <- bind_rows(df, temp)
+  }
+  
+  library(kableExtra)
+  breaker <- nrow(out_list[[1]])
+  lengther <- length(out_list)
+  breaks <- c(0, breaker * 1:(lengther))
+  k <- kable(df, format = "latex", caption = the_caption, booktabs = T) %>%
+    kable_styling()
+  for (i in 1:(length(breaks)-1)){
+    message(i)
+    k <- k %>%
+      group_rows(namer[i], 
+                 breaks[i] + 1,
+                 breaks[i] + breaker,
+                 latex_gap_space = "1.5em") 
+  }
+  print(k)
+}
+
+irs$months_since <- irs$days_since %/% 30
+
+# Define function for making season
+make_season <- function(date){
+  out <- ifelse(as.numeric(format(date, '%m')) %in% c(11:12, 1:3),
+                'Malaria season', 'Off season')
+  out <- factor(out, levels = c('Off season', 'Malaria season'))
+  return(out)
 }

@@ -420,88 +420,6 @@ Given that IRS is carried out on a continuous rolling basis, we used relative wo
 
 
 
-```{r}
-clean_up_model <- function(x){
-  # extract coefficients
-  coefs <- data.frame(coef(summary(x)))
-  # use normal distribution to approximate p-value
-  coefs$p.z <- 2 * (1 - pnorm(abs(coefs$t.value)))
-  ps <- coefs$p.z
-  x = broom::tidy(x)
-  for(j in 2:(ncol(x) -1)){
-    x[,j] <- x[,j] * 100
-  }
-  x$term <- gsub('seasonhigh', 'Malaria season', x$term)    
-  x$term <- gsub('seasonlow', 'Low malaria season', x$term)
-  x$term <- gsub('months_since', 'Months since IRS: ', x$term)
-  x$term <- gsub('department', 'Department: ', x$term)
-  x$term <- gsub('precipitation', 'Precipitation (mm) ', x$term)
-  x$term <- gsub('maragra_fabricaTRUE', 'Living at factory', x$term)
-  x$term <- gsub('sexM', 'Male', x$term)
-  x$term <- gsub('permanent_or_temporaryTemporary', 'Temp contract', x$term)
-  x$term <- gsub('rainyTRUE', 'Rainy day', x$term)
-  x$term <- gsub('on_siteTRUE', 'On site', x$term)
-  x$term <- gsub('on_siteFALSE', 'Off site', x$term)
-  x$term <- gsub('fieldNot field worker', 'Not field worker', x$term)
-  names(x) <- Hmisc::capitalize(names(x))
-  names(x) <- gsub('.', ' ', names(x), fixed = TRUE)
-  x$`P value` <- NA
-  x$`P value`[1:length(ps)] <- ps
-  x <- x %>% 
-    mutate(Estimate = paste0(round(Estimate, 3), ' (P',
-                             ifelse(`P value` <= 0.001,
-                                    '<0.001',
-                                    paste0('=', round(`P value`, 3))
-                                    ), ')')) %>%
-    dplyr::select(Term, Estimate)
-  x <- x %>% filter(!grepl('sd_', Term))
-  x <- x %>% filter(!grepl('10+', Term, fixed = TRUE))
-  return(x)
-}
-
-make_models_table <- function(model_list, the_caption = "Models with worker fixed effects"){
-  
-  out_list <- list()
-  for(i in 1:length(model_list)){
-    message(i)
-    this_model <- names(model_list)[i]
-    the_model <- model_list[[which(names(model_list) == this_model)]]
-    the_model <- clean_up_model(the_model)
-    names(the_model)[2] <- this_model
-    out_list[[i]] <- the_model
-  }
-
-  df <- out_list[[1]]
-  namer <- names(df)[2]
-  names(df)[2] <- 'Estimate'
-  
-  for(i in 2:length(out_list)){
-    temp <- out_list[[i]]
-    namer[i] <- names(temp)[2]
-    names(temp)[2] <- 'Estimate'
-    df <- bind_rows(df, temp)
-  }
-  
-  library(kableExtra)
-  breaker <- nrow(out_list[[1]])
-  lengther <- length(out_list)
-  breaks <- c(0, breaker * 1:(lengther))
-  k <- kable(df, format = "latex", caption = the_caption, booktabs = T) %>%
-    kable_styling()
-  for (i in 1:(length(breaks)-1)){
-    message(i)
-    k <- k %>%
-      group_rows(namer[i], 
-                 breaks[i] + 1,
-                 breaks[i] + breaker,
-                 latex_gap_space = "1.5em") 
-  }
-  print(k)
-}
-```
-
-
-
 The model results for all cause absenteeism (table 4) suggest a significant decrease in absenteeism following the administration of IRS. The effect is ambivalent among temporary workers, whereas among permanent workers the administration of IRS decreases absenteeism betwen 2.5 and 8.4 percentage points in the 2-9 month following administration. These effects are consistent with IRS decreasing absence through the medium of malaria, since (a) the effect is not as strong in the first month (potentially during the parasite incubation phase), the effect is stronger on field workers (who are more socioeconomically the demographic at greater risk of malaria than their administrative counterparts), and the effect is ambivalent among temporary workers (since the protective effect of IRS is only a function of the amount of time that the worker spends in the fumigated house).
 
 
@@ -517,12 +435,15 @@ The model results for sickness only absenteeism (table 5) suggest that IRS has a
 make_models_table(model_list = sick_models, the_caption = "Sick absenteeism only: model results")
 ```
 
+## Externalities
 
-### Externalities
+Below are model results for the full protection model.
 
-One potential shortcoming of our analysis thus far is that a "control" worker (ie, one whose house has never been sprayed or was sprayed greater than one year ago) may actually be conferred some protection against malaria by the fumigations at his/her neighbors' houses. This positive spillover effect would theoretically go through two channels: (i) via a reduction of mosquitoes in the vicinity and (ii) via a reduction of the malaria parasite in the blood of humans in the vicinity (ie, the parasite "reservoir").
+```{r, results = 'asis'}
+make_models_table(model_list = protection_models, the_caption = "All absenteeism with herd immunity: model results")
+```
 
-By the same token, just as being surrounded by IRS-treated homes may indirectly protect someone living in a home not treated by IRS, one might surmise that living on the periphery of the company grounds might lead to more malaria risk relative to living in the core, since homes near the periphery but outside of Maragra are less likely to be fumigated. In other words, to the extent that both positive and spillover effects are significant enough to warrant inclusion in our model, we would expect that (i) the prevalence of IRS in a worker's neighborhood should be associated with a reduction in absenteeism of the worker and (b) workers living further from the periphery of the company grounds should have lower absenteeism than workers living at the periphery. We test both of these hypotheses.
+
 
 #### Neighborhood protective effect
 

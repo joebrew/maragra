@@ -1,0 +1,351 @@
+\documentclass[]{article}
+\usepackage{lmodern}
+\usepackage{amssymb,amsmath}
+\usepackage{ifxetex,ifluatex}
+\usepackage{fixltx2e} % provides \textsubscript
+\ifnum 0\ifxetex 1\fi\ifluatex 1\fi=0 % if pdftex
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+\else % if luatex or xelatex
+  \ifxetex
+    \usepackage{mathspec}
+  \else
+    \usepackage{fontspec}
+  \fi
+  \defaultfontfeatures{Ligatures=TeX,Scale=MatchLowercase}
+\fi
+% use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+% use microtype if available
+\IfFileExists{microtype.sty}{%
+\usepackage{microtype}
+\UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\usepackage[margin=1in]{geometry}
+\usepackage{hyperref}
+\hypersetup{unicode=true,
+            pdftitle={Concept note},
+            pdfborder={0 0 0},
+            breaklinks=true}
+\urlstyle{same}  % don't use monospace font for urls
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\usepackage{graphicx,grffile}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+\IfFileExists{parskip.sty}{%
+\usepackage{parskip}
+}{% else
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{6pt plus 2pt minus 1pt}
+}
+\setlength{\emergencystretch}{3em}  % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{0}
+% Redefines (sub)paragraphs to behave more like sections
+\ifx\paragraph\undefined\else
+\let\oldparagraph\paragraph
+\renewcommand{\paragraph}[1]{\oldparagraph{#1}\mbox{}}
+\fi
+\ifx\subparagraph\undefined\else
+\let\oldsubparagraph\subparagraph
+\renewcommand{\subparagraph}[1]{\oldsubparagraph{#1}\mbox{}}
+\fi
+
+%%% Use protect on footnotes to avoid problems with footnotes in titles
+\let\rmarkdownfootnote\footnote%
+\def\footnote{\protect\rmarkdownfootnote}
+
+%%% Change title format to be more compact
+\usepackage{titling}
+
+% Create subtitle command for use in maketitle
+\newcommand{\subtitle}[1]{
+  \posttitle{
+    \begin{center}\large#1\end{center}
+    }
+}
+
+\setlength{\droptitle}{-2em}
+  \title{Concept note}
+  \pretitle{\vspace{\droptitle}\centering\huge}
+  \posttitle{\par}
+\subtitle{Modeling positive externalities (spillover) in IRS protection}
+  \author{}
+  \preauthor{}\postauthor{}
+  \date{}
+  \predate{}\postdate{}
+
+\pagenumbering{gobble}
+\usepackage{longtable}
+\usepackage[utf8]{inputenc}
+\usepackage{changepage}
+\usepackage{graphicx}
+\usepackage{multicol}
+\usepackage{geometry}
+\usepackage{fancyhdr}
+\usepackage{color}
+\usepackage{colortbl}
+\usepackage{color}
+% Font
+\usepackage{fontspec}
+\setmainfont{Swift-Regular_43151.ttf}
+\setsansfont[BoldFont={Swift-Bold_43130.ttf}]{Swift-Regular_43151.ttf}
+% \setmonofont{Swift-Regular_43151.ttf}
+\renewcommand{\familydefault}{\sfdefault}
+% \usepackage{fontspec}
+% \setmainfont{Lato-Regular.ttf}
+% \setsansfont[BoldFont={Lato-Bold.ttf}]{Lato-Regular.ttf}
+% \renewcommand{\familydefault}{\sfdefault}
+
+\def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
+\let\endchangemargin=\endlist
+\renewcommand{\rmdefault}{ppl}
+
+\usepackage{multicol}
+\usepackage{hyperref}
+\usepackage{geometry}
+\usepackage{lipsum}
+
+\usepackage{float}
+\floatplacement{figure}{H}
+
+% \usepackage{todonotes} % for side notes
+% \usepackage[colorinlistoftodos]{todonotes} % for side notes
+
+\usepackage{xargs}                      % Use more than one optional parameter in a new commands
+\usepackage[dvipsnames, table]{xcolor}  % Coloured text etc.
+% 
+\usepackage[colorinlistoftodos,prependcaption,textsize=tiny]{todonotes}
+\newcommandx{\unsure}[2][1=]{\todo[linecolor=red,backgroundcolor=red!25,bordercolor=red,#1]{#2}}
+\newcommandx{\change}[2][1=]{\todo[linecolor=blue,backgroundcolor=blue!25,bordercolor=blue,#1]{#2}}
+\newcommandx{\info}[2][1=]{\todo[linecolor=OliveGreen,backgroundcolor=OliveGreen!25,bordercolor=OliveGreen,#1]{#2}}
+\newcommandx{\improvement}[2][1=]{\todo[linecolor=Plum,backgroundcolor=Plum!25,bordercolor=Plum,#1]{#2}}
+\newcommandx{\thiswillnotshow}[2][1=]{\todo[disable,#1]{#2}}
+\usepackage{lmodern}
+\usepackage{fancyhdr} % Headers and footers
+\pagestyle{fancy} % All pages have headers and footers
+\fancyhead{} % Blank out the default header
+\fancyfoot{} % Blank out the default footer
+\fancyhead[C]{Return on investment of private sector malaria control at a large sugar facility in Southern Mozambique}
+\renewcommand{\thefootnote}{\fnsymbol{footnote}}
+
+\newcommand{\footremember}[2]{%
+    \footnote{#2}
+    \newcounter{#1}
+    \setcounter{#1}{\value{footnote}}%
+}
+\newcommand{\footrecall}[1]{%
+    \footnotemark[\value{#1}]%
+}
+
+\def\changemargin#1#2{\list{}{\rightmargin#2\leftmargin#1}\item[]}
+\let\endchangemargin=\endlist
+
+\widowpenalties 1 150
+
+\makeatletter
+\renewcommand\footnotesize{%
+   \@setfontsize\footnotesize\@ixpt{11}%
+   \abovedisplayskip 8\p@ \@plus2\p@ \@minus4\p@
+   \abovedisplayshortskip \z@ \@plus\p@
+   \belowdisplayshortskip 4\p@ \@plus2\p@ \@minus2\p@
+   \def\@listi{\leftmargin\leftmargini
+               \topsep 4\p@ \@plus2\p@ \@minus2\p@
+               \parsep 2\p@ \@plus\p@ \@minus\p@
+               \itemsep \parsep}%
+   \belowdisplayskip \abovedisplayskip
+}
+\makeatother
+
+\DeclareTextCommandDefault{\nobreakspace}{\leavevmode\nobreak\ }
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage[table]{xcolor}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+
+\begin{document}
+\maketitle
+
+\begin{center}
+\begin{large}
+
+Brew
+
+\end{large}
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\textbf{Overview}  
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\begin{changemargin}{3cm}{3cm} 
+
+The administration of insecticide at a worker's residence (indoor residual spraying or IRS) likely protects that worker from malaria infection by killing the vectors (mosquitoes) that land on the building's walls. However, it is also highly likely that the protective effective of IRS "spills over" to others who live nearby. This positive spillover effect would theoretically go through two channels: (i) via a reduction of mosquitoes in the vicinity and (ii) via a reduction of the malaria parasite in the blood of humans in the vicinity (ie, the parasite "reservoir"). This document describes our method for assessing the existence and magnitude of positive spillover of IRS in the Maragra workers' data. We devise a time-specific household "protection" score based on the theoretical effectiveness of IRS, and then use that protection score to develop a time-place specific "herd protection" score based on a weighted average of nearby household protection scores. We incorporate the latter into our fixed effects model and find that...
+
+\end{changemargin}
+\end{center}
+
+\vspace{20mm}
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+        \subsection*{Justification}
+        \begin{itemize}
+          \item Positive spillover may occur.
+          \item Spillover has both a space (ie, distance to sprayed house) and time (ie, time since spraying) dimension.
+          \item If spillover occurs and is not accounted for, our models likely underestimate the true effect of IRS since our "control" group (ie, those not receiving IRS) do actually receive IRS (indirectly via spillover).
+          \item If spillover does not occur, then this method should demonstrate its non-importance.
+        \end{itemize}
+        \vspace{2mm}
+    }%
+}
+
+\vfill
+\null
+
+\subsection*{Desinataires}
+
+\textbf{Elisa Sicuri; Menno Pradhan}
+
+\vspace{3mm}
+
+\newpage
+
+\subsection{Protection score}\label{protection-score}
+
+To test whether IRS from one household has an effect on workers living
+in another household, we first must make some assumptions about the
+level and waning effect of IRS generally. For our purposes, we make a
+rather simple assumption, based on the literature: that IRS has an
+immediate effect on mosquitoes and should affect malaria risk following
+the incubation period, that the waning effect begins in month 4 (Tukei
+et al., 2017), that IRS effects those not living in the household by
+reducing reproduction of mosquitoes {[}White2011{]}, and that IRS'
+effect after 1 year is essentially null (Bukirwa et al., 2009). We
+simplify these assumptions into a time-protection matrix, which can be
+visualized in the below chart.
+
+\includegraphics{externalities_files/figure-latex/unnamed-chunk-3-1.pdf}
+
+\subsection{Distance-based weighting}\label{distance-based-weighting}
+
+Having estimated each household's protection level at all times (ie, the
+``amount'' of protection that they pass on to neighbors), we need to
+define a method for how much of that total level is passed on. A
+household which is 1 meter from a neighbor should, theoretically, afford
+more protection to that household than another which is 1000 meters. To
+account for the effect of distance, we define a simple function for
+weighting a nearby residence's contribution to a household's ``herd
+protection'' score as follows:
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{weighter <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(x) \{}
+\NormalTok{    x[x }\OperatorTok{==}\StringTok{ }\DecValTok{0}\NormalTok{] <-}\StringTok{ }\FloatTok{0.01}
+\NormalTok{    out <-}\StringTok{ }\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{x)}\OperatorTok{^}\FloatTok{1.2}
+    \KeywordTok{return}\NormalTok{(out)}
+\NormalTok{\}}
+\end{Highlighting}
+\end{Shaded}
+
+Where \texttt{x} is the distance (in kilometers) to the household whose
+``herd protection'' score is being estimated. In other words, a
+household's ``herd protection'' score is the mean of all households'
+protection scores, weighted by the inverse of the distance away raised
+to the power of 1.2.
+
+Functionally, the weights look like this:
+
+\includegraphics{externalities_files/figure-latex/unnamed-chunk-5-1.pdf}
+
+We heavily weight towards closer houses to account for the relatively
+small travel distances that most mosquitoes fly in normal conditions
+(Verdonschot and Besse-Lototskaya, 2014).
+
+\subsection{Incorporating into data}\label{incorporating-into-data}
+
+We calculate a ``herd protection'' score for each location-date
+combination.
+
+\hypertarget{refs}{}
+\hypertarget{ref-Bukirwa2009}{}
+Bukirwa, H., Yau, V., Kigozi, R., Filler, S., Quick, L., Lugemwa, M.,
+Dissanayake, G., Kamya, M., Wabwire-Mangen, F., Dorsey, G., 2009.
+Assessing the impact of indoor residual spraying on malaria morbidity
+using a sentinel site surveillance system in western uganda. American
+Journal of Tropical Medicine and Hygiene 81, 611--614.
+\url{https://doi.org/10.4269/ajtmh.2009.09-0126}
+
+\hypertarget{ref-Tukei2017}{}
+Tukei, B.B., Beke, A., Lamadrid-Figueroa, H., 2017. Assessing the effect
+of indoor residual spraying (IRS) on malaria morbidity in northern
+uganda: A before and after study. Malaria Journal 16.
+\url{https://doi.org/10.1186/s12936-016-1652-4}
+
+\hypertarget{ref-Verdonschot2014}{}
+Verdonschot, P.F., Besse-Lototskaya, A.A., 2014. Flight distance of
+mosquitoes (culicidae): A metadata analysis to support the management of
+barrier zones around rewetted and newly constructed wetlands.
+Limnologica - Ecology and Management of Inland Waters 45, 69--79.
+\url{https://doi.org/10.1016/j.limno.2013.11.002}
+
+
+\end{document}

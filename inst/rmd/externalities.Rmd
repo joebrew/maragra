@@ -1,0 +1,188 @@
+---
+title: "Concept note"
+subtitle: "Modeling positive externalities (spillover) in IRS protection"
+date: ''
+output: 
+  pdf_document:
+    keep_tex: true
+    latex_engine: xelatex
+    includes:
+      in_header: preamble.sty
+fig_width: 4
+fig_height: 2.6
+bibliography: bibliography.bib
+csl: journal-of-health-economics.csl
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# Packages
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(knitr)
+library(RColorBrewer)
+library(extrafont)
+library(kableExtra)
+loadfonts()
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               fig.height = 3,
+               fig.width = 4,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE,
+               dev = "cairo_pdf",
+               fig.pos="!h")
+opts_knit$set(width=75)
+options(xtable.comment = FALSE)
+
+```
+
+```{r, eval = TRUE}
+source('paper_prepare.R')
+```
+
+
+
+\begin{center}
+\begin{large}
+
+Brew
+
+\end{large}
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\textbf{Overview}  
+\end{center}
+
+\vspace{5mm}
+\begin{center}
+\begin{changemargin}{3cm}{3cm} 
+
+The administration of insecticide at a worker's residence (indoor residual spraying or IRS) likely protects that worker from malaria infection by killing the vectors (mosquitoes) that land on the building's walls. However, it is also highly likely that the protective effective of IRS "spills over" to others who live nearby. This positive spillover effect would theoretically go through two channels: (i) via a reduction of mosquitoes in the vicinity and (ii) via a reduction of the malaria parasite in the blood of humans in the vicinity (ie, the parasite "reservoir"). This document describes our method for assessing the existence and magnitude of positive spillover of IRS in the Maragra workers' data. We devise a time-specific household "protection" score based on the theoretical effectiveness of IRS, and then use that protection score to develop a time-place specific "herd protection" score based on a weighted average of nearby household protection scores. We incorporate the latter into our fixed effects model and find that...
+
+\end{changemargin}
+\end{center}
+
+\vspace{20mm}
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+        \subsection*{Justification}
+        \begin{itemize}
+          \item Positive spillover may occur.
+          \item Spillover has both a space (ie, distance to sprayed house) and time (ie, time since spraying) dimension.
+          \item If spillover occurs and is not accounted for, our models likely underestimate the true effect of IRS since our "control" group (ie, those not receiving IRS) do actually receive IRS (indirectly via spillover).
+          \item If spillover does not occur, then this method should demonstrate its non-importance.
+        \end{itemize}
+        \vspace{2mm}
+    }%
+}
+
+\vfill
+\null
+
+\subsection*{Desinataires}
+\textbf{Elisa Sicuri; Menno Pradhan}
+
+\vspace{3mm}
+
+\newpage
+
+## Protection score
+
+To test whether IRS from one household has an effect on workers living in another household, we first must make some assumptions about the level and waning effect of IRS generally. For our purposes, we make a rather simple assumption, based on the literature: that IRS has an immediate effect on mosquitoes and should affect malaria risk following the incubation period, that the waning effect begins in month 4 [@Tukei2017], that IRS effects those not living in the household by reducing reproduction of mosquitoes [White2011], and that IRS' effect after 1 year is essentially null [@Bukirwa2009]. We simplify these assumptions into a time-protection matrix, which can be visualized in the below chart.
+
+```{r}
+protection <- 
+    data_frame(months_since = c('No IRS / > 1 yr', '01', '02-04', '05-09', '10-12'),
+               protection = c(0, 1, 3, 2, 1))
+ggplot(data = protection,
+       aes(x = months_since,
+           y = protection,
+           group = 1)) +
+  geom_area(fill = 'lightblue',
+            alpha = 0.6) +
+  geom_line() +
+  theme_maragra() +
+  labs(x = 'Months since IRS',
+       y = '"Protection" level')
+```
+
+## Distance-based weighting
+
+Having estimated each household's protection level at all times (ie, the "amount" of protection that they pass on to neighbors), we need to define a method for how much of that total level is passed on. A household which is 1 meter from a neighbor should, theoretically, afford more protection to that household than another which is 1000 meters. To account for the effect of distance, we define a simple function for weighting a nearby residence's contribution to a household's "herd protection" score as follows:
+
+```{r, echo = TRUE}
+weighter <- function(x){
+    x[x == 0] <- 0.01
+    out <- (1 / x)^1.2
+    return(out)
+}
+```
+
+Where `x` is the distance (in kilometers) to the household whose "herd protection" score is being estimated. In other words, a household's "herd protection" score is the mean of all households' protection scores, weighted by the inverse of the distance away raised to the power of 1.2.
+
+Functionally, the weights look like this:
+
+```{r}
+x <- seq(0, 1, length = 100)
+y <- weighter(x)
+x <- data_frame(x,y)
+ggplot(data = x,
+       aes(x = x,
+           y = y)) +
+  geom_line() +
+  labs(x = 'Km from house',
+       y = 'Weight for herd protection score') +
+  theme_maragra() +
+  geom_area(fill = 'lightblue',
+            alpha = 0.6)
+```
+
+We heavily weight towards closer houses to account for the relatively small travel distances that most mosquitoes fly in normal conditions [@Verdonschot2014].
+
+## Incorporating into data and model
+
+We calculate a "herd protection" score for each location-date combination (`r nrow(model_data)` values). Whereas our original model specification looked like: 
+
+$$
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * (\hat{\beta}_2{IRS_{it}}*\hat{\beta}_3{IRStime_{it}}) + \alpha_i + \delta_t + \upsilon_{it}
+$$
+
+Our new specification incorporates the herd protection value:
+
+$$
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * (\hat{\beta}_2{IRS_{it}}*\hat{\beta}_3{IRStime_{it}}) +  \hat{\beta}_4{Herd_{it}} +  \alpha_i + \delta_t + \upsilon_{it}
+$$
+
+$\hat{Y}_{it}$ is the rate of absence. $\beta_{1}$ is the binary "season" variable, imputed from overall district clinical incidence. Our intervention is whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment, represented, respectively, by $\beta_{2}$ and $\beta_{3}$. $\beta_{4}$ **represents the distance-weighted herd protection score**. $\alpha_i$ represents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term.
+
+
+## Results
+
+```{r, results = 'asis'}
+make_models_table(model_list = protection_models, the_caption = "All absenteeism with herd immunity: model results")
+```
+
+## Conclusion  
+
+Using the approach laid out here, there appears to be a significant protective effect afforded by the IRS of neighbors. If this approach is deemed correct, then next steps are determining:
+
+- How to translate the effect into costs and savings (simulation based approach at various IRS coverage levels?).
+- How to combine this effect with the other potential spillover effect (ie, core-periphery issues).
+- How / where to report on this in the paper (is this a "method" or "result"?).
+
+
+
+# References 

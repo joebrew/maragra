@@ -20,11 +20,25 @@ $$
 \hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * (\hat{\beta}_2{IRS_{it}}*\hat{\beta}_3{IRStime_{it}}) + \alpha_i + \delta_t + \upsilon_{it}
 $$
 
-$\hat{Y}_{it}$ is the rate of absence. $\beta_{1}$ is the binary "season" variable, imputed from overall district clinical incidence. Our intervention is whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment, represented, respectively, by $\beta_{2}$ and $\beta_{3}$. $\alpha_i$ reprsents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term.
+$\hat{Y}_{it}$ is the rate of absence. $\beta_{1}$ is the binary "season" variable, imputed from overall district clinical incidence. Our intervention is whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment, represented, respectively, by $\beta_{2}$ and $\beta_{3}$. $\alpha_i$ represents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term.
 
 We define the malaria season as any time during which the clinical incidence of malaria in the district of Manhiça was at or greater than the median clinical incidence of malaria for the entire study period. These weeks are flagged as red in Figure 1, Panel A.  By using clinical incidence of the area of residence of the workers (as opposed to more typical proxies for malaria risk, such as only rainy vs. non rainy season), our seasonality estimate is a closer approximation of true malaria risk, incorporating lagged effects such as the incubation period of the parasite, as well as any inherent non-linear effects of weather. In addition, we adjust for daily precipitation; though its lagged effect on malaria incidence is likely captured by the seasonality term, we include rainfall since it's immediate effect (through its impact on transportation and working conditions) may also affect absenteeism.
 
+
+### Externalities
+
+One potential shortcoming of our analysis thus far is that a "control" worker (ie, one whose house has never been sprayed or was sprayed greater than one year ago) may actually be conferred some protection against malaria by the fumigations at his/her neighbors' houses. This positive spillover effect would theoretically go through two channels: (i) via a reduction of mosquitoes in the vicinity and (ii) via a reduction of the malaria parasite in the blood of humans in the vicinity (ie, the parasite "reservoir").
+
+By the same token, just as being surrounded by IRS-treated homes may indirectly protect someone living in a home not treated by IRS, one might surmise that living on the periphery of the company grounds might lead to more malaria risk relative to living in the core, since homes near the periphery but outside of Maragra are less likely to be fumigated. In other words, to the extent that both positive and spillover effects are significant enough to warrant inclusion in our model, we would expect that (i) the prevalence of IRS in a worker's neighborhood should be associated with a reduction in absenteeism of the worker and (b) workers living further from the periphery of the company grounds should have lower absenteeism than workers living at the periphery. We test both of these hypotheses.
+
+```{r}
+
+```
+
+
 Details will go here about externalities (neighborhood effects, positive spillover to district, negative spillover from district, how large firm may mean that most positive externalities are absorbed by the firm, and not many negative externalities, but maybe with a smaller firm it wouldn't work as well)\todo{NOT DONE YET.}
+
+
 
 
 ## Estimating return on investment
@@ -38,6 +52,11 @@ $R = \dfrac{P_{w} - S_{wa} - S_{wc}}{P_{w}}$
 \end{center}
 
 ...where $R$ is the return on investment, $P$ is the malaria control program's total operating cost, $w$ refers to costs at the per-worker level, $a$ refers to savings through avoided absences, and $ c $ refers to savings through avoided clinical encounters. We define the malaria control program as "profitable" from an investment standpoint if ROI is greater than 100%, ie if the savings associated with the estimated effect of IRS is greater than the costs of the program's administration. 
+
+
+
+
+
 
 
 ## Reproducibility and ethical approval
