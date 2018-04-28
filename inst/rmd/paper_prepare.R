@@ -46,8 +46,9 @@ if('prepared_data.RData' %in% dir()){
     mutate(days_since = days_since %/% 30) %>%
     mutate(days_since = ifelse(is.na(days_since), 'Never',
                                ifelse(days_since < 0, 'Before',
-                                      ifelse(days_since >= 12, '12+', as.character(add_zero(days_since, n = 2)))))) %>%
-    mutate(months_since = factor(days_since, levels = unique(c('Never', 'Before', sort(unique(days_since)))))) %>%
+                                      ifelse(days_since >= 12, '12+', as.character(add_zero(days_since, n = 2)))))) 
+  model_data <-
+    model_data %>%
     mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) %>%
     # Add malaria incidence
     left_join(bes %>%
@@ -90,15 +91,14 @@ if('prepared_data.RData' %in% dir()){
   
   # Aggregate months since 
   model_data <- model_data %>%
+    mutate(months_since = days_since) %>%
     mutate(months_since = as.character(months_since)) %>%
-    mutate(months_since = ifelse(months_since %in% c('Never', 'Before'),
+    mutate(months_since = ifelse(months_since %in% c('Never', 'Before', '00', '01',
+                                                     '02', '03', '04', '05'),
                                  months_since,
-                                 ifelse(months_since %in% c('00', '01'), '01',
-                                        ifelse(months_since %in% c('02', '03', '04'),
-                                               '02-04',
-                                               ifelse(months_since %in% c('05', '06', '07', '08', '09'),
-                                                      '05-09',
-                                                      ifelse(months_since %in% c('10', '11', '12+'), '10+', months_since)))))) %>%
+                                 ifelse(months_since %in% c('06', '07', '08',
+                                                            '09', '10', '11', '12+'),
+                                        '06+', NA))) %>%
     # Define whether every sprayed
     ungroup %>%
     group_by(oracle_number) %>%
@@ -111,28 +111,36 @@ if('prepared_data.RData' %in% dir()){
     # Make never and before the same
     mutate(months_since = ifelse(months_since %in% c('Never', 'Before'), 'No IRS', months_since)) %>%
     # mutate(months_since = factor(months_since, levels = unique(c('Never', 'Before', sort(unique(months_since))))))
-    mutate(months_since = factor(months_since, levels = unique(c('No IRS', sort(unique(months_since)))))) %>%
+    # mutate(months_since = ifelse(is.na(months_since),
+    #                              'No IRS',
+    #                              ifelse(months_since != 'No IRS', 'IRS', 'No IRS'))) %>%
+    # mutate(months_since = factor(months_since, levels = unique(c('No IRS', sort(unique(months_since)))))) %>%
     rename(on_site = ever_sprayed)
+  
+  model_data <- model_data %>%
+    mutate(months_since = factor(months_since, levels = unique(c('No IRS', sort(unique(months_since)))))) 
+  
   # Since ad and factory are same, keep same
   model_data$field <- ifelse(model_data$department == 'Field', 
                              'Field worker',
                              'Not field worker')
   
   
-  # Model simple
-  fit <- lm(absent ~ season * months_since + on_site, data = model_data)
-  # summary(fit)
-  
-  # Complex model
-  fit_full <- lm(absent ~ season * months_since + on_site + sex + field + precipitation, data = model_data)
-  
-  models <- list(
-    a = lm(absent ~ season * months_since + on_site, data = model_data),
-    b = lm(absent ~ season * months_since + on_site + sex, data = model_data),
-    c = lm(absent ~ season * months_since + on_site + sex + field, data = model_data),
-    # d = lm(absent ~ season * months_since + sex + department + rainy, data = model_data),
-    d = lm(absent ~ season * months_since + on_site + sex + field + rainy + permanent_or_temporary, data = model_data)
-  )
+  # # Model simple
+  # fit <- lm(absent ~ season * months_since + on_site, data = model_data)
+  # # summary(fit)
+  # 
+  # # Complex model
+  # fit_full <- lm(absent ~ season * months_since + on_site + sex + field + precipitation, data = model_data)
+  # 
+  models <- list()
+  # models <- list(
+  #   a = lm(absent ~ season * months_since + on_site, data = model_data),
+  #   b = lm(absent ~ season * months_since + on_site + sex, data = model_data),
+  #   c = lm(absent ~ season * months_since + on_site + sex + field, data = model_data),
+  #   # d = lm(absent ~ season * months_since + sex + department + rainy, data = model_data),
+  #   d = lm(absent ~ season * months_since + on_site + sex + field + rainy + permanent_or_temporary, data = model_data)
+  # )
   
   model_data <- model_data %>% 
     # mutate(group = paste0(ifelse(on_site, 'On site', 'Off site'), ' ',
@@ -168,12 +176,44 @@ if('prepared_data.RData' %in% dir()){
               by = c('date', 'unidade'))
   
   # Create a supposed protection level based on time since IRS
-  protection <- 
-    data_frame(months_since = c('No IRS', '01', '02-04', '05-09', '10+'),
-               protection = c(0, 1, 3, 2, 1))
+  # based on Tukei: https://malariajournal.biomedcentral.com/articles/10.1186/s12936-016-1652-4
+  
+  x <- c(1:6)
+  y <- (c(-3.45, -6.04, - 6.53, -0.17, -2.74, 5.27) + 27.61) / 27.61
+  lo <- loess(y~x, span = 3)$fitted
+  lo[lo > 1] <- 1
+  lo <- 1-lo
+  df <- data.frame(x,y,lo)
+  df$months_since <- add_zero(df$x, n = 2)
+  df$months_since[df$months_since == '06'] <- '06+'
+  df <- df %>%
+    bind_rows(df[nrow(df),] %>%
+                mutate(months_since = 'No IRS'))
+
+  protection <- df %>%
+    dplyr::select(months_since, lo) %>%
+    dplyr::rename(protection = lo)
+
   model_data <- left_join(model_data,
                           protection,
-                          by = 'months_since')
+                          by = 'months_since') %>%
+    mutate(protection = ifelse(is.na(protection), 0, protection))
+  
+  
+  model_data <- model_data %>%
+    mutate(months_since = 
+             ifelse(months_since %in% c('06+', 'No IRS'), 'No IRS',
+                    ifelse(is.na(months_since), 'No IRS',
+                           'IRS')))
+  
+  model_data$months_since <- factor(model_data$months_since,
+                            levels = unique(c('No IRS', sort(unique(model_data$months_since)))))
+  # model_data$p <- ifelse(model_data$months_since == 'No IRS',
+  #                                    0,
+  #                                    as.numeric(model_data$months_since) + 1)
+  # model_data$p <- 1/model_data$p
+  
+  model_data$p <- ifelse(model_data$months_since == 'No IRS', 0, 1)
   
   # Estimate a protection factor based on the weighted protection 
   # scores of nearby houses
@@ -182,8 +222,8 @@ if('prepared_data.RData' %in% dir()){
   out_list <- list()
   
   weighter <- function(x){
-    x[x == 0] <- 0.01
-    out <- (1 / x)^1.2
+    # x[x == 0] <- 0.01
+    out <- (1 / x)#^1.2
     # out[is.infinite(out)] <- 0
     return(out)
   }
@@ -204,13 +244,37 @@ if('prepared_data.RData' %in% dir()){
     
     # Go through each house and get the distances, protection
     for(j in 1:nrow(this_model_data_spatial)){
+      # message('---house number ', j, ' of ', nrow(this_model_data_spatial))
       sub_distances <- distances[j,]
       x <- this_model_data_spatial$protection
       w <- weighter(sub_distances)
+      x <- x[is.finite(w)]
+      # # Protection is 1 divided months since irs
+      # p <- ifelse(this_model_data_spatial$months_since == 'No IRS',
+      #             0,
+      #             as.numeric(this_model_data_spatial$months_since) + 1)
       
+      p <- this_model_data_spatial$p
+      p[is.infinite(p)] <- 0
+      p <- p[is.finite(w)]
+      
+      # The weight
+      w <- w[is.finite(w)]
+      # Number of houses within 1k
+      n <- length(which(sub_distances <= 1))
+      # The weighted protection score (average)
       positivity <- stats::weighted.mean(x = x,
                                          w = w,
                                          na.rm = TRUE)
+      # The weighted additive protection score
+      s <- sum(x[sub_distances <= 1] * w[sub_distances <= 1], na.rm = TRUE)
+      
+      # Product of weighted distance multipled by time since IRS
+      # (this is for modeling herd protection naively)
+      herdy <- p * w
+      herdy <- sum(herdy, na.rm = TRUE)
+      
+      
       counter <- counter + 1
       id <- this_model_data_spatial$oracle_number[j]
       # message('-----', id, ': ', positivity)
@@ -218,7 +282,10 @@ if('prepared_data.RData' %in% dir()){
       # Update model_data
       out_data <- data_frame(oracle_number = id,
                              date = this_date,
-                             herd = positivity)
+                             herd = positivity,
+                             n = n,
+                             s = s,
+                             herdy = herdy)
       out_list[[counter]] <- out_data
     }
   }
@@ -227,30 +294,61 @@ if('prepared_data.RData' %in% dir()){
   protection_df <- bind_rows(out_list)
   protection_df <- protection_df %>%
     group_by(oracle_number, date) %>%
-    summarise(herd = mean(herd, na.rm = TRUE))
+    summarise(herd = mean(herd, na.rm = TRUE),
+              n = mean(n, na.rm = TRUE),
+              s = mean(s, na.rm = TRUE),
+              herdy = mean(herdy, na.rm = TRUE))
   
   # Join to model data
   model_data <- left_join(model_data, protection_df,
                  by = c('oracle_number', 'date'))
+  # model_data$herd <- model_data$s #model_data$n * model_data$herd
+  model_data$herd <- NULL
+  model_data$herd <- model_data$herdy
+  model_data$months_since <- factor(model_data$months_since,
+                                    levels = unique(c('No IRS', c(sort(unique(as.character(model_data$months_since)))))))
+  model_data$rainy_day <- model_data$precipitation >= 0.01
   
+  # Get hiv prevalence
+  hiv_prevalence <- maragra::hiv_prevalence
+  prevs <- model_data %>%
+    group_by(longitude_aura,
+             latitude_aura) %>%
+    summarise(n = n()) %>%
+    filter(!is.na(longitude_aura)) %>%
+    mutate(x = longitude_aura,
+           y = latitude_aura) %>%
+    dplyr::select(-n) %>%
+    ungroup
+  coordinates(prevs) <- ~x+y
+  x <- raster::extract(x = hiv_prevalence, y = prevs)
+  prevs$hiv_prevalence <- x
+  prevs$hiv_prevalence[is.na(prevs$hiv_prevalence)] <- mean(prevs$hiv_prevalence,na.rm = TRUE)
+  model_data <- left_join(x = model_data,
+                          y = prevs@data,
+                          by = c('longitude_aura',
+                                 'latitude_aura'))
   
+  # model_data$months_since[model_data$days_since >= 183] <- 'No IRS'
+  # model_data$months_since <- ifelse(model_data$months_since != 'No IRS',
+  #                                   'IRS',
+  #                                   'No IRS')
+  save.image('~/Desktop/temp.RData')
   fe_models <- list()
   sick_models <- list()
   protection_models <- list()
   groups <- sort(unique(model_data$group))
   # library(lmerTest)
-  
-  save.image('~/Desktop/temp.RData')
   # library(nlme)
   for (i in 1:length(groups)){
     message(i)
     this_group <- groups[i]
     these_data <- model_data %>% filter(group == this_group)
-    this_model <- felm(absent ~ season*months_since + precipitation | oracle_number + malaria_year | 0 | 0,
+    this_model <- felm(absent ~ season*months_since + rainy_day  | oracle_number + malaria_year | 0 | 0,
                        data = these_data)
-    this_sick_model <- felm(absent_sick ~ season*months_since + precipitation | oracle_number + malaria_year| 0 | 0,
+    this_sick_model <- felm(absent_sick ~ season*months_since + rainy_day  | oracle_number + malaria_year| 0 | 0,
                             data = these_data)
-    this_protection_model <- felm(absent ~ season*months_since + precipitation + herd | oracle_number + malaria_year | 0 | 0,
+    this_protection_model <- felm(absent ~ season*months_since + rainy_day + herd  | oracle_number + malaria_year | 0 | 0,
                        data = these_data)
     fe_models[[i]] <- this_model
     sick_models[[i]] <- this_sick_model
@@ -394,9 +492,9 @@ if('prepared_data.RData' %in% dir()){
   
   library(ggmap)
   # if('.hdf.RData' %in% dir()){
-  #   load('.hdf.RData')
+    load('.hdf.RData')
   # } else {
-  hdf <- ggmap::get_map(location = c(lon = mar$long, lat = mar$lat), maptype = 'satellite', zoom = 14)
+  # hdf <- ggmap::get_map(location = c(lon = mar$long, lat = mar$lat), maptype = 'satellite', zoom = 14)
   #   save(hdf, file = '.hdf.RData')
   # }
   
@@ -427,10 +525,12 @@ clean_up_model <- function(x){
   x$term <- gsub('maragra_fabricaTRUE', 'Living at factory', x$term)
   x$term <- gsub('sexM', 'Male', x$term)
   x$term <- gsub('permanent_or_temporaryTemporary', 'Temp contract', x$term)
+  x$term <- gsub('rainy_dayTRUE', 'Rainy day', x$term)
   x$term <- gsub('rainyTRUE', 'Rainy day', x$term)
   x$term <- gsub('on_siteTRUE', 'On site', x$term)
   x$term <- gsub('on_siteFALSE', 'Off site', x$term)
   x$term <- gsub('fieldNot field worker', 'Not field worker', x$term)
+  x$term <- gsub('herd', 'Herd protection', x$term)
   names(x) <- Hmisc::capitalize(names(x))
   names(x) <- gsub('.', ' ', names(x), fixed = TRUE)
   x$`P value` <- NA
@@ -474,8 +574,8 @@ make_models_table <- function(model_list, the_caption = "Models with worker fixe
   breaker <- nrow(out_list[[1]])
   lengther <- length(out_list)
   breaks <- c(0, breaker * 1:(lengther))
-  k <- kable(df, format = "latex", caption = the_caption, booktabs = T) %>%
-    kable_styling()
+  k <- kable(df, format = "latex", caption = the_caption, booktabs = T, longtable = TRUE) %>%
+    kable_styling(latex_options = c("hold_position", "repeat_header"))
   for (i in 1:(length(breaks)-1)){
     message(i)
     k <- k %>%

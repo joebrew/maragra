@@ -26,20 +26,22 @@ library(knitr)
 library(RColorBrewer)
 library(extrafont)
 library(kableExtra)
+library(raster)
 loadfonts()
 ## Global options
 options(max.print="75")
 opts_chunk$set(echo=FALSE,
 	             cache=FALSE,
                prompt=FALSE,
-               fig.height = 3,
-               fig.width = 4,
+               fig.height = 4,
+               fig.width = 5,
                tidy=TRUE,
                comment=NA,
                message=FALSE,
                warning=FALSE,
                dev = "cairo_pdf",
-               fig.pos="!h")
+               fig.pos="!h",
+               fig.align = 'center')
 opts_knit$set(width=75)
 options(xtable.comment = FALSE)
 
@@ -101,23 +103,45 @@ The administration of insecticide at a worker's residence (indoor residual spray
 
 ## Protection score
 
-To test whether IRS from one household has an effect on workers living in another household, we first must make some assumptions about the level and waning effect of IRS generally. For our purposes, we make a rather simple assumption, based on the literature: that IRS has an immediate effect on mosquitoes and should affect malaria risk following the incubation period, that the waning effect begins in month 4 [@Tukei2017], that IRS effects those not living in the household by reducing reproduction of mosquitoes [White2011], and that IRS' effect after 1 year is essentially null [@Bukirwa2009]. We simplify these assumptions into a time-protection matrix, which can be visualized in the below chart.
+To test whether IRS from one household has an effect on workers living in another household, we first must make some assumptions about the level and waning effect of IRS generally. For our purposes, we make a rather simple assumption, based on the literature: that IRS has an immediate effect on mosquitoes and should affect malaria risk following the incubation period, that the waning effect begins in month 4 [@Tukei2017], that IRS effects those not living in the household by reducing reproduction of mosquitoes [@White2011], and that IRS' effect after 1 year is essentially null [@Bukirwa2009]. We simplify these assumptions into a time-protection matrix, which can be visualized in the below chart.
 
 ```{r}
-protection <- 
-    data_frame(months_since = c('No IRS / > 1 yr', '01', '02-04', '05-09', '10-12'),
-               protection = c(0, 1, 3, 2, 1))
-ggplot(data = protection,
-       aes(x = months_since,
-           y = protection,
-           group = 1)) +
-  geom_area(fill = 'lightblue',
-            alpha = 0.6) +
+x <- c(1:6)
+y <- (c(-3.45, -6.04, - 6.53, -0.17, -2.74, 5.27) + 27.61) / 27.61
+lo <- loess(y~x, span = 3)$fitted
+lo[lo > 1] <- 1
+lo <- 1-lo
+y <- 1-y
+df <- data.frame(x,y,lo)
+df$months_since <- add_zero(df$x, n = 2)
+df$months_since[df$months_since == '06'] <- '06+'
+df <- df %>%
+  bind_rows(df[nrow(df),] %>%
+              mutate(months_since = 'No IRS'))
+df <- df %>%
+  gather(key, value, y:lo) %>%
+  mutate(key = ifelse(key == 'lo', 
+                      'Brew', 'Tukei'))
+ggplot(data = df,
+       aes(x = x,
+           y = value,
+           group = key,
+           color = key)) +
+  geom_point() +
   geom_line() +
+  # geom_smooth(se = FALSE,span = 3) +
   theme_maragra() +
-  labs(x = 'Months since IRS',
-       y = '"Protection" level')
+  labs(x = 'Months after IRS',
+       y = 'Protection') +
+  geom_hline(lty = 2, 
+             alpha = 0.6,
+             yintercept = 0) +
+  scale_color_manual(name = '',
+                     values = c('blue', 'orange'))
+
 ```
+
+The above chart shows two lines: the orange line is based on Tukei's emperical results regarding the protection afforded by IRS against malaria infection (among children) as a function of time since IRS; the blue line is our simplification of Tukei's work. 
 
 ## Distance-based weighting
 
@@ -125,13 +149,11 @@ Having estimated each household's protection level at all times (ie, the "amount
 
 ```{r, echo = TRUE}
 weighter <- function(x){
-    x[x == 0] <- 0.01
-    out <- (1 / x)^1.2
-    return(out)
+   1/x
 }
 ```
 
-Where `x` is the distance (in kilometers) to the household whose "herd protection" score is being estimated. In other words, a household's "herd protection" score is the mean of all households' protection scores, weighted by the inverse of the distance away raised to the power of 1.2.
+Where `x` is the distance (in kilometers) to the household whose "herd protection" score is being estimated. In other words, a household's "herd protection" score is the mean of all households' protection scores, weighted by the inverse of the distance away.
 
 Functionally, the weights look like this:
 
@@ -152,6 +174,76 @@ ggplot(data = x,
 
 We heavily weight towards closer houses to account for the relatively small travel distances that most mosquitoes fly in normal conditions [@Verdonschot2014].
 
+## Density
+
+We consider a house's "herd" protection level (ie, the protection conferred to the house through externality) to be the average of the other houses' non-herd protection levels, weighted by the distance to the house in question. The below is an illustration of a house (the red x) and the neighboring houses (circles). The "weight" of each house is indicated by the circle size, and the protection level of the house is indicated by the shading of the circle.
+
+```{r, fig.width = 8}
+make_data <- function(n = 5){
+  df <- data.frame(id = letters[1:n],
+                 x = rnorm(n = n),
+                 y = rnorm(n = n),
+                 protection = round(sample(seq(0, 0.2, length = 100), n), digits = 1),
+                 color = c('red', rep('grey', n-1))) %>%
+  mutate(lng = x,
+         lat = y)
+  df$x[1] <- df$lng[1] <- df$lat[1] <- df$y[1] <- 0
+library(sp)
+coordinates(df) <- ~x+y
+df$distance <- round(spDists(x = df)[1,], digits = 3) / 1
+df$weight <- weighter(df$distance)
+df$herd_protection <- df$protection * df$weight
+return(df)
+}
+
+df <- make_data(n = 10)
+make_plot <- function(df){
+  ggplot(data = df@data,
+       aes(x = lng,
+           y = lat)) +
+  geom_point(aes(size = weight,
+                 color = protection)) +
+  geom_point(data = df@data[1,],
+             color = 'red',
+             pch = 4,
+             cex = 3) +
+  theme_maragra() +
+  labs(x = '',
+       y = '') +
+  theme(legend.position = 'right') +
+  guides(color = guide_colourbar(title = 'Protection', title.position = 'top'),
+         size = guide_legend(nrow = 5, title.position = 'top', nbin = 2)) +
+  scale_color_continuous(low = 'orange', high = 'blue') +
+    xlim(-2,2) +
+    ylim(-2,2)
+}
+make_plot(df = df)
+
+  
+
+```
+
+
+However, this consideration misses one important dimension: density. The below house's weighted average protection score is identical to that of the above house. In other words, at the time in question, at both locations, the percentage of houses with IRS coverage is the same, and the (weighted) average time since IRS is the same. However, the below house is likely much more protected than the above, given the _absolute_ number of nearby IRS-protected houses.
+
+```{r, fig.width = 8}
+df <- make_data(n = 100)
+make_plot(df = df)
+```
+
+In the latter representation, the likelihood of a mosquito landing on a DDT-affected surface is much higher than the former, even though the relative IRS coverage for the neighborhood is identical. In order to account for this, we must take _density_ itself into account, ie the number of houses (and their protection level and proximity) within 1 kilometer.
+
+Our approach is this: rather than using a weighted average of each household's individual protection score, we instead use a weighted sum. A particular household's herd protection score at any given time is the sum of all households' individual protection scores at that time multiplied by those households' distance weights.
+
+
+## Combining them all together
+
+The summation of (a) the IRS level of other houses at a certain time, (b) weighted by the distance of those houses to the house in question, (c) limited to only the 1 km radius multiplied yields a "herd protection score".
+
+This score is conceptually similar to Cohen and Dupas' quantification of the positive externalities of ITN (bednet) use in Kenya [@Cohen2010] in that it attempts to estimate the protection conferred to "non-users" by users and uses a "weighted sum" (as opposed to average). Our approach differs in that the time dimension for IRS is much more important than ITN (ie, IRS is not a binary but rather a waning function, as described previously), requiring us to create herd scores for every day.
+
+Our approach can be justified in that previous studies have found strong positive health externalities in malaria interventions related to ITN coverage [@Alaii2003FactorsAU]. No studies exist on positive externalities for IRS coverage, but to the extent that the mechanisms for the reduction in infection are similar (reduction in the natural reservoir of the disease, reduction in the number of vectors, etc.), it is reasonable to assume similar effects. Additionally, we using weighted distance for our score calculation (rather than simply defining a radius threshold) because of previous studies' findings that there is a linear decline in protection conferred to others with greater distance from an intervention [@Binka2007]
+
 ## Incorporating into data and model
 
 We calculate a "herd protection" score for each location-date combination (`r nrow(model_data)` values). Whereas our original model specification looked like: 
@@ -169,11 +261,252 @@ $$
 $\hat{Y}_{it}$ is the rate of absence. $\beta_{1}$ is the binary "season" variable, imputed from overall district clinical incidence. Our intervention is whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment, represented, respectively, by $\beta_{2}$ and $\beta_{3}$. $\beta_{4}$ **represents the distance-weighted herd protection score**. $\alpha_i$ represents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term.
 
 
+
+\newpage
+
 ## Results
+
+
+### Table
 
 ```{r, results = 'asis'}
 make_models_table(model_list = protection_models, the_caption = "All absenteeism with herd immunity: model results")
 ```
+
+### HIV
+
+We incorporated HIV prevalence of the area lived in, but it had not significance and was then removed from the model.
+
+```{r}
+plot(hiv_prevalence)
+```
+
+## Spatial protection surfaces
+
+The below shows worker locations and the _average_ herd protection score for the entire study period.
+
+```{r}
+# Fortify bairros
+library(maptools)
+library(rgeos)
+border <- gConvexHull(bairros_maragra_bairro)
+border <- SpatialPolygonsDataFrame(Sr = border,
+                                   data = data.frame(a = 1))
+# border <- unionSpatialPolygons(bairros_maragra_bairro, 
+#                           IDs = rep(1, nrow(bairros_maragra_bairro)),
+#                           threshold = 9^9)
+border_fortified <- 
+  broom::tidy(border,
+              regions = 'Id')
+
+# Create average herd risk score
+x <- model_data %>%
+  group_by(lng = longitude_aura,
+           lat = latitude_aura) %>%
+  summarise(herd = mean(herd, na.rm = TRUE)) %>%
+  ungroup %>%
+  filter(!is.na(lng))
+x_sp <- x
+coordinates(x_sp) <- ~lng+lat   
+proj4string(x_sp) <- proj4string(border)
+overs <- sp::over(x_sp, border)
+x <- x[!is.na(overs),]
+ggplot() +
+  geom_point(data = x,
+       aes(x = lng,
+           y = lat,
+           color = herd)) +
+  geom_polygon(data = border_fortified,
+               aes(x = long,
+                   y = lat,
+                   group = group),
+               fill = NA,
+               color = 'black') +
+  ggthemes::theme_map() +
+  scale_color_continuous(name = 'Herd\nprotection\nscore',
+                         low = 'orange',
+                         high = 'blue')
+  
+```
+
+The below uses kernel density interpolation (via krieging) to estimate a generalized protection surface over the entire facility.
+
+```{r}
+# Create a gridded dataframe with values 
+# for the entire range (bbox) of border
+df_grid <- expand.grid(lng = seq(bbox(border)[1,1],
+                                 bbox(border)[1,2],
+                                 by = 0.0008),
+                       lat = seq(bbox(border)[2,1],
+                                 bbox(border)[2,2],
+                                 by = 0.0008),
+                       herd = NA)
+df_grid$latitude <- df_grid$lat
+df_grid$longitude <- df_grid$lng
+coordinates(df_grid) <- ~longitude+latitude
+
+# Go through each row of df_grid, getting the 
+# weighted mean irs score for that point
+# and putting a color into df_grid
+if('df_grid.RData' %in% dir()){
+  load('df_grid.RData')
+} else {
+  for (i in 1:nrow(df_grid)){
+  # Get distance from every point in x_sp
+  distances <- spDistsN1(pts = x_sp,
+                        pt = df_grid[i,],
+                        longlat = TRUE)
+  # Define which are acceptably close
+  close_enough <- which(distances <= 50)
+  # Get an herd score
+  herd <- stats::weighted.mean(x = x_sp$herd[close_enough],
+                       w = (1 / distances[close_enough]) ^2,
+                       na.rm = TRUE)
+  # Assign irs to the dataframe
+  df_grid$herd[i] <- herd
+
+}
+save('df_grid', file = 'df_grid.RData')
+}
+# Convert df_grid to raster
+temp <- df_grid@data %>% arrange(lng, lat)
+r <- rasterFromXYZ(temp[, c('lng', 'lat', 'herd')])
+plot(r)
+
+proj4string(df_grid) <- proj4string(border)
+x <- over(df_grid, polygons(border))
+df_grid_small <- df_grid[!is.na(x),]
+temp <- df_grid_small@data %>% arrange(lng, lat)
+r <- rasterFromXYZ(temp[, c('lng', 'lat', 'herd')])
+```
+
+```{r}
+plot(border)
+plot(r, add = TRUE)
+plot(border, add = TRUE)
+```
+
+### Theoretical protection surface
+
+The below shows a theoretical protection surface assuming (a) uniform distribution of residences, (b) random distribution of IRS over time, but never going beyond 6 months between sprays.
+
+
+```{r}
+theoretical <- function(n){
+  x <- lng <- runif(n = n, min = -1, max = 1)
+y <- lat <- runif(n = n, min = -1, max = 1)
+data <- data.frame(id = 1:n,
+                   x,y, lng, lat,protection = sample(protection$protection[1:5], n,
+                                                     replace = TRUE))
+coordinates(data) <- ~x+y
+
+# Loop through and get scores
+out_list <- list()
+counter <- 0
+distances <- spDists(data)
+for(j in 1:nrow(data)){
+      sub_distances <- distances[j,]
+      x <- data$protection
+      w <- weighter(sub_distances)
+      x <- x[is.finite(w)]
+      
+      # The weight
+      w <- w[is.finite(w)]
+      # Number of houses within 1k
+      n <- length(which(sub_distances <= 1))
+      # The weighted protection score (average)
+      positivity <- stats::weighted.mean(x = x,
+                                         w = w,
+                                         na.rm = TRUE)
+      # The weighted additive protection score
+      s <- sum(x[sub_distances <= 1] * w[sub_distances <= 1], na.rm = TRUE)
+      counter <- counter + 1
+      
+      # Update model_data
+      out_data <- data_frame(id = data$id[j],
+                             herd = positivity,
+                             n = n,
+                             s = s)
+      out_list[[counter]] <- out_data
+    }
+
+x <- bind_rows(out_list)
+x <- x %>%
+    group_by(id) %>%
+    summarise(herd = mean(herd, na.rm = TRUE),
+              n = mean(n, na.rm = TRUE),
+              s = mean(s, na.rm = TRUE))
+  
+data@data <- left_join(data@data, x)
+
+border <- gConvexHull(data)
+border <- SpatialPolygonsDataFrame(Sr = border,
+                                   data = data.frame(a = 1))
+border_fortified <- broom::tidy(border, regions = 1)
+
+a1 <- ggplot() +
+  geom_polygon(data = border_fortified,
+               aes(x = long,
+                   y = lat,
+                   group = group),
+               fill = NA,
+               alpha = 0.2,
+               color = 'black') +
+  geom_point(data = data@data,
+             aes(x = lng,
+                 y = lat,
+                 color = protection)) +
+  theme_maragra() +
+  scale_color_continuous(name = 'Individual\nprotection',
+                         low = 'orange',
+                         high = 'green',
+                         guide = 'legend') +
+  labs(x = '',
+       y = '')
+a2 <- ggplot() +
+  geom_polygon(data = border_fortified,
+               aes(x = long,
+                   y = lat,
+                   group = group),
+               fill = NA,
+               alpha = 0.2,
+               color = 'black') +
+  geom_point(data = data@data,
+             aes(x = lng,
+                 y = lat,
+                 color = s)) +
+  theme_maragra() +
+  scale_color_continuous(name = 'Herd\nprotection',
+                         low = 'orange',
+                         high = 'green',
+                         guide = 'legend') +
+  labs(x = '',
+       y = '')
+Rmisc::multiplot(a1, a2, cols = 2)
+}
+
+```
+
+#### 100 workers
+
+```{r}
+theoretical(n = 100) 
+```
+
+#### 1000 workers
+
+```{r}
+theoretical(n = 1000)
+```
+
+
+#### 3000 workers
+
+```{r}
+theoretical(n = 3000)
+```
+
+
 
 ## Conclusion  
 

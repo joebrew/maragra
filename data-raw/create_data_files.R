@@ -1183,7 +1183,28 @@ weather <- weather %>%
          date >= '2013-01-01',
          date <= '2016-12-31')
 
+# Load the hiv prevalence data
+# create in the laura_de_la_fuente repo / separate project
+load('hiv_prevalence.RData')
+hiv_prevalence <- r
+
+# Bairros
+x <- bairros
+x$NeighCode <- as.numeric(as.character(x$NeighCode))
+x@data <- x@data %>%
+  mutate(maragra_bairro = NeighCode %in%
+           c(601:609,701:709, 1001:1003)) %>%
+  mutate(maragra_fabrica = NeighCode %in%
+           1001:1003)
+# x <- spTransform(x,CRS("+proj=utm +zone=36 +datum=WGS84 +units=m") )
+
+bairros_maragra_bairro <- x[x$maragra_bairro,]
+bairros_maragra_fabrica <- x[x$maragra_fabrica,]
+# the_bairro <- spTransform(the_bairro, CRS("+proj=utm +zone=36 +datum=WGS84 +units=m") )
+# the_fabrica <- spTransform(the_fabrica, CRS("+proj=utm +zone=36 +datum=WGS84 +units=m") )
+
 # Save for use in package
+devtools::use_data(hiv_prevalence, overwrite = TRUE)
 devtools::use_data(bes,
                    overwrite = TRUE)
 devtools::use_data(ab,
@@ -1199,6 +1220,10 @@ devtools::use_data(workers,
 devtools::use_data(ab_panel,
                    overwrite = TRUE)
 devtools::use_data(bairros,
+                   overwrite = TRUE)
+devtools::use_data(bairros_maragra_bairro,
+                   overwrite = TRUE)
+devtools::use_data(bairros_maragra_fabrica,
                    overwrite = TRUE)
 devtools::use_data(census,
                    overwrite = TRUE)

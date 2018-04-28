@@ -152,6 +152,9 @@
 \usepackage{geometry}
 \usepackage{lipsum}
 
+\usepackage{longtable}
+
+
 \usepackage{float}
 \floatplacement{figure}{H}
 
@@ -278,12 +281,17 @@ rather simple assumption, based on the literature: that IRS has an
 immediate effect on mosquitoes and should affect malaria risk following
 the incubation period, that the waning effect begins in month 4 (Tukei
 et al., 2017), that IRS effects those not living in the household by
-reducing reproduction of mosquitoes {[}White2011{]}, and that IRS'
+reducing reproduction of mosquitoes (White et al., 2011), and that IRS'
 effect after 1 year is essentially null (Bukirwa et al., 2009). We
 simplify these assumptions into a time-protection matrix, which can be
 visualized in the below chart.
 
-\includegraphics{externalities_files/figure-latex/unnamed-chunk-3-1.pdf}
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-3-1} \end{center}
+
+The above chart shows two lines: the orange line is based on Tukei's
+emperical results regarding the protection afforded by IRS against
+malaria infection (among children) as a function of time since IRS; the
+blue line is our simplification of Tukei's work.
 
 \subsection{Distance-based weighting}\label{distance-based-weighting}
 
@@ -299,9 +307,7 @@ protection'' score as follows:
 \begin{Shaded}
 \begin{Highlighting}[]
 \NormalTok{weighter <-}\StringTok{ }\ControlFlowTok{function}\NormalTok{(x) \{}
-\NormalTok{    x[x }\OperatorTok{==}\StringTok{ }\DecValTok{0}\NormalTok{] <-}\StringTok{ }\FloatTok{0.01}
-\NormalTok{    out <-}\StringTok{ }\NormalTok{(}\DecValTok{1}\OperatorTok{/}\NormalTok{x)}\OperatorTok{^}\FloatTok{1.2}
-    \KeywordTok{return}\NormalTok{(out)}
+    \DecValTok{1}\OperatorTok{/}\NormalTok{x}
 \NormalTok{\}}
 \end{Highlighting}
 \end{Shaded}
@@ -309,23 +315,237 @@ protection'' score as follows:
 Where \texttt{x} is the distance (in kilometers) to the household whose
 ``herd protection'' score is being estimated. In other words, a
 household's ``herd protection'' score is the mean of all households'
-protection scores, weighted by the inverse of the distance away raised
-to the power of 1.2.
+protection scores, weighted by the inverse of the distance away.
 
 Functionally, the weights look like this:
 
-\includegraphics{externalities_files/figure-latex/unnamed-chunk-5-1.pdf}
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-5-1} \end{center}
 
 We heavily weight towards closer houses to account for the relatively
 small travel distances that most mosquitoes fly in normal conditions
 (Verdonschot and Besse-Lototskaya, 2014).
 
-\subsection{Incorporating into data}\label{incorporating-into-data}
+\subsection{Density}\label{density}
+
+We consider a house's ``herd'' protection level (ie, the protection
+conferred to the house through externality) to be the average of the
+other houses' non-herd protection levels, weighted by the distance to
+the house in question. The below is an illustration of a house (the red
+x) and the neighboring houses (circles). The ``weight'' of each house is
+indicated by the circle size, and the protection level of the house is
+indicated by the shading of the circle.
+
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-6-1} \end{center}
+
+However, this consideration misses one important dimension: density. The
+below house's weighted average protection score is identical to that of
+the above house. In other words, at the time in question, at both
+locations, the percentage of houses with IRS coverage is the same, and
+the (weighted) average time since IRS is the same. However, the below
+house is likely much more protected than the above, given the
+\emph{absolute} number of nearby IRS-protected houses.
+
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-7-1} \end{center}
+
+In the latter representation, the likelihood of a mosquito landing on a
+DDT-affected surface is much higher than the former, even though the
+relative IRS coverage for the neighborhood is identical. In order to
+account for this, we must take \emph{density} itself into account, ie
+the number of houses (and their protection level and proximity) within 1
+kilometer.
+
+Our approach is this: rather than using a weighted average of each
+household's individual protection score, we instead use a weighted sum.
+A particular household's herd protection score at any given time is the
+sum of all households' individual protection scores at that time
+multiplied by those households' distance weights.
+
+\subsection{Combining them all
+together}\label{combining-them-all-together}
+
+The summation of (a) the IRS level of other houses at a certain time,
+(b) weighted by the distance of those houses to the house in question,
+(c) limited to only the 1 km radius multiplied yields a ``herd
+protection score''.
+
+This score is conceptually similar to Cohen and Dupas' quantification of
+the positive externalities of ITN (bednet) use in Kenya (Cohen and
+Dupas, 2010) in that it attempts to estimate the protection conferred to
+``non-users'' by users and uses a ``weighted sum'' (as opposed to
+average). Our approach differs in that the time dimension for IRS is
+much more important than ITN (ie, IRS is not a binary but rather a
+waning function, as described previously), requiring us to create herd
+scores for every day.
+
+Our approach can be justified in that previous studies have found strong
+positive health externalities in malaria interventions related to ITN
+coverage (Alaii et al., 2003). No studies exist on positive
+externalities for IRS coverage, but to the extent that the mechanisms
+for the reduction in infection are similar (reduction in the natural
+reservoir of the disease, reduction in the number of vectors, etc.), it
+is reasonable to assume similar effects. Additionally, we using weighted
+distance for our score calculation (rather than simply defining a radius
+threshold) because of previous studies' findings that there is a linear
+decline in protection conferred to others with greater distance from an
+intervention (Binka et al., 2007)
+
+\subsection{Incorporating into data and
+model}\label{incorporating-into-data-and-model}
 
 We calculate a ``herd protection'' score for each location-date
-combination.
+combination (1759100 values). Whereas our original model specification
+looked like:
+
+\[
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * (\hat{\beta}_2{IRS_{it}}*\hat{\beta}_3{IRStime_{it}}) + \alpha_i + \delta_t + \upsilon_{it}
+\]
+
+Our new specification incorporates the herd protection value:
+
+\[
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * (\hat{\beta}_2{IRS_{it}}*\hat{\beta}_3{IRStime_{it}}) +  \hat{\beta}_4{Herd_{it}} +  \alpha_i + \delta_t + \upsilon_{it}
+\]
+
+\(\hat{Y}_{it}\) is the rate of absence. \(\beta_{1}\) is the binary
+``season'' variable, imputed from overall district clinical incidence.
+Our intervention is whether the residence of the worker in question was
+treated in the last year, and, if so, the time since treatment,
+represented, respectively, by \(\beta_{2}\) and \(\beta_{3}\).
+\(\beta_{4}\) \textbf{represents the distance-weighted herd protection
+score}. \(\alpha_i\) represents the time invariant worker fixed effects,
+and \(\delta_i\) represents the fixed effect of the particular malaria
+season. \(\upsilon\) is the error term.
+
+\newpage
+
+\subsection{Results}\label{results}
+
+\subsubsection{Table}\label{table}
+
+\begin{longtable}[t]{ll}
+\caption{\label{tab:unnamed-chunk-8}All absenteeism with herd immunity: model results}\\
+\toprule
+Term & Estimate\\
+\midrule
+\endfirsthead
+\caption[]{All absenteeism with herd immunity: model results \textit{(continued)}}\\
+\toprule
+Term & Estimate\\
+\midrule
+\endhead
+\
+\endfoot
+\bottomrule
+\endlastfoot
+\addlinespace[1.5em]
+\multicolumn{2}{l}{\textbf{Permanent field worker}}\\
+\hspace{1em}Malaria season & 3.597 (P<0.001)\\
+\hspace{1em}Months since IRS: IRS & 6.149 (P<0.001)\\
+\hspace{1em}Rainy day & 3.246 (P<0.001)\\
+\hspace{1em}Herd protection & -0.01 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: IRS & -8.548 (P<0.001)\\
+\addlinespace[1.5em]
+\multicolumn{2}{l}{\textbf{Permanent not field worker}}\\
+\hspace{1em}Malaria season & 0.792 (P<0.001)\\
+\hspace{1em}Months since IRS: IRS & 2.243 (P<0.001)\\
+\hspace{1em}Rainy day & 4.552 (P<0.001)\\
+\hspace{1em}Herd protection & -0.009 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: IRS & -1.508 (P=0.002)\\
+\addlinespace[1.5em]
+\multicolumn{2}{l}{\textbf{Temporary field worker}}\\
+\hspace{1em}Malaria season & -0.362 (P<0.001)\\
+\hspace{1em}Months since IRS: IRS & -0.229 (P=0.004)\\
+\hspace{1em}Rainy day & 0.037 (P=0.261)\\
+\hspace{1em}Herd protection & 0.002 (P<0.001)\\
+\hspace{1em}Malaria season:Months since IRS: IRS & 0.26 (P=0.014)\\
+\addlinespace[1.5em]
+\multicolumn{2}{l}{\textbf{Temporary not field worker}}\\
+\hspace{1em}Malaria season & 3.151 (P<0.001)\\
+\hspace{1em}Months since IRS: IRS & -1.718 (P=0.076)\\
+\hspace{1em}Rainy day & 0.224 (P=0.469)\\
+\hspace{1em}Herd protection & 0.002 (P=0.772)\\
+\hspace{1em}Malaria season:Months since IRS: IRS & 2.657 (P=0.02)\\*
+\end{longtable}
+
+\subsubsection{HIV}\label{hiv}
+
+We incorporated HIV prevalence of the area lived in, but it had not
+significance and was then removed from the model.
+
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-9-1} \end{center}
+
+\subsection{Spatial protection
+surfaces}\label{spatial-protection-surfaces}
+
+The below shows worker locations and the \emph{average} herd protection
+score for the entire study period.
+
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-10-1} \end{center}
+
+The below uses kernel density interpolation (via krieging) to estimate a
+generalized protection surface over the entire facility.
+
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-11-1} \end{center}
+
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-12-1} \end{center}
+
+\subsubsection{Theoretical protection
+surface}\label{theoretical-protection-surface}
+
+The below shows a theoretical protection surface assuming (a) uniform
+distribution of residences, (b) random distribution of IRS over time,
+but never going beyond 6 months between sprays.
+
+\paragraph{100 workers}\label{workers}
+
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-14-1} \end{center}
+
+\paragraph{1000 workers}\label{workers-1}
+
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-15-1} \end{center}
+
+\paragraph{3000 workers}\label{workers-2}
+
+\begin{center}\includegraphics{externalities_files/figure-latex/unnamed-chunk-16-1} \end{center}
+
+\subsection{Conclusion}\label{conclusion}
+
+Using the approach laid out here, there appears to be a significant
+protective effect afforded by the IRS of neighbors. If this approach is
+deemed correct, then next steps are determining:
+
+\begin{itemize}
+\tightlist
+\item
+  How to translate the effect into costs and savings (simulation based
+  approach at various IRS coverage levels?).
+\item
+  How to combine this effect with the other potential spillover effect
+  (ie, core-periphery issues).
+\item
+  How / where to report on this in the paper (is this a ``method'' or
+  ``result''?).
+\end{itemize}
+
+\section*{References}\label{references}
+\addcontentsline{toc}{section}{References}
 
 \hypertarget{refs}{}
+\hypertarget{ref-Alaii2003FactorsAU}{}
+Alaii, J.A., Hawley, W.A., Kolczak, M.S., Kuile, F.O.T., Gimnig, J.E.,
+Vulule, J., Odhacha, A., Oloo, A.J., Nahlen, B.L., Phillips-Howard,
+P.A., 2003. Factors affecting use of permethrin-treated bed nets during
+a randomized controlled trial in western kenya. The American journal of
+tropical medicine and hygiene 68 4 Suppl, 137--41.
+
+\hypertarget{ref-Binka2007}{}
+Binka, F.N., Kubaje, A., Adjuik, M., Williams, L.A., Lengeler, C.,
+Maude, G.H., Armah, G.E., Kajihara, B., Adiamah, J.H., Smith, P.G.,
+2007. Impact of permethrin impregnated bednets on child mortality in
+kassena-nankana district, ghana: A randomized controlled trial. Tropical
+Medicine \& International Health 1, 147--154.
+\url{https://doi.org/10.1111/j.1365-3156.1996.tb00020.x}
+
 \hypertarget{ref-Bukirwa2009}{}
 Bukirwa, H., Yau, V., Kigozi, R., Filler, S., Quick, L., Lugemwa, M.,
 Dissanayake, G., Kamya, M., Wabwire-Mangen, F., Dorsey, G., 2009.
@@ -333,6 +553,11 @@ Assessing the impact of indoor residual spraying on malaria morbidity
 using a sentinel site surveillance system in western uganda. American
 Journal of Tropical Medicine and Hygiene 81, 611--614.
 \url{https://doi.org/10.4269/ajtmh.2009.09-0126}
+
+\hypertarget{ref-Cohen2010}{}
+Cohen, J., Dupas, P., 2010. Free distribution or cost-sharing? Evidence
+from a randomized malaria prevention experiment. Quarterly Journal of
+Economics 125, 1--45. \url{https://doi.org/10.1162/qjec.2010.125.1.1}
 
 \hypertarget{ref-Tukei2017}{}
 Tukei, B.B., Beke, A., Lamadrid-Figueroa, H., 2017. Assessing the effect
@@ -346,6 +571,12 @@ mosquitoes (culicidae): A metadata analysis to support the management of
 barrier zones around rewetted and newly constructed wetlands.
 Limnologica - Ecology and Management of Inland Waters 45, 69--79.
 \url{https://doi.org/10.1016/j.limno.2013.11.002}
+
+\hypertarget{ref-White2011}{}
+White, M.T., Griffin, J.T., Churcher, T.S., Ferguson, N.M., Basáñez,
+M.-G., Ghani, A.C., 2011. Modelling the impact of vector control
+interventions on anopheles gambiae population dynamics. Parasites \&
+Vectors 4, 153. \url{https://doi.org/10.1186/1756-3305-4-153}
 
 
 \end{document}

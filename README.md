@@ -61,10 +61,13 @@ Having run this, you'll now have the following datasets for analysis:
 -   ab
 -   ab\_panel
 -   bairros
+-   bairros\_maragra\_bairro
+-   bairros\_maragra\_fabrica
 -   bes
 -   census
 -   clinic
 -   clinic\_agg
+-   hiv\_prevalence
 -   irs
 -   mc
 -   weather
