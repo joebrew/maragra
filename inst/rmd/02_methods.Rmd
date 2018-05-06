@@ -32,7 +32,106 @@ The summation of (a) the IRS level of other houses at a certain time, (b) weight
 
 This score is conceptually similar to Cohen and Dupas' quantification of the positive externalities of ITN (bednet) use in Kenya [@Cohen2010] in that it attempts to estimate the protection conferred to "non-users" by users and uses a "weighted sum" (as opposed to average). Our approach differs in that the time dimension for IRS is much more important than ITN (ie, IRS is not a binary but rather a waning function, as described previously), requiring us to create herd scores for every day.
 
-Our approach can be justified in that previous studies have found strong positive health externalities in malaria interventions related to ITN coverage [@Alaii2003FactorsAU]. No studies exist on positive externalities for IRS coverage, but to the extent that the mechanisms for the reduction in infection are similar (reduction in the natural reservoir of the disease, reduction in the number of vectors, etc.), it is reasonable to assume similar effects. Additionally, we using weighted distance for our score calculation (rather than simply defining a radius threshold) because of previous studies' findings that there is a linear decline in protection conferred to others with greater distance from an intervention [@Binka2007]
+Our approach can be justified in that previous studies have found strong positive health externalities in malaria interventions related to ITN coverage [@Alaii2003FactorsAU]. No studies exist on positive externalities for IRS coverage, but to the extent that the mechanisms for the reduction in infection are similar (reduction in the natural reservoir of the disease, reduction in the number of vectors, etc.), it is reasonable to assume similar effects. Additionally, we are using weighted distance for our score calculation (rather than simply defining a radius threshold) because of previous studies' findings that there is a linear decline in protection conferred to others with greater distance from an intervention [@Binka2007].
+
+
+Figure x shows a smooth interpolated surface of herd protection, averaged for the entire study period.
+
+```{r, fig.cap = 'Kernel density surface of average all-time herd protection score for Maragra worker neighborhoods (relative to highest protection)', fig.align = 'center'}
+# Fortify bairros
+library(maptools)
+library(rgeos)
+border <- gConvexHull(bairros_maragra_bairro)
+border <- SpatialPolygonsDataFrame(Sr = border,
+                                   data = data.frame(a = 1))
+# border <- unionSpatialPolygons(bairros_maragra_bairro, 
+#                           IDs = rep(1, nrow(bairros_maragra_bairro)),
+#                           threshold = 9^9)
+border_fortified <- 
+  broom::tidy(border,
+              regions = 'Id')
+
+# Create average herd risk score
+x <- model_data %>%
+  group_by(lng = longitude_aura,
+           lat = latitude_aura) %>%
+  summarise(herd = mean(herd, na.rm = TRUE)) %>%
+  ungroup %>%
+  filter(!is.na(lng))
+x_sp <- x
+coordinates(x_sp) <- ~lng+lat   
+proj4string(x_sp) <- proj4string(border)
+overs <- sp::over(x_sp, border)
+x <- x[!is.na(overs),]
+# ggplot() +
+#   geom_point(data = x,
+#        aes(x = lng,
+#            y = lat,
+#            color = herd)) +
+#   geom_polygon(data = border_fortified,
+#                aes(x = long,
+#                    y = lat,
+#                    group = group),
+#                fill = NA,
+#                color = 'black') +
+#   ggthemes::theme_map() +
+#   scale_color_continuous(name = 'Herd\nprotection\nscore',
+#                          low = 'orange',
+#                          high = 'blue')
+  
+df_grid <- expand.grid(lng = seq(bbox(border)[1,1],
+                                 bbox(border)[1,2],
+                                 by = 0.0008),
+                       lat = seq(bbox(border)[2,1],
+                                 bbox(border)[2,2],
+                                 by = 0.0008),
+                       herd = NA)
+df_grid$latitude <- df_grid$lat
+df_grid$longitude <- df_grid$lng
+coordinates(df_grid) <- ~longitude+latitude
+
+# Go through each row of df_grid, getting the 
+# weighted mean irs score for that point
+# and putting a color into df_grid
+if('df_grid.RData' %in% dir()){
+  load('df_grid.RData')
+} else {
+  for (i in 1:nrow(df_grid)){
+  # Get distance from every point in x_sp
+  distances <- spDistsN1(pts = x_sp,
+                        pt = df_grid[i,],
+                        longlat = TRUE)
+  # Define which are acceptably close
+  close_enough <- which(distances <= 50)
+  # Get an herd score
+  herd <- stats::weighted.mean(x = x_sp$herd[close_enough],
+                       w = (1 / distances[close_enough]) ^2,
+                       na.rm = TRUE)
+  # Assign irs to the dataframe
+  df_grid$herd[i] <- herd
+
+}
+save('df_grid', file = 'df_grid.RData')
+}
+
+library(raster)
+# Convert df_grid to raster
+temp <- df_grid@data %>% arrange(lng, lat)
+r <- rasterFromXYZ(temp[, c('lng', 'lat', 'herd')])
+
+proj4string(df_grid) <- proj4string(border)
+x <- over(df_grid, polygons(border))
+df_grid_small <- df_grid[!is.na(x),]
+temp <- df_grid_small@data %>% arrange(lng, lat)
+r <- rasterFromXYZ(temp[, c('lng', 'lat', 'herd')])
+values(r) <- values(r) / max(values(r), na.rm = TRUE) * 100
+plot(border, col = NA, border = NA)
+plot(r, add = TRUE)
+# plot(border, add = TRUE)
+plot(bairros, add = TRUE)
+```
+
+Some more details will eventually go here.
 
 
 ### Econometric model

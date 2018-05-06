@@ -445,6 +445,71 @@ make_models_table(model_list = protection_models, the_caption = "All absenteeism
 ```
 
 
+## What would happen without IRS?
+
+The below chart shows the modeled average absenteeism rate during malaria season for permanent workers, by group type.
+
+```{r}
+x <- model_data %>%
+  dplyr::filter(season == 'high',
+                # group == groups[1],
+                permanent_or_temporary == 'Permanent'
+                )
+x <- x [,grepl('predicted', names(x)) | names(x) == 'group']
+x <- x %>% gather(key, value, predicted_no_herd_no_irs:predicted_max_irs)
+dict <- data.frame(key = c('predicted', 
+                           'predicted_no_herd',
+                           'predicted_no_irs',
+                           'predicted_no_herd_no_irs',
+                           'predicted_max_herd_max_irs',
+                           'predicted_max_herd',
+                           'predicted_max_irs'),
+                   new_key = c('As is',
+                               'No herd protection',
+                               'No individual protection',
+                               'No protection (herd or individual)',
+                               'Protection: maximum IRS and herd',
+                               'Protection: maximum herd',
+                               'Protection: maximum IRS'))
+
+x <- left_join(x,
+               dict)
+plot_data <- x %>%
+  mutate(new_key = gsub(' ', '\n', new_key)) %>%
+  group_by(group, 
+           new_key) %>%
+  summarise(avg = mean(value, na.rm = TRUE),
+            med = median(value, na.rm = TRUE),
+            upr = quantile(value, 0.75, na.rm = TRUE),
+            lwr = quantile(value, 0.25, na.rm = TRUE))
+levs <- gsub(' ', '\n', c('No herd protection',
+                               'No individual protection',
+                               'No protection (herd or individual)',
+                               'As is',
+                               'Protection: maximum herd',
+                               'Protection: maximum IRS',
+                               'Protection: maximum IRS and herd'))
+plot_data$new_key <- factor(plot_data$new_key,
+                       levels = levs)
+cols <- colorRampPalette(brewer.pal(n = 9,
+                                    name = 'Spectral'))(length(unique(plot_data$group)))
+
+ggplot(data = plot_data,
+       aes(x = new_key,
+           y = avg * 100,
+           color = group)) +
+  geom_point() +
+  theme_maragra() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x = 'Scenario',
+       y = 'Absenteeism rate') +
+  geom_line(aes(group = group),
+            alpha = 0.3) +
+  scale_color_manual(name = '',
+                     values = cols)
+```
+
+
 ## Translating absences to costs
 
 xxx\todo{Not done yet. This will be relatively straightforward arithmetic, but I want to first make sure that the models are rock solid (since all of the "translation" hinges on them).}

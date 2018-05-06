@@ -532,6 +532,168 @@ if('prepared_data.RData' %in% dir()){
   
   map_list <- list(g1,g2,g3,g4)
   
+  # Get the herd protection score assuming that everyone nearby was protected
+  groups <- sort(unique(model_data$group))
+  herd_ideal <- 
+    model_data %>%
+    filter(!is.na(longitude_aura),
+           !is.na(latitude_aura)) %>%
+    group_by(oracle_number) %>%
+    summarise(lng = dplyr::first(longitude_aura),
+              lat = dplyr::first(latitude_aura)) %>%
+    ungroup
+  coordinates(herd_ideal) <- ~lng+lat
+  proj4string(herd_ideal) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+  # Get distances
+  distances <- spDists(x = herd_ideal)
+  out <- apply(distances, 1, function(x){
+    x <- weighter(x)
+    x <- x[is.finite(x)]
+    x <- sum(x, na.rm = TRUE)
+    return(x)
+  })
+  herd_ideal$herd_ideal <- out
+  herd_ideal <- herd_ideal@data
+  # Join back to model_data
+  model_data <-
+    left_join(model_data,
+              herd_ideal)
+  
+  
+  # Define function similiar to "predict" but for felm
+  predict_felm <- function(model, df,
+                           irs0 = FALSE,
+                           irs_all = FALSE,
+                           herd0 = FALSE,
+                           herd_max = FALSE){
+    # Extract fixed effects
+    fe <- getfe(model) %>%
+      dplyr::select(idx, effect)
+    fe$key <- row.names(fe)
+    # Extract the fixed effects
+    fe_oracle_number <- 
+      fe %>%
+      dplyr::filter(grepl('oracle', key)) %>%
+      dplyr::select(idx, effect) %>%
+      dplyr::rename(oracle_number = idx)
+    fe_malaria_year <- 
+      fe %>% 
+      dplyr::filter(grepl('year', key)) %>%
+      dplyr::select(idx, effect) %>%
+      dplyr::rename(malaria_year = idx)
+    # Get the coefficients for the non-fixed effects variables
+    betas <- model$beta
+    beta_names <- row.names(betas)
+    betas <- data_frame(var = beta_names, 
+                        beta = as.numeric(betas))
+    # Split up the vals, etc.
+    betas$variable <- gsub('high', '', betas$var)
+    betas$variable <- gsub('After', '', betas$variable)
+    betas$variable <- gsub('TRUE', '', betas$variable)
+
+    # Get the non fe parts
+    x <- model$X
+    
+    a <- data.frame(oracle_number = model$fe$oracle_number,
+                    malaria_year = model$fe$malaria_year)
+    data <- cbind(x, a)
+    
+    # Join the fe parts
+    data <- left_join(data,
+                      fe_malaria_year) %>%
+      dplyr::select(-malaria_year) %>%
+      dplyr::rename(malaria_year = effect) %>%
+      left_join(fe_oracle_number) %>%
+      dplyr::select(-oracle_number) %>%
+      dplyr::rename(oracle_number = effect)
+    
+    # Get the sum
+    betas <- data.frame(betas)
+    data <- data.frame(data)
+    
+    # Deal with the NAs in the model frame
+    is <- 1:nrow(df)
+    nas <- model$na.action
+    is <- is[!is %in% nas]
+    done <- rep(NA, nrow(df))
+    
+    # If IRS is 0 (for prediction purposes, overwrite)
+    if(irs0){
+      data$months_sinceAfter <- 0
+      data$seasonhigh.months_sinceAfter <- 0
+    }
+    if(herd0){
+      data$herd <- 0
+    }
+    if(irs_all){
+      data$months_sinceAfter <- 1
+      data$seasonhigh.months_sinceAfter <- 1
+    }
+    if(herd_max){
+      data$herd <- df$herd_ideal[is]
+    }
+    
+    out <- 
+      (betas$beta[betas$var == 'seasonhigh'] * data$seasonhigh) +
+      (betas$beta[betas$var == 'months_sinceAfter'] * data$months_sinceAfter) +
+      (betas$beta[betas$var == 'rainy_dayTRUE'] * data$rainy_dayTRUE) +
+      (betas$beta[betas$var == 'herd'] * data$herd) +
+      (betas$beta[betas$var == 'seasonhigh:months_sinceAfter'] * data$seasonhigh.months_sinceAfter) +
+      as.numeric(data$malaria_year) +
+      as.numeric(data$oracle_number)
+    
+    done[is] <- out
+    # done[nas] <- NA
+    return(done)
+  }
+  
+  model_data$predicted <-
+    model_data$predicted_no_irs <-
+    model_data$predicted_no_herd <- 
+    model_data$predicted_no_herd_no_irs <-
+    model_data$predicted_max_irs <- 
+    model_data$predicted_max_herd <-
+    model_data$predicted_max_herd_max_irs <- 
+    NA
+  
+  for (i in 1:length(groups)){
+    message(i)
+    this_group <- groups[i]
+    indices <- which(model_data$group == this_group)
+    model <- protection_models[[this_group]]
+    data <- model_data[indices,]  %>%
+      filter(months_since != 'Never')
+    model_data$predicted[indices] <- 
+      predict_felm(model = model,
+              df = data)
+    model_data$predicted_no_irs[indices] <-
+      predict_felm(model = model,
+                   df = data,
+                   irs0 = TRUE)
+    model_data$predicted_no_herd[indices] <-
+      predict_felm(model = model,
+                   df = data,
+                   herd0 = TRUE)
+    model_data$predicted_no_herd_no_irs[indices] <-
+      predict_felm(model = model,
+                   df = data,
+                   herd0 = TRUE,
+                   irs0 = TRUE)
+    model_data$predicted_max_irs[indices] <-
+      predict_felm(model = model,
+                   df = data,
+                   irs_all = TRUE)
+    model_data$predicted_max_herd[indices] <- 
+      predict_felm(model = model,
+                   df = data,
+                   herd_max = TRUE)
+    model_data$predicted_max_herd_max_irs[indices] <- 
+      predict_felm(model = model,
+                   df = data,
+                   herd_max = TRUE,
+                   irs_all = TRUE)
+  }
+  
   save.image(file = 'prepared_data.RData')
   }
 
