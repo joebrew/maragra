@@ -11,11 +11,12 @@ output:
 fig_width: 4
 fig_height: 2.6
 bibliography: bibliography.bib
-csl: journal-of-health-economics.csl
 ---
 
 
 ```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# csl: journal-of-health-economics.csl
+
 # Packages
 library(tidyverse)
 library(knitr)
@@ -103,9 +104,9 @@ The administration of insecticide at a worker's residence (indoor residual spray
 
 ## Protection score
 
-To test whether IRS from one household has an effect on workers living in another household, we first must make some assumptions about the level and waning effect of IRS generally. For our purposes, we make a rather simple assumption, based on the literature: that IRS has an immediate effect on mosquitoes and should affect malaria risk following the incubation period, that the waning effect begins in month 4 [@Tukei2017], that IRS effects those not living in the household by reducing reproduction of mosquitoes [@White2011], and that IRS' effect after 1 year is essentially null [@Bukirwa2009]. We simplify these assumptions into a time-protection matrix, which can be visualized in the below chart.
+To test whether IRS from one household has an effect on workers living in another household, we first must make some assumptions about the level and waning effect of IRS generally. It is known from the literature that IRS has an immediate effect on mosquitoes and should affect malaria risk following the incubation period, that the waning effect begins in month 4 [@Tukei2017], that IRS effects those not living in the household by reducing reproduction of mosquitoes [@White2011], and that IRS' effect after 1 year is essentially null [@Bukirwa2009]. 
 
-```{r}
+```{r, eval = FALSE}
 x <- c(1:6)
 y <- (c(-3.45, -6.04, - 6.53, -0.17, -2.74, 5.27) + 27.61) / 27.61
 lo <- loess(y~x, span = 3)$fitted
@@ -139,13 +140,16 @@ ggplot(data = df,
   scale_color_manual(name = '',
                      values = c('blue', 'orange'))
 
+
+# The above chart shows two lines: the orange line is based on Tukei's emperical results regarding the protection afforded by IRS against malaria infection (among children) as a function of time since IRS; the blue line is our simplification of Tukei's work. 
+
 ```
 
-The above chart shows two lines: the orange line is based on Tukei's emperical results regarding the protection afforded by IRS against malaria infection (among children) as a function of time since IRS; the blue line is our simplification of Tukei's work. 
+For our purposes, we make simplify even further. We make no assumptions about the level of positive externalities afforded by IRS (instead preferring to estimate this within our model), and we do not account for waning, instead modeling the entire "post" period of 6 months as one.\footnote{Though not as granular as estimating time-specific protection within the 6 months following IRS administration, our approach is not less accurate; it simply aggregates the entirety of the 6 months after IRS administration into one value, and assumes (as is suggested by the literature) that the period after 6 months is effectively equivalent in chemical terms as the period prior to IRS.}
 
 ## Distance-based weighting
 
-Having estimated each household's protection level at all times (ie, the "amount" of protection that they pass on to neighbors), we need to define a method for how much of that total level is passed on. A household which is 1 meter from a neighbor should, theoretically, afford more protection to that household than another which is 1000 meters. To account for the effect of distance, we define a simple function for weighting a nearby residence's contribution to a household's "herd protection" score as follows:
+At any given time, each household is either (a) protected (ie, < 6 months following IRS administration) or (b) unprotected. If the former, they confer protection to their neighbors; if the latter, they confer no protection to their neighbors. Having assigned each household's protection status at all times, we need to define a method for how much of any given household's protection level is passed on. A household which is 1 meter from a neighbor should, theoretically, afford more protection to that household than another which is 1000 meters. To account for the effect of distance, we define a simple function for weighting a nearby residence's contribution to a household's "herd protection" score as 1 divided by the distance, as follows:
 
 ```{r, echo = TRUE}
 weighter <- function(x){
@@ -176,14 +180,14 @@ We heavily weight towards closer houses to account for the relatively small trav
 
 ## Density
 
-We consider a house's "herd" protection level (ie, the protection conferred to the house through externality) to be the average of the other houses' non-herd protection levels, weighted by the distance to the house in question. The below is an illustration of a house (the red x) and the neighboring houses (circles). The "weight" of each house is indicated by the circle size, and the protection level of the house is indicated by the shading of the circle.
+We consider a house's "herd" protection level (ie, the protection conferred to the house through externality) to be the average of the other houses' non-herd protection levels (ie, 0 if not protected and 1 if protected), weighted by the distance to the house in question. The below is an illustration of a house (the red x) and the neighboring houses (circles). The "weight" of each house is indicated by the circle size, and the protection level of the house is indicated by the shading of the circle.
 
 ```{r, fig.width = 8}
 make_data <- function(n = 5){
   df <- data.frame(id = letters[1:n],
                  x = rnorm(n = n),
                  y = rnorm(n = n),
-                 protection = round(sample(seq(0, 0.2, length = 100), n), digits = 1),
+                 protection = round(sample(0:1, n, replace = TRUE), digits = 1),
                  color = c('red', rep('grey', n-1))) %>%
   mutate(lng = x,
          lat = y)
@@ -198,28 +202,51 @@ return(df)
 
 df <- make_data(n = 10)
 make_plot <- function(df){
-  ggplot(data = df@data,
+  g <- 
+  ggplot(data = df@data %>% mutate(protection = factor(protection)) %>%
+           mutate(Weight = weight),
        aes(x = lng,
            y = lat)) +
-  geom_point(aes(size = weight,
-                 color = protection)) +
+  geom_point(aes(size = Weight,
+                 color = protection),
+             alpha = 0.6) +
   geom_point(data = df@data[1,],
-             color = 'red',
+             color = 'blue',
              pch = 4,
              cex = 3) +
   theme_maragra() +
   labs(x = '',
        y = '') +
-  theme(legend.position = 'right') +
-  guides(color = guide_colourbar(title = 'Protection', title.position = 'top'),
-         size = guide_legend(nrow = 5, title.position = 'top', nbin = 2)) +
-  scale_color_continuous(low = 'orange', high = 'blue') +
+  # theme(legend.position = 'right') +
+    scale_color_manual(name = 'Protection',
+                       values = c('red', 'darkgreen')) +
+  # guides(color = guide_colourbar(title = 'Protection', title.position = 'top'),
+  #        size = guide_legend(nrow = 5, title.position = 'top', nbin = 2)) +
+  # scale_color_continuous(low = 'orange', high = 'blue') +
     xlim(-2,2) +
     ylim(-2,2)
+  for(i in seq(10, 150, length = 10)){
+    g <- g + 
+      geom_point(data = df@data[1,],
+             color = 'black',
+             pch = 1,
+             cex = i,
+             alpha = 0.4) 
+  }
+  for(i in 2:nrow(df@data)){
+    x <- bind_rows(df@data[i,],
+                   df@data[1,])
+    g <- g + geom_line(data = x,
+                        aes(x = lng,
+                            y = lat),
+                        alpha = 0.6,
+                        color = 'blue',
+                       lty = 2,
+                       size = 0.3)
+  }
+  return(g)
 }
 make_plot(df = df)
-
-  
 
 ```
 
@@ -240,7 +267,7 @@ Our approach is this: rather than using a weighted average of each household's i
 
 The summation of (a) the IRS level of other houses at a certain time, (b) weighted by the distance of those houses to the house in question, (c) limited to only the 1 km radius multiplied yields a "herd protection score".
 
-This score is conceptually similar to Cohen and Dupas' quantification of the positive externalities of ITN (bednet) use in Kenya [@Cohen2010] in that it attempts to estimate the protection conferred to "non-users" by users and uses a "weighted sum" (as opposed to average). Our approach differs in that the time dimension for IRS is much more important than ITN (ie, IRS is not a binary but rather a waning function, as described previously), requiring us to create herd scores for every day.
+This score is conceptually similar to Cohen and Dupas' quantification of the positive externalities of ITN (bednet) use in Kenya [@Cohen2010] in that it attempts to estimate the protection conferred to "non-users" by users and uses a "weighted sum" (as opposed to average). Our approach differs in that the time dimension for IRS is much more important than ITN (ie, IRS is not a binary but rather a waning function, as described previously), requiring us to create herd scores for every day. This is because the protection conferred to a house by its neighbors may change from one day to the next, when a neighbor either (a) gets sprayed or (b) leaves "protected" status (ie, due to the end of the 6 months window).
 
 Our approach can be justified in that previous studies have found strong positive health externalities in malaria interventions related to ITN coverage [@Alaii2003FactorsAU]. No studies exist on positive externalities for IRS coverage, but to the extent that the mechanisms for the reduction in infection are similar (reduction in the natural reservoir of the disease, reduction in the number of vectors, etc.), it is reasonable to assume similar effects. Additionally, we using weighted distance for our score calculation (rather than simply defining a radius threshold) because of previous studies' findings that there is a linear decline in protection conferred to others with greater distance from an intervention [@Binka2007]
 
@@ -273,13 +300,6 @@ $\hat{Y}_{it}$ is the rate of absence. $\beta_{1}$ is the binary "season" variab
 make_models_table(model_list = protection_models, the_caption = "All absenteeism with herd immunity: model results")
 ```
 
-### HIV
-
-We incorporated HIV prevalence of the area lived in, but it had not significance and was then removed from the model.
-
-```{r}
-plot(hiv_prevalence)
-```
 
 ## Spatial protection surfaces
 
@@ -329,7 +349,7 @@ ggplot() +
   
 ```
 
-The below uses kernel density interpolation (via krieging) to estimate a generalized protection surface over the entire facility.
+The below uses kernel density interpolation to estimate a generalized protection surface over the entire facility.
 
 ```{r}
 # Create a gridded dataframe with values 
@@ -386,6 +406,19 @@ plot(r, add = TRUE)
 plot(border, add = TRUE)
 ```
 
+
+## Conclusion  
+
+Using the approach laid out here, there appears to be a significant protective effect afforded by the IRS of neighbors. If this approach is deemed correct, then next steps are determining:
+
+- How to translate the effect into costs and savings (simulation based approach at various IRS coverage levels?).
+- How / where to report on this in the paper (is this a "method" or "result"?).
+
+
+\newpage
+
+## Appendix
+
 ### Theoretical protection surface
 
 The below shows a theoretical protection surface assuming (a) uniform distribution of residences, (b) random distribution of IRS over time, but never going beyond 6 months between sprays.
@@ -396,7 +429,7 @@ theoretical <- function(n){
   x <- lng <- runif(n = n, min = -1, max = 1)
 y <- lat <- runif(n = n, min = -1, max = 1)
 data <- data.frame(id = 1:n,
-                   x,y, lng, lat,protection = sample(protection$protection[1:5], n,
+                   x,y, lng, lat,protection = sample(0:1, n,
                                                      replace = TRUE))
 coordinates(data) <- ~x+y
 
@@ -507,14 +540,6 @@ theoretical(n = 3000)
 ```
 
 
-
-## Conclusion  
-
-Using the approach laid out here, there appears to be a significant protective effect afforded by the IRS of neighbors. If this approach is deemed correct, then next steps are determining:
-
-- How to translate the effect into costs and savings (simulation based approach at various IRS coverage levels?).
-- How to combine this effect with the other potential spillover effect (ie, core-periphery issues).
-- How / where to report on this in the paper (is this a "method" or "result"?).
 
 
 

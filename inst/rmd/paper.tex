@@ -643,14 +643,83 @@ likelihood of absence from work as well as their likelihood of clinical
 malaria. To estimate this effect, we estimated separate models for
 absence and illness. We employed linear mixed effects models (Minalu et
 al., 2011) (Liu et al., 2010) (with individual worker fixed effects, and
-random effects for other covariates) in lieu of interrupted time series
-(Lopez Bernal et al., 2016) so as to explicitly adjust for confounders
-(Bell and Jones, 2014). We divide into 4 different models for different
-worker types, so as to account for the potential time-varying effects of
-worker type on risk of malaria. Our model specification is as follows
+random effects for other covariates) so as to explicitly adjust for
+confounders (Bell and Jones, 2014). We divide into 4 different models
+for different worker types, so as to account for the potential
+time-varying effects of worker type on risk of malaria.
+
+\subsubsection{Externalities}\label{externalities}
+
+The administration of insecticide at a worker's residence (indoor
+residual spraying or IRS) likely protects that worker from malaria
+infection by killing the vectors (mosquitoes) that land on the
+building's walls. However, it is also highly likely that the protective
+effective of IRS ``spills over'' to others who live nearby. This
+positive spillover effect would theoretically go through two channels:
+(i) via a reduction of mosquitoes in the vicinity and (ii) via a
+reduction of the malaria parasite in the blood of humans in the vicinity
+(ie, the parasite ``reservoir''). This document describes our method for
+assessing the existence and magnitude of positive spillover of IRS in
+the Maragra workers' data. We devise a time-specific household
+``protection'' score based on the theoretical effectiveness of IRS, and
+then use that protection score to develop a time-place specific ``herd
+protection'' score based on a weighted average of nearby household
+protection scores.
+
+We consider a house's ``herd'' protection level (ie, the protection
+conferred to the house through externality) to be the average of the
+other houses' non-herd protection levels, weighted by the distance to
+the house in question. The below is an illustration of a house (the red
+x) and the neighboring houses (circles). The ``weight'' of each house is
+indicated by the circle size, and the protection level of the house is
+indicated by the shading of the circle.
+
+However, this consideration misses one important dimension: density. The
+below house's weighted average protection score is identical to that of
+the above house. In other words, at the time in question, at both
+locations, the percentage of houses with IRS coverage is the same, and
+the (weighted) average time since IRS is the same. However, the below
+house is likely much more protected than the above, given the
+\emph{absolute} number of nearby IRS-protected houses.
+
+Our approach is this: rather than using a weighted average of each
+household's individual protection score, we instead use a weighted sum.
+A particular household's herd protection score at any given time is the
+sum of all households' individual protection scores at that time
+multiplied by those households' distance weights.
+
+The summation of (a) the IRS level of other houses at a certain time,
+(b) weighted by the distance of those houses to the house in question,
+(c) limited to only the 1 km radius multiplied yields a ``herd
+protection score''.
+
+This score is conceptually similar to Cohen and Dupas' quantification of
+the positive externalities of ITN (bednet) use in Kenya (Cohen and
+Dupas, 2010) in that it attempts to estimate the protection conferred to
+``non-users'' by users and uses a ``weighted sum'' (as opposed to
+average). Our approach differs in that the time dimension for IRS is
+much more important than ITN (ie, IRS is not a binary but rather a
+waning function, as described previously), requiring us to create herd
+scores for every day.
+
+Our approach can be justified in that previous studies have found strong
+positive health externalities in malaria interventions related to ITN
+coverage (Alaii et al., 2003). No studies exist on positive
+externalities for IRS coverage, but to the extent that the mechanisms
+for the reduction in infection are similar (reduction in the natural
+reservoir of the disease, reduction in the number of vectors, etc.), it
+is reasonable to assume similar effects. Additionally, we using weighted
+distance for our score calculation (rather than simply defining a radius
+threshold) because of previous studies' findings that there is a linear
+decline in protection conferred to others with greater distance from an
+intervention (Binka et al., 2007)
+
+\subsubsection{Econometric model}\label{econometric-model}
+
+Our model specification is as follows
 
 \[
-\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * (\hat{\beta}_2{IRS_{it}}*\hat{\beta}_3{IRStime_{it}}) + \alpha_i + \delta_t + \upsilon_{it}
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * (\hat{\beta}_2{IRS_{it}}*\hat{\beta}_3{IRStime_{it}}) +  \hat{\beta}_4{Herd_{it}} +  \alpha_i + \delta_t + \upsilon_{it}
 \]
 
 \(\hat{Y}_{it}\) is the rate of absence. \(\beta_{1}\) is the binary
@@ -658,8 +727,9 @@ worker type on risk of malaria. Our model specification is as follows
 Our intervention is whether the residence of the worker in question was
 treated in the last year, and, if so, the time since treatment,
 represented, respectively, by \(\beta_{2}\) and \(\beta_{3}\).
-\(\alpha_i\) represents the time invariant worker fixed effects, and
-\(\delta_i\) represents the fixed effect of the particular malaria
+\(\beta_{4}\) \textbf{represents the distance-weighted herd protection
+score}. \(\alpha_i\) represents the time invariant worker fixed effects,
+and \(\delta_i\) represents the fixed effect of the particular malaria
 season. \(\upsilon\) is the error term.
 
 We define the malaria season as any time during which the clinical
@@ -675,36 +745,6 @@ In addition, we adjust for daily precipitation; though its lagged effect
 on malaria incidence is likely captured by the seasonality term, we
 include rainfall since it's immediate effect (through its impact on
 transportation and working conditions) may also affect absenteeism.
-
-\subsubsection{Externalities}\label{externalities}
-
-One potential shortcoming of our analysis thus far is that a ``control''
-worker (ie, one whose house has never been sprayed or was sprayed
-greater than one year ago) may actually be conferred some protection
-against malaria by the fumigations at his/her neighbors' houses. This
-positive spillover effect would theoretically go through two channels:
-(i) via a reduction of mosquitoes in the vicinity and (ii) via a
-reduction of the malaria parasite in the blood of humans in the vicinity
-(ie, the parasite ``reservoir'').
-
-By the same token, just as being surrounded by IRS-treated homes may
-indirectly protect someone living in a home not treated by IRS, one
-might surmise that living on the periphery of the company grounds might
-lead to more malaria risk relative to living in the core, since homes
-near the periphery but outside of Maragra are less likely to be
-fumigated. In other words, to the extent that both positive and
-spillover effects are significant enough to warrant inclusion in our
-model, we would expect that (i) the prevalence of IRS in a worker's
-neighborhood should be associated with a reduction in absenteeism of the
-worker and (b) workers living further from the periphery of the company
-grounds should have lower absenteeism than workers living at the
-periphery. We test both of these hypotheses.
-
-Details will go here about externalities (neighborhood effects, positive
-spillover to district, negative spillover from district, how large firm
-may mean that most positive externalities are absorbed by the firm, and
-not many negative externalities, but maybe with a smaller firm it
-wouldn't work as well)\todo{NOT DONE YET.}
 
 \subsection{Estimating return on
 investment}\label{estimating-return-on-investment}
@@ -759,19 +799,19 @@ treatment and control groups, albeit at different times.
   \hline
 Variable &   & Treatment workers & Treatment days & Control workers & Control days \\ 
   \hline
-Department & Administrative & 157 & 185674 &   0 &   0 \\ 
-   & Factory & 459 & 300949 &   0 &   0 \\ 
-   & Field & 2746 & 1272477 &   0 &   0 \\ 
-  Sex & F & 1305 & 537391 &   0 &   0 \\ 
-   & M & 2057 & 1221709 &   0 &   0 \\ 
-  Status & Permanent & 500 & 702386 &   0 &   0 \\ 
-   & Temporary & 2862 & 1056714 &   0 &   0 \\ 
-  Age & 20 & 985 & 377221 &   0 &   0 \\ 
-   & 30 & 1244 & 589902 &   0 &   0 \\ 
-   & 40 & 665 & 397122 &   0 &   0 \\ 
-   & 50 & 347 & 287758 &   0 &   0 \\ 
-   & 60 & 117 & 102448 &   0 &   0 \\ 
-   & 70 &   4 & 4649 &   0 &   0 \\ 
+Department & Administrative &  38 & 47992 &   0 &   0 \\ 
+   & Factory & 109 & 78821 &   0 &   0 \\ 
+   & Field & 545 & 268206 &   0 &   0 \\ 
+  Sex & F & 310 & 139959 &   0 &   0 \\ 
+   & M & 382 & 255060 &   0 &   0 \\ 
+  Status & Permanent & 128 & 182199 &   0 &   0 \\ 
+   & Temporary & 564 & 212820 &   0 &   0 \\ 
+  Age & 20 & 200 & 81640 &   0 &   0 \\ 
+   & 30 & 242 & 124339 &   0 &   0 \\ 
+   & 40 & 154 & 101317 &   0 &   0 \\ 
+   & 50 &  68 & 63739 &   0 &   0 \\ 
+   & 60 &  26 & 22257 &   0 &   0 \\ 
+   & 70 &   2 & 1727 &   0 &   0 \\ 
    \hline
 \end{tabular}
 \caption{Overall worker characteristics} 
@@ -786,11 +826,11 @@ permanent workers (figure x).
 
 \begin{figure}[!h]
 
-{\centering \includegraphics{figures/unnamed-chunk-20-1} 
+{\centering \includegraphics{figures/unnamed-chunk-19-1} 
 
 }
 
-\caption{Age distribution by sex and worker status}\label{fig:unnamed-chunk-20}
+\caption{Age distribution by sex and worker status}\label{fig:unnamed-chunk-19}
 \end{figure}
 
 During the study period, weather followed typical seasonal trends for
@@ -798,11 +838,11 @@ the area, albeit slightly drier than previous periods.
 
 \begin{figure}[!h]
 
-{\centering \includegraphics{figures/unnamed-chunk-21-1} 
+{\centering \includegraphics{figures/unnamed-chunk-20-1} 
 
 }
 
-\caption{i. Monthly total precipitation in the Maniça district; ii. Average monthly temperature (bars) during the study period, as well as monthly maximum (red) and minimum (blue) temperatures}\label{fig:unnamed-chunk-21}
+\caption{i. Monthly total precipitation in the Maniça district; ii. Average monthly temperature (bars) during the study period, as well as monthly maximum (red) and minimum (blue) temperatures}\label{fig:unnamed-chunk-20}
 \end{figure}
 
 In Southern Mozambique, malaria peaks during the summer months (December
@@ -823,7 +863,7 @@ captured by absenteeism but not by the clinical data.
 
 \begin{figure}
 \centering
-\includegraphics{figures/unnamed-chunk-22-1.pdf}
+\includegraphics{figures/unnamed-chunk-21-1.pdf}
 \caption{Clinical malaria (district of Manhiça), all-cause absenteeism
 among Maragra workers, sick absenteeism among Maragra workers, positive
 cases at company clinic, and test positivity rate at company clinic}
@@ -834,13 +874,13 @@ December 31st, 2016, the Maragra Malaria Control Unit carried out 11,007
 episodes of fumigation of residential ``agregados'' (household
 combinations), for a total of 13,260 building-fumigation combinations.
 The total number of unique agregados sprayed during this period was
-3,998. Among the 3,362 workers for whom we have reliable absenteeism and
+3,998. Among the 692 workers for whom we have reliable absenteeism and
 residential data, 562 had their homes fumigated at least once (the
 majority of workers live off of the facility).
 
 \textbf{Absences}: We observed 1,759,100 unique worker-days among the
-3,362 workers. The all-period average absenteeism rate was 5.56\%,
-though this rate varied widely as a function of worker department, sex,
+692 workers. The all-period average absenteeism rate was 5.56\%, though
+this rate varied widely as a function of worker department, sex,
 residence, and season (table 1).
 
 \begin{table}[ht]
@@ -849,18 +889,17 @@ residence, and season (table 1).
   \hline
 Variable &  & 2013 & 2014 & 2015 & 2016 \\ 
   \hline
-Malaria season & Low & 5.2\% & 7\% & 5.4\% & 3.3\% \\ 
-   & High & 8.2\% & 12.8\% & 6.3\% & 2.7\% \\ 
-  Worker type & Field worker & 4.4\% & 7.6\% & 3.9\% & 1.7\% \\ 
-   & Not field worker & 10.7\% & 12.4\% & 11.5\% & 9.6\% \\ 
-  Contract & Permanent & 12.1\% & 12.6\% & 12\% & 10.2\% \\ 
-   & Temporary & 0.1\% & 5\% & 2.3\% & 0.5\% \\ 
-  Sex & F & 4\% & 8.1\% & 4.4\% & 1.9\% \\ 
-   & M & 8.1\% & 10\% & 6.5\% & 3.7\% \\ 
-  Residence & Off site & 6.4\% & 9.6\% & 5.9\% & 3\% \\ 
-   & On site & 9.4\% & 9.7\% & 6.1\% & 3.1\% \\ 
-  Precipitation & Dry & 5.4\% & 7.7\% & 4.8\% & 2.4\% \\ 
-   & Rainy & 7.9\% & 10.6\% & 7\% & 3.3\% \\ 
+Malaria season & Low & 7.5\% & 6.6\% & 5.5\% & 3.4\% \\ 
+   & High & 10.7\% & 13.4\% & 6.4\% & 2.7\% \\ 
+  Worker type & Field worker & 7.1\% & 8.7\% & 3.9\% & 1.9\% \\ 
+   & Not field worker & 11.5\% & 10.8\% & 10.7\% & 8.2\% \\ 
+  Contract & Permanent & 12.8\% & 12.5\% & 11.2\% & 9.5\% \\ 
+   & Temporary & 0.1\% & 4\% & 2.1\% & 0.5\% \\ 
+  Sex & F & 7.1\% & 8.6\% & 4.4\% & 2.3\% \\ 
+   & M & 10.4\% & 10\% & 6.9\% & 3.8\% \\ 
+  Residence & On site & 9.4\% & 9.7\% & 6.1\% & 3.1\% \\ 
+  Precipitation & Dry & 7.4\% & 7.5\% & 4.9\% & 2.4\% \\ 
+   & Rainy & 10.5\% & 10.8\% & 7.1\% & 3.4\% \\ 
    \hline
 \end{tabular}
 \caption{Absenteeism rate by year and worker characteristics} 
@@ -878,11 +917,11 @@ coefficient of 0.25).
 
 \begin{figure}[!h]
 
-{\centering \includegraphics{figures/unnamed-chunk-27-1} 
+{\centering \includegraphics{figures/unnamed-chunk-26-1} 
 
 }
 
-\caption{Rainfall and absenteeism: association of any rainfall with absenteeism rate (left) and association of rainfall amount and absenteeism (right)}\label{fig:unnamed-chunk-27}
+\caption{Rainfall and absenteeism: association of any rainfall with absenteeism rate (left) and association of rainfall amount and absenteeism (right)}\label{fig:unnamed-chunk-26}
 \end{figure}
 
 The extent to which rainfall's effect on absenteeism is confounded by
@@ -956,191 +995,18 @@ Maragra - so as to capture other seasonal effects from those workers.
 The model results for all cause absenteeism (table 4) suggest a
 significant decrease in absenteeism following the administration of IRS.
 The effect is ambivalent among temporary workers, whereas among
-permanent workers the administration of IRS decreases absenteeism betwen
-2.5 and 8.4 percentage points in the 2-9 month following administration.
-These effects are consistent with IRS decreasing absence through the
-medium of malaria, since (a) the effect is not as strong in the first
-month (potentially during the parasite incubation phase), the effect is
-stronger on field workers (who are more socioeconomically the
+permanent workers the administration of IRS decreases absenteeism by
+xxx. These effects are consistent with IRS decreasing absence through
+the medium of malaria, since (a) the effect is not as strong in the
+first month (potentially during the parasite incubation phase), the
+effect is stronger on field workers (who are more socioeconomically the
 demographic at greater risk of malaria than their administrative
 counterparts), and the effect is ambivalent among temporary workers
 (since the protective effect of IRS is only a function of the amount of
 time that the worker spends in the fumigated house).
 
 \begin{longtable}[t]{ll}
-\caption{\label{tab:unnamed-chunk-28}All cause absenteeism: model results}\\
-\toprule
-Term & Estimate\\
-\midrule
-\endfirsthead
-\caption[]{All cause absenteeism: model results \textit{(continued)}}\\
-\toprule
-Term & Estimate\\
-\midrule
-\endhead
-\
-\endfoot
-\bottomrule
-\endlastfoot
-\addlinespace[1.5em]
-\multicolumn{2}{l}{\textbf{Permanent field worker}}\\
-\hspace{1em}Malaria season & 2.458 (P<0.001)\\
-\hspace{1em}Months since IRS: 00 & 4.838 (P<0.001)\\
-\hspace{1em}Months since IRS: 01 & 6.013 (P<0.001)\\
-\hspace{1em}Months since IRS: 02 & 5.395 (P<0.001)\\
-\hspace{1em}Months since IRS: 03 & 5.596 (P<0.001)\\
-\hspace{1em}Months since IRS: 04 & 2.47 (P=0.052)\\
-\hspace{1em}Months since IRS: 05 & 2.925 (P=0.015)\\
-\hspace{1em}Rainy day & 2.236 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & -10.488 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & -1.828 (P=0.187)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & -7.825 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & -10.95 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & -5.517 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & -11.014 (P<0.001)\\
-\addlinespace[1.5em]
-\multicolumn{2}{l}{\textbf{Permanent not field worker}}\\
-\hspace{1em}Malaria season & 0.955 (P<0.001)\\
-\hspace{1em}Months since IRS: 00 & -2.358 (P=0.002)\\
-\hspace{1em}Months since IRS: 01 & 0.709 (P=0.356)\\
-\hspace{1em}Months since IRS: 02 & 2.866 (P<0.001)\\
-\hspace{1em}Months since IRS: 03 & 6.045 (P<0.001)\\
-\hspace{1em}Months since IRS: 04 & 4.113 (P<0.001)\\
-\hspace{1em}Months since IRS: 05 & -0.144 (P=0.877)\\
-\hspace{1em}Rainy day & 4.503 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & 2.792 (P=0.008)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & 0.502 (P=0.625)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & -5.816 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & -4.871 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & -5.815 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & 1.719 (P=0.183)\\
-\addlinespace[1.5em]
-\multicolumn{2}{l}{\textbf{Temporary field worker}}\\
-\hspace{1em}Malaria season & -0.356 (P<0.001)\\
-\hspace{1em}Months since IRS: 00 & -0.093 (P=0.57)\\
-\hspace{1em}Months since IRS: 01 & -0.006 (P=0.972)\\
-\hspace{1em}Months since IRS: 02 & -0.232 (P=0.156)\\
-\hspace{1em}Months since IRS: 03 & -0.177 (P=0.305)\\
-\hspace{1em}Months since IRS: 04 & -0.059 (P=0.763)\\
-\hspace{1em}Months since IRS: 05 & 0.039 (P=0.86)\\
-\hspace{1em}Rainy day & 0.028 (P=0.236)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & -0.114 (P=0.659)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & -0.269 (P=0.301)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & -0.212 (P=0.432)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & 0.127 (P=0.628)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & 0.808 (P=0.002)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & 0.682 (P=0.013)\\
-\addlinespace[1.5em]
-\multicolumn{2}{l}{\textbf{Temporary not field worker}}\\
-\hspace{1em}Malaria season & 1.897 (P<0.001)\\
-\hspace{1em}Months since IRS: 00 & -0.929 (P=0.726)\\
-\hspace{1em}Months since IRS: 01 & -2.264 (P=0.251)\\
-\hspace{1em}Months since IRS: 02 & 1.086 (P=0.517)\\
-\hspace{1em}Months since IRS: 03 & 2.083 (P=0.218)\\
-\hspace{1em}Months since IRS: 04 & -4.187 (P=0.02)\\
-\hspace{1em}Months since IRS: 05 & -3.224 (P=0.111)\\
-\hspace{1em}Rainy day & 1.053 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & 0.754 (P=0.797)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & 14.058 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & -3.674 (P=0.128)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & -3.644 (P=0.119)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & 12.4 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & -2.697 (P=0.334)\\*
-\end{longtable}
-
-The model results for sickness only absenteeism (table 5) suggest that
-IRS has a significant effect on permanent field workers. The effect is
-directionally similar among temporary fieldworkers (but does not reach
-the level of significance). Among non-fieldworkers, the effect of IRS is
-mixed.\todo{I'll probably remove this from the final version, since we're saying that the data aren't that good...}
-
-\begin{longtable}[t]{ll}
-\caption{\label{tab:unnamed-chunk-29}Sick absenteeism only: model results}\\
-\toprule
-Term & Estimate\\
-\midrule
-\endfirsthead
-\caption[]{Sick absenteeism only: model results \textit{(continued)}}\\
-\toprule
-Term & Estimate\\
-\midrule
-\endhead
-\
-\endfoot
-\bottomrule
-\endlastfoot
-\addlinespace[1.5em]
-\multicolumn{2}{l}{\textbf{Permanent field worker}}\\
-\hspace{1em}Malaria season & -0.068 (P=0.116)\\
-\hspace{1em}Months since IRS: 00 & 1.358 (P<0.001)\\
-\hspace{1em}Months since IRS: 01 & 0.511 (P=0.141)\\
-\hspace{1em}Months since IRS: 02 & 2.272 (P<0.001)\\
-\hspace{1em}Months since IRS: 03 & 1.21 (P<0.001)\\
-\hspace{1em}Months since IRS: 04 & -0.057 (P=0.889)\\
-\hspace{1em}Months since IRS: 05 & -0.295 (P=0.442)\\
-\hspace{1em}Rainy day & -0.053 (P=0.207)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & -2.046 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & -1.037 (P=0.019)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & -1.691 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & -0.428 (P=0.365)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & 0.52 (P=0.305)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & -0.617 (P=0.257)\\
-\addlinespace[1.5em]
-\multicolumn{2}{l}{\textbf{Permanent not field worker}}\\
-\hspace{1em}Malaria season & -0.056 (P=0.216)\\
-\hspace{1em}Months since IRS: 00 & -0.315 (P=0.317)\\
-\hspace{1em}Months since IRS: 01 & -1.009 (P=0.002)\\
-\hspace{1em}Months since IRS: 02 & -0.504 (P=0.131)\\
-\hspace{1em}Months since IRS: 03 & 1.483 (P<0.001)\\
-\hspace{1em}Months since IRS: 04 & 2.029 (P<0.001)\\
-\hspace{1em}Months since IRS: 05 & -0.266 (P=0.492)\\
-\hspace{1em}Rainy day & -0.012 (P=0.785)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & 0.65 (P=0.137)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & 1.491 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & 1.06 (P=0.016)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & -0.973 (P=0.035)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & -0.709 (P=0.158)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & 2.82 (P<0.001)\\
-\addlinespace[1.5em]
-\multicolumn{2}{l}{\textbf{Temporary field worker}}\\
-\hspace{1em}Malaria season & -0.104 (P<0.001)\\
-\hspace{1em}Months since IRS: 00 & 0.204 (P=0.002)\\
-\hspace{1em}Months since IRS: 01 & -0.137 (P=0.03)\\
-\hspace{1em}Months since IRS: 02 & -0.056 (P=0.392)\\
-\hspace{1em}Months since IRS: 03 & 0.122 (P=0.077)\\
-\hspace{1em}Months since IRS: 04 & 0.061 (P=0.432)\\
-\hspace{1em}Months since IRS: 05 & -0.163 (P=0.063)\\
-\hspace{1em}Rainy day & -0.018 (P=0.05)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & -0.307 (P=0.003)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & 0.107 (P=0.306)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & 0.064 (P=0.557)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & 0.077 (P=0.464)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & -0.185 (P=0.079)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & 0.056 (P=0.613)\\
-\addlinespace[1.5em]
-\multicolumn{2}{l}{\textbf{Temporary not field worker}}\\
-\hspace{1em}Malaria season & -0.15 (P=0.191)\\
-\hspace{1em}Months since IRS: 00 & -0.401 (P=0.765)\\
-\hspace{1em}Months since IRS: 01 & 2.063 (P=0.038)\\
-\hspace{1em}Months since IRS: 02 & -0.508 (P=0.549)\\
-\hspace{1em}Months since IRS: 03 & 0.019 (P=0.982)\\
-\hspace{1em}Months since IRS: 04 & -1.905 (P=0.036)\\
-\hspace{1em}Months since IRS: 05 & -2.031 (P=0.047)\\
-\hspace{1em}Rainy day & -0.036 (P=0.711)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & 0.005 (P=0.997)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & -2.43 (P=0.071)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & 0.083 (P=0.946)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & -1.915 (P=0.105)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & 5.662 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & 1.729 (P=0.22)\\*
-\end{longtable}
-
-\subsection{Externalities}\label{externalities-1}
-
-Below are model results for the full protection model.
-
-\begin{longtable}[t]{ll}
-\caption{\label{tab:unnamed-chunk-30}All absenteeism with herd immunity: model results}\\
+\caption{\label{tab:unnamed-chunk-27}All absenteeism with herd immunity: model results}\\
 \toprule
 Term & Estimate\\
 \midrule
@@ -1156,82 +1022,33 @@ Term & Estimate\\
 \endlastfoot
 \addlinespace[1.5em]
 \multicolumn{2}{l}{\textbf{Permanent field worker}}\\
-\hspace{1em}Malaria season & 3.595 (P<0.001)\\
-\hspace{1em}Months since IRS: 00 & 4.684 (P<0.001)\\
-\hspace{1em}Months since IRS: 01 & 7.368 (P<0.001)\\
-\hspace{1em}Months since IRS: 02 & 7.572 (P<0.001)\\
-\hspace{1em}Months since IRS: 03 & 7.675 (P<0.001)\\
-\hspace{1em}Months since IRS: 04 & 3.808 (P=0.005)\\
-\hspace{1em}Months since IRS: 05 & 3.612 (P=0.004)\\
-\hspace{1em}Rainy day & 3.251 (P<0.001)\\
-\hspace{1em}Herd protection & -0.208 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & -10.583 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & -2.757 (P=0.061)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & -8.816 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & -11.784 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & -6.39 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & -12.58 (P<0.001)\\
+\hspace{1em}Malaria season & 2.809 (P<0.001)\\
+\hspace{1em}IRS status=After & 1.835 (P<0.001)\\
+\hspace{1em}Rainy day & 3.765 (P<0.001)\\
+\hspace{1em}Herd protection & -0.003 (P=0.368)\\
+\hspace{1em}Malaria season:IRS status=After & -5.106 (P<0.001)\\
 \addlinespace[1.5em]
 \multicolumn{2}{l}{\textbf{Permanent not field worker}}\\
-\hspace{1em}Malaria season & 0.812 (P<0.001)\\
-\hspace{1em}Months since IRS: 00 & -1.763 (P=0.024)\\
-\hspace{1em}Months since IRS: 01 & 1.383 (P=0.083)\\
-\hspace{1em}Months since IRS: 02 & 4.06 (P<0.001)\\
-\hspace{1em}Months since IRS: 03 & 5.191 (P<0.001)\\
-\hspace{1em}Months since IRS: 04 & 4.688 (P<0.001)\\
-\hspace{1em}Months since IRS: 05 & -0.158 (P=0.87)\\
-\hspace{1em}Rainy day & 4.491 (P<0.001)\\
-\hspace{1em}Herd protection & -0.051 (P=0.021)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & 2.437 (P=0.025)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & 0.144 (P=0.892)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & -6.423 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & -2.935 (P=0.011)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & -5.391 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & 0.971 (P=0.473)\\
+\hspace{1em}Malaria season & 0.831 (P<0.001)\\
+\hspace{1em}IRS status=After & 1.151 (P<0.001)\\
+\hspace{1em}Rainy day & 3.835 (P<0.001)\\
+\hspace{1em}Herd protection & 0 (P=0.927)\\
+\hspace{1em}Malaria season:IRS status=After & -1.66 (P<0.001)\\
 \addlinespace[1.5em]
 \multicolumn{2}{l}{\textbf{Temporary field worker}}\\
-\hspace{1em}Malaria season & -0.35 (P<0.001)\\
-\hspace{1em}Months since IRS: 00 & -0.148 (P=0.351)\\
-\hspace{1em}Months since IRS: 01 & -0.22 (P=0.156)\\
-\hspace{1em}Months since IRS: 02 & -0.528 (P=0.001)\\
-\hspace{1em}Months since IRS: 03 & -0.431 (P=0.012)\\
-\hspace{1em}Months since IRS: 04 & -0.285 (P=0.138)\\
-\hspace{1em}Months since IRS: 05 & -0.021 (P=0.921)\\
-\hspace{1em}Rainy day & 0.071 (P=0.041)\\
-\hspace{1em}Herd protection & 0.024 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & -0.165 (P=0.514)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & -0.152 (P=0.55)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & -0.039 (P=0.884)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & 0.149 (P=0.562)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & 0.83 (P=0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & 0.643 (P=0.017)\\
+\hspace{1em}Malaria season & -0.188 (P=0.001)\\
+\hspace{1em}IRS status=After & -0.254 (P<0.001)\\
+\hspace{1em}Rainy day & 0 (P=0.994)\\
+\hspace{1em}Herd protection & -0.001 (P=0.006)\\
+\hspace{1em}Malaria season:IRS status=After & 0.054 (P=0.568)\\
 \addlinespace[1.5em]
 \multicolumn{2}{l}{\textbf{Temporary not field worker}}\\
-\hspace{1em}Malaria season & 3.49 (P<0.001)\\
-\hspace{1em}Months since IRS: 00 & -0.214 (P=0.938)\\
-\hspace{1em}Months since IRS: 01 & -1.84 (P=0.374)\\
-\hspace{1em}Months since IRS: 02 & 1.463 (P=0.414)\\
-\hspace{1em}Months since IRS: 03 & 2.207 (P=0.217)\\
-\hspace{1em}Months since IRS: 04 & -4.231 (P=0.024)\\
-\hspace{1em}Months since IRS: 05 & -3.542 (P=0.091)\\
-\hspace{1em}Rainy day & 0.514 (P=0.101)\\
-\hspace{1em}Herd protection & 0.012 (P=0.918)\\
-\hspace{1em}Malaria season:Months since IRS: 00 & -0.626 (P=0.837)\\
-\hspace{1em}Malaria season:Months since IRS: 01 & 13.506 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 02 & -3.399 (P=0.18)\\
-\hspace{1em}Malaria season:Months since IRS: 03 & -3.826 (P=0.115)\\
-\hspace{1em}Malaria season:Months since IRS: 04 & 10.956 (P<0.001)\\
-\hspace{1em}Malaria season:Months since IRS: 05 & -3.786 (P=0.191)\\*
+\hspace{1em}Malaria season & 5.772 (P<0.001)\\
+\hspace{1em}IRS status=After & -2.187 (P=0.023)\\
+\hspace{1em}Rainy day & -1.349 (P=0.003)\\
+\hspace{1em}Herd protection & 0.043 (P<0.001)\\
+\hspace{1em}Malaria season:IRS status=After & -3.235 (P=0.003)\\*
 \end{longtable}
-
-\paragraph{Neighborhood protective
-effect}\label{neighborhood-protective-effect}
-
-\todo{Working on this now}
-
-\paragraph{Core-periphery difference}\label{core-periphery-difference}
-
-\todo{Working on this now}
 
 \subsection{Translating absences to
 costs}\label{translating-absences-to-costs}
@@ -1412,7 +1229,7 @@ IRS}\label{unadjusted-absenteeism-by-time-since-irs}
 
 \begin{figure}
 \centering
-\includegraphics{figures/unnamed-chunk-34-1.pdf}
+\includegraphics{figures/unnamed-chunk-32-1.pdf}
 \caption{i. Absenteeism before and after IRS administration for all
 workers who ever received IRS; ii. The same, but segregated by malaria
 and non-malaria seasons}
@@ -1423,7 +1240,7 @@ IRS}\label{unadjusted-sick-absenteeism-by-time-since-irs}
 
 \begin{figure}
 \centering
-\includegraphics{figures/unnamed-chunk-35-1.pdf}
+\includegraphics{figures/unnamed-chunk-33-1.pdf}
 \caption{i. Sick absenteeism before and after IRS administration for all
 workers who ever received IRS; ii. The same, but segregated by malaria
 and non-malaria seasons}
@@ -1437,6 +1254,13 @@ and non-malaria seasons}
 Ajani, O., Ashagidigbi, W., 2010. Effect of malaria on rural households'
 farm income in oyo state, nigeria. African Journal of Biomedical
 Research 11. \url{https://doi.org/10.4314/ajbr.v11i3.50723}
+
+\hypertarget{ref-Alaii2003FactorsAU}{}
+Alaii, J.A., Hawley, W.A., Kolczak, M.S., Kuile, F.O.T., Gimnig, J.E.,
+Vulule, J., Odhacha, A., Oloo, A.J., Nahlen, B.L., Phillips-Howard,
+P.A., 2003. Factors affecting use of permethrin-treated bed nets during
+a randomized controlled trial in western kenya. The American journal of
+tropical medicine and hygiene 68 4 Suppl, 137--41.
 
 \hypertarget{ref-AsensoOkyere1997}{}
 Asenso-Okyere, W., Dzator, J.A., 1997. Household cost of seeking malaria
@@ -1468,6 +1292,14 @@ Bennett, A., Avanceña, A.L.V., Wegbreit, J., Cotter, C., Roberts, K.,
 Gosling, R., 2017. Engaging the private sector in malaria surveillance:
 A review of strategies and recommendations for elimination settings.
 Malaria Journal 16. \url{https://doi.org/10.1186/s12936-017-1901-1}
+
+\hypertarget{ref-Binka2007}{}
+Binka, F.N., Kubaje, A., Adjuik, M., Williams, L.A., Lengeler, C.,
+Maude, G.H., Armah, G.E., Kajihara, B., Adiamah, J.H., Smith, P.G.,
+2007. Impact of permethrin impregnated bednets on child mortality in
+kassena-nankana district, ghana: A randomized controlled trial. Tropical
+Medicine \& International Health 1, 147--154.
+\url{https://doi.org/10.1111/j.1365-3156.1996.tb00020.x}
 
 \hypertarget{ref-Bloom2008}{}
 Bloom, D., Canning, D., 2008. Population Health and Economic Growth
@@ -1502,6 +1334,11 @@ Political Economy 41, S26--S48.
 
 \hypertarget{ref-anglo}{}
 CCM, 2016. AngloGold Ashanti Malaria Control Ltd (AGA Mal).
+
+\hypertarget{ref-Cohen2010}{}
+Cohen, J., Dupas, P., 2010. Free distribution or cost-sharing? Evidence
+from a randomized malaria prevention experiment. Quarterly Journal of
+Economics 125, 1--45. \url{https://doi.org/10.1162/qjec.2010.125.1.1}
 
 \hypertarget{ref-Cole2006}{}
 Cole, M.A., Neumayer, E., 2006. The impact of poor health on total
@@ -1619,12 +1456,6 @@ two-part random effects model for correlated medical costs. Journal of
 Health Economics 29, 110--123.
 \url{https://doi.org/10.1016/j.jhealeco.2009.11.010}
 
-\hypertarget{ref-Lopez_Bernal_2016}{}
-Lopez Bernal, J., Cummins, S., Gasparrini, A., 2016. Interrupted time
-series regression for the evaluation of public health interventions: A
-tutorial. International Journal of Epidemiology dyw098.
-\url{https://doi.org/10.1093/ije/dyw098}
-
 \hypertarget{ref-Mayor2007}{}
 Mayor, A., Aponte, J.J., Fogg, C., Saúte, F., Greenwood, B., Dgedge, M.,
 Menendez, C., Alonso, P.L., 2007.. Malaria Journal 6, 3.
@@ -1678,6 +1509,11 @@ burden of malaria on businesses in ghana: A case for private sector
 investment in malaria control. Malaria Journal 15.
 \url{https://doi.org/10.1186/s12936-016-1506-0}
 
+\hypertarget{ref-OLaughlin2016}{}
+O'Laughlin, B., 2016. Consuming bodies: Health and work in the cane
+fields in xinavane, mozambique. Journal of Southern African Studies 43,
+625--641. \url{https://doi.org/10.1080/03057070.2016.1190519}
+
 \hypertarget{ref-Orem_2012}{}
 Orem, J., Kirigia, J., Azairwe, R., Kasirye, I., Walker, O., 2012.
 Impact of malaria morbidity on gross domestic product in uganda.
@@ -1690,11 +1526,6 @@ Kulkarni, V., Schwabe, C., Segura, L., Kleinschmidt, I., Slotman, M.A.,
 2012. Malaria transmission after five years of vector control on bioko
 island, equatorial guinea. Parasites \& Vectors 5, 253.
 \url{https://doi.org/10.1186/1756-3305-5-253}
-
-\hypertarget{ref-OLaughlin2016}{}
-O'Laughlin, B., 2016. Consuming bodies: Health and work in the cane
-fields in xinavane, mozambique. Journal of Southern African Studies 43,
-625--641. \url{https://doi.org/10.1080/03057070.2016.1190519}
 
 \hypertarget{ref-Phillips98}{}
 Phillips, S.F.M., 1998. Economics and its contribution to the fight
