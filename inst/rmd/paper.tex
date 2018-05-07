@@ -708,11 +708,25 @@ coverage (Alaii et al., 2003). No studies exist on positive
 externalities for IRS coverage, but to the extent that the mechanisms
 for the reduction in infection are similar (reduction in the natural
 reservoir of the disease, reduction in the number of vectors, etc.), it
-is reasonable to assume similar effects. Additionally, we using weighted
-distance for our score calculation (rather than simply defining a radius
-threshold) because of previous studies' findings that there is a linear
-decline in protection conferred to others with greater distance from an
-intervention (Binka et al., 2007)
+is reasonable to assume similar effects. Additionally, we are using
+weighted distance for our score calculation (rather than simply defining
+a radius threshold) because of previous studies' findings that there is
+a linear decline in protection conferred to others with greater distance
+from an intervention (Binka et al., 2007).
+
+Figure x shows a smooth interpolated surface of herd protection,
+averaged for the entire study period.
+
+\begin{figure}[!h]
+
+{\centering \includegraphics{figures/unnamed-chunk-17-1} 
+
+}
+
+\caption{Kernel density surface of average all-time herd protection score for Maragra worker neighborhoods (relative to highest protection)}\label{fig:unnamed-chunk-17}
+\end{figure}
+
+Some more details will eventually go here.
 
 \subsubsection{Econometric model}\label{econometric-model}
 
@@ -745,9 +759,6 @@ In addition, we adjust for daily precipitation; though its lagged effect
 on malaria incidence is likely captured by the seasonality term, we
 include rainfall since it's immediate effect (through its impact on
 transportation and working conditions) may also affect absenteeism.
-
-\subsection{Estimating return on
-investment}\label{estimating-return-on-investment}
 
 Our formula for return on investment can be described in a
 straightforward fashion\ldots{}
@@ -787,10 +798,10 @@ We collected absenteeism and demographic data data on 3362 workers from
 and 30s and employed on temporary contracts. Table 1 shows overall
 worker details divided by ``Treatment'' versus ``Control'' status.
 ``Treatment'' is considered the time beginning at IRS administration and
-ending one year later; ``Control'' is considered time observed either
-prior to IRS administration (and greater than 1 year after previous IRS
-administration) or among workers who never received IRS. Because of the
-temporal nature of these categories, many workers belong to both
+ending six months later; ``Control'' is considered time observed either
+prior to IRS administration (and greater than 6 months after previous
+IRS administration) or among workers who never received IRS. Because of
+the temporal nature of these categories, many workers belong to both
 treatment and control groups, albeit at different times.
 
 \begin{table}[ht]
@@ -799,19 +810,19 @@ treatment and control groups, albeit at different times.
   \hline
 Variable &   & Treatment workers & Treatment days & Control workers & Control days \\ 
   \hline
-Department & Administrative &  38 & 47992 &   0 &   0 \\ 
-   & Factory & 109 & 78821 &   0 &   0 \\ 
-   & Field & 545 & 268206 &   0 &   0 \\ 
-  Sex & F & 310 & 139959 &   0 &   0 \\ 
-   & M & 382 & 255060 &   0 &   0 \\ 
-  Status & Permanent & 128 & 182199 &   0 &   0 \\ 
-   & Temporary & 564 & 212820 &   0 &   0 \\ 
-  Age & 20 & 200 & 81640 &   0 &   0 \\ 
-   & 30 & 242 & 124339 &   0 &   0 \\ 
-   & 40 & 154 & 101317 &   0 &   0 \\ 
-   & 50 &  68 & 63739 &   0 &   0 \\ 
-   & 60 &  26 & 22257 &   0 &   0 \\ 
-   & 70 &   2 & 1727 &   0 &   0 \\ 
+Department & Administrative &  35 & 12523 &  38 & 35469 \\ 
+   & Factory &  71 & 20533 & 103 & 58288 \\ 
+   & Field & 410 & 91302 & 490 & 176904 \\ 
+  Sex & F & 228 & 47907 & 279 & 92052 \\ 
+   & M & 288 & 76451 & 352 & 178609 \\ 
+  Status & Permanent & 127 & 47075 & 128 & 135124 \\ 
+   & Temporary & 389 & 77283 & 503 & 135537 \\ 
+  Age & 20 & 140 & 29463 & 175 & 52177 \\ 
+   & 30 & 176 & 39119 & 223 & 85220 \\ 
+   & 40 & 123 & 30186 & 141 & 71131 \\ 
+   & 50 &  58 & 18881 &  65 & 44858 \\ 
+   & 60 &  17 & 5893 &  25 & 16364 \\ 
+   & 70 &   2 & 816 &   2 & 911 \\ 
    \hline
 \end{tabular}
 \caption{Overall worker characteristics} 
@@ -826,11 +837,11 @@ permanent workers (figure x).
 
 \begin{figure}[!h]
 
-{\centering \includegraphics{figures/unnamed-chunk-19-1} 
+{\centering \includegraphics{figures/unnamed-chunk-20-1} 
 
 }
 
-\caption{Age distribution by sex and worker status}\label{fig:unnamed-chunk-19}
+\caption{Age distribution by sex and worker status}\label{fig:unnamed-chunk-20}
 \end{figure}
 
 During the study period, weather followed typical seasonal trends for
@@ -838,11 +849,11 @@ the area, albeit slightly drier than previous periods.
 
 \begin{figure}[!h]
 
-{\centering \includegraphics{figures/unnamed-chunk-20-1} 
+{\centering \includegraphics{figures/unnamed-chunk-21-1} 
 
 }
 
-\caption{i. Monthly total precipitation in the Maniça district; ii. Average monthly temperature (bars) during the study period, as well as monthly maximum (red) and minimum (blue) temperatures}\label{fig:unnamed-chunk-20}
+\caption{i. Monthly total precipitation in the Maniça district; ii. Average monthly temperature (bars) during the study period, as well as monthly maximum (red) and minimum (blue) temperatures}\label{fig:unnamed-chunk-21}
 \end{figure}
 
 In Southern Mozambique, malaria peaks during the summer months (December
@@ -863,7 +874,7 @@ captured by absenteeism but not by the clinical data.
 
 \begin{figure}
 \centering
-\includegraphics{figures/unnamed-chunk-21-1.pdf}
+\includegraphics{figures/unnamed-chunk-22-1.pdf}
 \caption{Clinical malaria (district of Manhiça), all-cause absenteeism
 among Maragra workers, sick absenteeism among Maragra workers, positive
 cases at company clinic, and test positivity rate at company clinic}
@@ -917,20 +928,15 @@ coefficient of 0.25).
 
 \begin{figure}[!h]
 
-{\centering \includegraphics{figures/unnamed-chunk-26-1} 
+{\centering \includegraphics{figures/unnamed-chunk-27-1} 
 
 }
 
-\caption{Rainfall and absenteeism: association of any rainfall with absenteeism rate (left) and association of rainfall amount and absenteeism (right)}\label{fig:unnamed-chunk-26}
+\caption{Rainfall and absenteeism: association of any rainfall with absenteeism rate (left) and association of rainfall amount and absenteeism (right)}\label{fig:unnamed-chunk-27}
 \end{figure}
 
 The extent to which rainfall's effect on absenteeism is confounded by
 its effect on malaria is discussed in the model results section.
-
-\textbf{Effect of IRS on clinical malaria}: The number of malaria cases
-registered at the company clinic during that time was 1873, for an
-approximate annualized clinical incidence of 110 cases per 1,000.
-\todo{Not done yet. In fact, not even sure if I should do this section at all, since it's basically just a distraction.}
 
 \textbf{Costs of program}: The malaria control program at Maragra has an
 annual operating budget of approximately \$112,000, which includes the
@@ -990,7 +996,19 @@ thereby making it unecessary to adjust for them specifically. Our model
 took into account workers' residential location (on or off site) - even
 though off site workers by definition could not be administered IRS by
 Maragra - so as to capture other seasonal effects from those workers.
-\todo{This is not very eloquent yet and needs to be improved.}
+
+The herd protection score, unit-less by nature given that it's a
+summation of binary protection statuses weighted by inverse-transformed
+distances, took the following distribution in our data:
+
+\begin{figure}[!h]
+
+{\centering \includegraphics{figures/unnamed-chunk-28-1} 
+
+}
+
+\caption{Distribution of herd protection score in panel data}\label{fig:unnamed-chunk-28}
+\end{figure}
 
 The model results for all cause absenteeism (table 4) suggest a
 significant decrease in absenteeism following the administration of IRS.
@@ -1006,7 +1024,7 @@ counterparts), and the effect is ambivalent among temporary workers
 time that the worker spends in the fumigated house).
 
 \begin{longtable}[t]{ll}
-\caption{\label{tab:unnamed-chunk-27}All absenteeism with herd immunity: model results}\\
+\caption{\label{tab:unnamed-chunk-29}All absenteeism with herd immunity: model results}\\
 \toprule
 Term & Estimate\\
 \midrule
@@ -1049,6 +1067,14 @@ Term & Estimate\\
 \hspace{1em}Herd protection & 0.043 (P<0.001)\\
 \hspace{1em}Malaria season:IRS status=After & -3.235 (P=0.003)\\*
 \end{longtable}
+
+\subsection{What would happen without
+IRS?}\label{what-would-happen-without-irs}
+
+The below chart shows the modeled average absenteeism rate during
+malaria season for permanent workers, by group type.
+
+\includegraphics{figures/unnamed-chunk-31-1.pdf}
 
 \subsection{Translating absences to
 costs}\label{translating-absences-to-costs}
@@ -1229,7 +1255,7 @@ IRS}\label{unadjusted-absenteeism-by-time-since-irs}
 
 \begin{figure}
 \centering
-\includegraphics{figures/unnamed-chunk-32-1.pdf}
+\includegraphics{figures/unnamed-chunk-35-1.pdf}
 \caption{i. Absenteeism before and after IRS administration for all
 workers who ever received IRS; ii. The same, but segregated by malaria
 and non-malaria seasons}
@@ -1240,7 +1266,7 @@ IRS}\label{unadjusted-sick-absenteeism-by-time-since-irs}
 
 \begin{figure}
 \centering
-\includegraphics{figures/unnamed-chunk-33-1.pdf}
+\includegraphics{figures/unnamed-chunk-36-1.pdf}
 \caption{i. Sick absenteeism before and after IRS administration for all
 workers who ever received IRS; ii. The same, but segregated by malaria
 and non-malaria seasons}
