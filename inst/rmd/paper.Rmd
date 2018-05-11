@@ -4,12 +4,14 @@ title: Is malaria control profitable? Return on investment of privately-managed 
 csl: apa_modified.csl
 date: ''
 output:
-  word_document: default
+  html_document:
+    df_print: paged
   pdf_document:
     includes:
       in_header: preamble.sty
     keep_tex: yes
     latex_engine: xelatex
+  word_document: default
 fig_width: 4
 fig_height: 2.6
 bibliography: bibliography.bib
@@ -38,7 +40,7 @@ opts_chunk$set(echo=FALSE,
                comment=NA,
                message=FALSE,
                warning=FALSE,
-               dev = "cairo_pdf",
+               # dev = "cairo_pdf",
                fig.pos="!h",
                fig.path = 'figures/')
 opts_knit$set(width=75)

@@ -1,42 +1,6 @@
 
 # Methods
 
-## Data 
-
-In collaboration with the sugar processing facility, we collected data for the period from January 2010 through December 2016. Data came from four sources: (i) the Human Resources' roster of worker details and absences, (ii) the facility's on-site clinic's medical and laboratory records, (iii) the facility's on-site malaria control program's records pertaining to the dates, chemicals, and location of IRS activities, and (iv) interviews with company employees pertaining to costs, data limitations, etc. Digitization and collection of data took place during the period from March 2016 through May 2017. Supplementary data pertaining to worker characteristics was obtained from through the Centro de Investigação em Saude de Manhiça's (CISM) demographic census, which covered workers from the district, but not those who migrated from other parts of the country [@Nhacolo_2006]. 
-
-Data pertaining to district-wide malaria incidence was obtained from Mozambique’s Boletim Epidemiológico Semanal (BES), which is the system by which the National Malaria Control Program monitors incidence at the district level throghout the entire country, and reports the number of confirmed weekly malaria cases at government health facilities. Using these case numbers, combined with population estimates from the National Statistical Institute (INE), we estimate each day's annualized weekly malaria incidence rate (cases per 1000 population at risk), interpolated from the weekly figures. We retrieved weather data for all Mozambican stations from NOAA. We estimated the meteorological conditions at the centroid of Manhiça using a simple interpolation method whereby the district's weather conditions were estimated to be a function of all Mozambican weather stations' reported conditions, inversely weighted by kilometers from district centroid. 
-
-Maragra regularly employs IRS at on-site worker households in order to reduce those workers' (and their families') risk of malaria infection. IRS works by killing the malaria vector (mosquito), thereby preventing infection of the household occupants. When administered correctly, IRS is a low-risk intervention to its recipients, and is assumed not to affect absenteeism in the short-term (to the extent that it may cause negative side-effects, these are generally long-term). It is preventive only, and does not cure current malaria infection, nor does it affect the parasite load of mosquitoes. Workers living off-site (our control group) also may have received IRS at some point during the study period (from government programs). Even though we do not have reliable person-level data on IRS carried out by the government, off-site workers are a suitable control in the sense that they represent "business as usual" (ie, what would happen if the company carried out no IRS and relied solely on public interventions). Using company HR and clinical records, we were able to identify absences and episodes of clinical malaria among all workers, as well as identify the time since the most recent IRS episode before the onsent of absence or illness.
-
-Worker characteristics, illness and absenteeism data, along with IRS activity data, were systematically stored, collected, and used at the individual level by Maragra, and therefore of generally high quality. Because cost data was less systematically collected by Maragra, and because many costs could not be precisely quantified due to the abundance of in-kind and cross-departmental expenditures, we had to rely on rough estimations based on a mix of interviews, reciepts, and interpolations. Since our program cost data is not as reliable as our worker characteristic and outcome data, we were conservative in our estimates, and generally tried to err on the side of program activities and materials costing _more_ than what was reported, when doubt was aired. Cost data consisted of three types: (i) wages of malaria control employees, (ii) transporation and vehicle costs for IRS teams, and (iii) acquisition costs of purchasing IRS chemicals for fumigation (ACT and DDT), the latter two being combined into malaria control "programme" costs. 
-
-
-## Conceptual framework and identification strategy
-
-We sought to understand the effect of IRS on individual workers' likelihood of absence from work as well as their likelihood of clinical malaria. To estimate this effect, we estimated separate models for absence and illness. We employed linear mixed effects models [@Minalu2011] [@Liu2010] (with individual worker fixed effects, and random effects for other covariates) so as to explicitly adjust for confounders [@Bell2014]. We divide into 4 different models for different worker types, so as to account for the potential time-varying effects of worker type on risk of malaria. 
-
-### Externalities
-
-The administration of insecticide at a worker's residence (indoor residual spraying or IRS) likely protects that worker from malaria infection by killing the vectors (mosquitoes) that land on the building's walls. However, it is also highly likely that the protective effective of IRS "spills over" to others who live nearby. This positive spillover effect would theoretically go through two channels: (i) via a reduction of mosquitoes in the vicinity and (ii) via a reduction of the malaria parasite in the blood of humans in the vicinity (ie, the parasite "reservoir"). This document describes our method for assessing the existence and magnitude of positive spillover of IRS in the Maragra workers' data. We devise a time-specific household "protection" score based on the theoretical effectiveness of IRS, and then use that protection score to develop a time-place specific "herd protection" score based on a weighted average of nearby household protection scores.
-
-We consider a house's "herd" protection level (ie, the protection conferred to the house through externality) to be the average of the other houses' non-herd protection levels, weighted by the distance to the house in question. The below is an illustration of a house (the red x) and the neighboring houses (circles). The "weight" of each house is indicated by the circle size, and the protection level of the house is indicated by the shading of the circle.
-
-
-However, this consideration misses one important dimension: density. The below house's weighted average protection score is identical to that of the above house. In other words, at the time in question, at both locations, the percentage of houses with IRS coverage is the same, and the (weighted) average time since IRS is the same. However, the below house is likely much more protected than the above, given the _absolute_ number of nearby IRS-protected houses.
-
-Our approach is this: rather than using a weighted average of each household's individual protection score, we instead use a weighted sum. A particular household's herd protection score at any given time is the sum of all households' individual protection scores at that time multiplied by those households' distance weights.
-
-
-The summation of (a) the IRS level of other houses at a certain time, (b) weighted by the distance of those houses to the house in question, (c) limited to only the 1 km radius multiplied yields a "herd protection score".
-
-This score is conceptually similar to Cohen and Dupas' quantification of the positive externalities of ITN (bednet) use in Kenya [@Cohen2010] in that it attempts to estimate the protection conferred to "non-users" by users and uses a "weighted sum" (as opposed to average). Our approach differs in that the time dimension for IRS is much more important than ITN (ie, IRS is not a binary but rather a waning function, as described previously), requiring us to create herd scores for every day.
-
-Our approach can be justified in that previous studies have found strong positive health externalities in malaria interventions related to ITN coverage [@Alaii2003FactorsAU]. No studies exist on positive externalities for IRS coverage, but to the extent that the mechanisms for the reduction in infection are similar (reduction in the natural reservoir of the disease, reduction in the number of vectors, etc.), it is reasonable to assume similar effects. Additionally, we are using weighted distance for our score calculation (rather than simply defining a radius threshold) because of previous studies' findings that there is a linear decline in protection conferred to others with greater distance from an intervention [@Binka2007].
-
-
-Figure x shows a smooth interpolated surface of herd protection, averaged for the entire study period.
-
 ```{r, fig.cap = 'Kernel density surface of average all-time herd protection score for Maragra worker neighborhoods (relative to highest protection)', fig.align = 'center'}
 # Fortify bairros
 library(maptools)
@@ -131,9 +95,6 @@ plot(r, add = TRUE)
 plot(bairros, add = TRUE)
 ```
 
-Some more details will eventually go here.
-
-
 ### Econometric model
 
 
@@ -146,9 +107,6 @@ $$
 
 $\hat{Y}_{it}$ is the rate of absence. $\beta_{1}$ is the binary "season" variable, imputed from overall district clinical incidence. Our intervention is whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment, represented, respectively, by $\beta_{2}$ and $\beta_{3}$. $\beta_{4}$ **represents the distance-weighted herd protection score**. $\alpha_i$ represents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term.
 
-We define the malaria season as any time during which the clinical incidence of malaria in the district of Manhiça was at or greater than the median clinical incidence of malaria for the entire study period. These weeks are flagged as red in Figure 1, Panel A.  By using clinical incidence of the area of residence of the workers (as opposed to more typical proxies for malaria risk, such as only rainy vs. non rainy season), our seasonality estimate is a closer approximation of true malaria risk, incorporating lagged effects such as the incubation period of the parasite, as well as any inherent non-linear effects of weather. In addition, we adjust for daily precipitation; though its lagged effect on malaria incidence is likely captured by the seasonality term, we include rainfall since it's immediate effect (through its impact on transportation and working conditions) may also affect absenteeism.
-
-
 Our formula for return on investment can be described in a straightforward fashion...
 
 
@@ -160,9 +118,6 @@ $R = \dfrac{P_{w} - S_{wa} - S_{wc}}{P_{w}}$
 ...where $R$ is the return on investment, $P$ is the malaria control program's total operating cost, $w$ refers to costs at the per-worker level, $a$ refers to savings through avoided absences, and $ c $ refers to savings through avoided clinical encounters. We define the malaria control program as "profitable" from an investment standpoint if ROI is greater than 100%, ie if the savings associated with the estimated effect of IRS is greater than the costs of the program's administration. 
 
 
-## Reproducibility and ethical approval
-
-All data processing and analysis were carried out in R [@R] and all analysis code is freely available online [@brewgit]. Ethical approval for this project was obtained from the Institutional Ethics Review Board for Health at the CISM (CIBS-CISM) prior to data collection.
 
 \newpage
 

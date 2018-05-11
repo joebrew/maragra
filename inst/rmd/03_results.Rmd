@@ -10,7 +10,7 @@
 n <- length(unique(ab_panel$oracle_number[ab_panel$date >= '2012-01-01' & ab_panel$date <= '2016-12-31']))
 ```
 
-We collected absenteeism and demographic data data on `r n` workers from 2012 through 2016. Workers were approximately 60% male, and more than 80% fieldworkers (predominantly cane-cutters). Most were in their 20s and 30s and employed on temporary contracts. Table 1 shows overall worker details divided by "Treatment" versus "Control" status. "Treatment" is considered the time beginning at IRS administration and ending six months later; "Control" is considered time observed either prior to IRS administration (and greater than 6 months after previous IRS administration) or among workers who never received IRS. Because of the temporal nature of these categories, many workers belong to both treatment and control groups, albeit at different times.
+We collected absenteeism and demographic data data on `r n` workers from 2012 through 2016. 
 
 ```{r, results='asis'}
 # x <- ab_panel %>%
@@ -54,14 +54,14 @@ for(i in 1:length(vars)){
 }
 demo_table <- bind_rows(out_list)
 names(demo_table)[1:2] <- c('Variable', ' ')
-print(xtable::xtable(demo_table,
-                     caption = 'Overall worker characteristics',
-                     align = c('r', 'r', rep('l', 5))),
-      include.rownames = FALSE)
+kable(demo_table, format = 'html') %>% kable_styling()
+# print(xtable::xtable(demo_table,
+#                      caption = 'Overall worker characteristics',
+#                      align = c('r', 'r', rep('l', 5))),
+#       include.rownames = FALSE)
 
 ```
 
-Temporary workers tended to be younger and male; female temporary workers being on average 5-10 years older than their male counterparts. Permanent workers had a bi-modal age distribution, the older peak explained by the greater density of males in administrative roles. Females accounted for 43% of temporary workers but only 16% of permanent workers (figure x).
 
 ```{r, fig.width = 5, fig.height = 3.5, fig.align='center', fig.cap = 'Age distribution by sex and worker status'}
 # x$age <- round(as.numeric(as.Date('2014-01-01') - x$date_of_birth) / 365.25, digits = 2)
@@ -81,7 +81,6 @@ g1 <- ggplot(data = x,
 g1
 ```
 
-During the study period, weather followed typical seasonal trends for the area, albeit slightly drier than previous periods.
 
 ```{r, fig.width = 6, fig.height = 3.5, fig.align='center', fig.cap = 'i. Monthly total precipitation in the Maniça district; ii. Average monthly temperature (bars) during the study period, as well as monthly maximum (red) and minimum (blue) temperatures'}
 x <- weather %>%
@@ -128,9 +127,6 @@ g2 <- ggplot(data = x,
   scale_x_date(labels = scales::date_format("%Y"))
 Rmisc::multiplot(g1, g2, cols = 2)
 ```
-
-
-In Southern Mozambique, malaria peaks during the summer months (December through March) most years (Figure 5, panel A), and worker absenteeism at Maragra rates track malaria incidence closely, following the same seasonal patterns (figure 4, panel B). Both all-cause absenteeism and sick absenteeism have declined in recent years at Maragra (figure 5, panel C), with the latter declining at a faster rate than the former. The fact that the rate of confirmed cases at the company clinic is largely non-seasonal (figure 5, panels E and F) suggests that a significant portion of workers either seek care for malaria elsewhere (for example, government health posts, of which several are nearby and in some many cases closer to workers' residence than the company clinic) or do not seek care during malaria infection. Accordingly, we focus our analysis on all-cause absenteeism rather than sickness absenteeism or malaria diagnostics, with the assumption that much of illness is captured by absenteeism but not by the clinical data.
 
 
 
@@ -329,10 +325,11 @@ ab_table$Variable[ab_table$Variable == 'Field'] <- 'Worker type'
 ab_table$Variable[ab_table$Variable == 'Permanent_or_temporary'] <- 'Contract'
 ab_table$x <- Hmisc::capitalize(ab_table$x)
 names(ab_table)[2] <- ''
-print(xtable::xtable(ab_table,
-                     caption = 'Absenteeism rate by year and worker characteristics',
-                     align = c('r', 'r', 'l', rep('l', 4))),
-      include.rownames = FALSE)
+kable(ab_table, format = 'html') %>% kable_styling()
+# print(xtable::xtable(ab_table,
+#                      caption = 'Absenteeism rate by year and worker characteristics',
+#                      align = c('r', 'r', 'l', rep('l', 4))),
+#       include.rownames = FALSE)
 ```
 
 
@@ -396,26 +393,8 @@ p2 <- ggplot(data = plot_data,
 Rmisc::multiplot(p1, p2, cols = 2)
 ```
 
-The extent to which rainfall's effect on absenteeism is confounded by its effect on malaria is discussed in the model results section.
 
 
-**Costs of program**: The malaria control program at Maragra has an annual operating budget of approximately $112,000, which includes the purchase of insecticide, the wages of IRS sprayers and drivers, transportation, record-keeping, and general administrative costs. Assuming linearity in costs, the program spends approximately $19 per building sprayed. With each agregado containing an average of 2.2 workers. Much of the benefit of IRS goes to non-worker residents of sprayed agregados (who constitute a majority), but this benefit is purposefully ignored for this analysis. 
-
-
-**Cost of malaria**: Given the likelihood that clinical data does not fully capture all malaria cases (and most likely captures only a small fraction of actual infections, given the high rates of acumulated adult immunity [Mayor2007]), we do not quantify the costs of malaria infection to the company. Rather, we first estimate the reduction in absenteeism attributible to IRS, and then quantify the savings associated with prevented absences. Additionally, we calculate the clinical savings of IRS by first estimating the share of absences which are associated with an episode of clinical malaria, and then applying the clinical cost per case to the equivalent share of prevented absences. We intentionally ignore the savings accrued by the public health system, as well as the likely utility gains in secondary realms such as school absenteeism, producitivity, etc. 
-
-
-## Analysis
-
-### Effect of IRS on absenteeism
-
-Immediately following IRS, a worker's likelihood of absence drops significantly (appendix figure, panel A). As one would expect if the mechanism by which IRS reduces absence is through reduced malaria infection, the effect of IRS during the low transmission season is significant, but far less substantial in effect size (appendix figure, panel B).
-
-In order to assess the effect of IRS on absenteeism, we created 4 worker fixed effects models for the 4 principal worker types (permanent field worker, temporary field worker, permanent non-field worker, temporary non-field worker) for both outcoms (all cause absenteeism vs. sickness absenteeism). The reason for segregating models rather than incorporating worker type as a fixed effect was that it seemed plausible that the effect of the treatment (IRS) on the outcome would be different (and vary differently over time) depending on these worker types. For instance, it is reasonable to assume that IRS' effect would be differential for a temporary worker (who likely lives in the fumigated house less than 100% of the year) than for a permanent worker. 
-
-Given that IRS is carried out on a continuous rolling basis, we used relative worker time (as opposed to calendar) as the time component of our model - that is, each workers' days until and since IRS were standardized so that day 0 (date of fumigation) was the interruption point. This has the advantage of incorporating into the model a variety of potential time-varying confounders in a quasi-randomized fashion, thereby making it unecessary to adjust for them specifically. Our model took into account workers' residential location (on or off site) - even though off site workers by definition could not be administered IRS by Maragra - so as to capture other seasonal effects from those workers.
-
-The herd protection score, unit-less by nature given that it's a summation of binary protection statuses weighted by inverse-transformed distances, took the following distribution in our data:
 
 ```{r, fig.align = 'center', fig.cap = 'Distribution of herd protection score in panel data'}
 ggplot(data = model_data,
@@ -427,10 +406,7 @@ ggplot(data = model_data,
        y = 'Density')
 ```
 
-
-
-
-The model results for all cause absenteeism (table 4) suggest a significant decrease in absenteeism following the administration of IRS. The effect is ambivalent among temporary workers, whereas among permanent workers the administration of IRS decreases absenteeism by xxx. These effects are consistent with IRS decreasing absence through the medium of malaria, since (a) the effect is not as strong in the first month (potentially during the parasite incubation phase), the effect is stronger on field workers (who are more socioeconomically the demographic at greater risk of malaria than their administrative counterparts), and the effect is ambivalent among temporary workers (since the protective effect of IRS is only a function of the amount of time that the worker spends in the fumigated house).
+\newpage
 
 
 ```{r, results = 'asis'}
@@ -438,11 +414,6 @@ make_models_table(model_list = protection_models, the_caption = "All absenteeism
 ```
 
 
-
-
-```{r}
-# Make dummy data for seeing effect of herd on irs
-```
 
 
 ## What would happen without IRS?
@@ -509,42 +480,9 @@ ggplot(data = plot_data,
                      values = cols)
 ```
 
-
-## Translating absences to costs
-
-xxx\todo{Not done yet. This will be relatively straightforward arithmetic, but I want to first make sure that the models are rock solid (since all of the "translation" hinges on them).}
-
-
-## Return on investment 
-
-\todo{Not done yet. In conversation with Eduardo from MC about getting more accurate costs}
-
-**Savings**  
- 
-- In percentage point terms, reduction from 13% to 8%.  
-- 5 annually prevented absences per worker.   
-- 8,000 workers: 40,000 prevented absences, wage of 3 USD
-- TOTAL: 120,000 USD in productivity-only savings.   
-
-**Costs**  
-
-- 8 IRS workers, 1500 USD yearly = 12,000 USD  
-- ACT + DDT: 50,000 USD 
-- Facilities, vehicles, gas: 50,000 USD  
-- TOTAL: 112,000 USD in IRS-only costs  
-
-**7% ROI** (ignoring clinical costs)
-
-
 \newpage
 
 ## Robustness and generalizability 
-
-Two principal concerns call into question the results of our analysis. First, the application of IRS to a workers house may be endogenous.\todo{Is this the right term here? We're not dealing with an "unobserved" factor per se, rather we're dealing with a situation in which the cause might influence the effect, and the effect might influence the cause, ie a feedback loop.} It is reasonable to suspect that the application of IRS to households is not random, but rather that IRS was applied more frequently to houses which had already seen a malaria case. In this case, our estimated effect of IRS on absenteeism would likely be underestimated, with the post-IRS absenteeism rates actually having declined from a greater pre-IRS absenteeism rate than otherwise suggested. 
-
-To check for this, we estimate the odds of absenteeism as a function of receiving IRS _during the 10 day period prior to receiving IRS_. If IRS application is indeed endogenous, we would expect absenteeism to be elevated during this period (since the increase in absenteeism would be theoretically responsible for the application of IRS), a situation which would require further statistical adjustment. If, on the other hand, there is no endogeneity, we would expect absenteeism in the 10 day period prior to IRS administration to be similar to other pre-IRS absenteeism (adjusting for seasonality).\todo{Should add model specification formula here.}
-
-The below shows our robustness check for all cause absenteeism.
 
 ```{r, echo = FALSE}
 ro_data <- ab_panel %>%
@@ -584,7 +522,7 @@ make_model <- function(formula = 'absent ~ pre_irs + time_period'){
   out$Variable <- as.character(out$Variable)
   out$Variable <- gsub('pre_irsTRUE', '10 days prior to IRS', out$Variable)
   out$Variable <- gsub('time_period', '', out$Variable)
-  return(kable(out, format = "latex") %>%
+  return(kable(out, format = "html") %>%
   kable_styling() %>%
     row_spec(row = which(grepl('prior', out$Variable)),background = "yellow"))
 }
