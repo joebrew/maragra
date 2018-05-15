@@ -1,6 +1,84 @@
 
 # Methods
 
+## Budget info
+
+```{r}
+costs_itemized <- maragra::costs_itemized
+costs_raw <- maragra::costs_raw
+costs <- maragra::costs
+# Annual operating budget
+aob <- round(mean(costs$usd), digits = 2)
+print(paste0('Average annual operating budget of ', aob))
+
+
+plot_data <- costs_itemized %>%
+  filter(!is.na(Account)) %>%
+  mutate(area = Account) %>%
+  mutate(area = ifelse(grepl('WAGES', area), 'Human resources', area)) %>%
+  mutate(area = ifelse(area %in% c('LUBRICANTS', 'TYRES & TUBES',
+                                   'VEHICLE MAINTENANCE', 'DIESEL'),
+                       'Vehicles', area)) %>%
+  mutate(area = ifelse(area %in% c('PENSION FUND CONTRIBUTIONS',
+                                   'SALARIES BASIC', 'HOUSING ALLOWANCE',
+                                   'LEAVE PAY PROVISION'), 'Human resources', area)) %>%
+  mutate(area = ifelse(area %in% toupper(c('Equipment maintenance',
+                                   'Protective clothing',
+                                   'Tools',
+                                   'Consumables')),
+                       'Equipment', area)) %>%
+  mutate(area = ifelse(area %in% c('ENVIRONMENTAL MONITORING',
+                                   'TRAVEL (FOREIGN)'),
+                       'Other', area)) %>%
+  group_by(period, area) %>%
+  summarise(total = sum(usd, na.rm = TRUE)) %>%
+  ungroup %>%
+  mutate(area = tolower(area)) %>%
+  mutate(area = Hmisc::capitalize(area))
+  
+ggplot(data = plot_data,
+             aes(x = period,
+                 y = total,
+                 group = area,
+                 fill = area)) +
+  geom_bar(stat = 'identity',
+           position = 'dodge') +
+  scale_fill_manual(name = '',
+                    values = colorRampPalette(brewer.pal(n = 9,
+                                                         name = 'Set1'))(length(unique(plot_data$area)))) +
+  theme_maragra() +
+  labs(x = '',
+       y = 'USD')
+
+fumigations <- mc %>%
+  filter(date >= '2013-01-01',
+         date <= '2016-12-31')
+n_fumigations <- nrow(fumigations)
+n_buildings <- sum(fumigations$casas_cobertas, na.rm = TRUE)
+unique_agregados <- length(unique(fumigations$unidade))
+people_sprayed <- length(unique(model_data$oracle_number[model_data$days_since != 'Never']))
+people_observed <- length(unique(model_data$oracle_number))
+pr <- function(x){prettyNum(x, big.mark = ',')}
+
+print('Assuming linearity in costs, the program spends approximately xxx per building sprayed.') 
+aob / (n_buildings / 4)
+
+# print('With each agregado containing an average of 2.2 workers.')
+
+x = ab_panel %>%
+  mutate(year = as.numeric(format(date, '%Y')),
+         month = as.numeric(format(date, '%m'))) %>%
+  group_by(year, month) %>%
+  summarise(absences = length(which(absent))) %>%
+  ungroup %>%
+  left_join(clinic_agg %>% group_by(year, month) %>% 
+              summarise(positive = sum(positive))) %>%
+  mutate(percent_clinic = positive / absences * 100) %>%
+  mutate(n_ab_for_clinic = absences / positive)
+
+mean(x$n_ab_for_clinic, na.rm = TRUE)
+```
+
 ```{r, fig.cap = 'Kernel density surface of average all-time herd protection score for Maragra worker neighborhoods (relative to highest protection)', fig.align = 'center'}
 # Fortify bairros
 library(maptools)
@@ -93,6 +171,16 @@ plot(border, col = NA, border = NA)
 plot(r, add = TRUE)
 # plot(border, add = TRUE)
 plot(bairros, add = TRUE)
+```
+
+```{r}
+x <- model_data %>%
+  group_by(group) %>%
+  summarise(avg = mean(herd, na.rm = TRUE),
+            avg_ideal = mean(herd_ideal, na.rm = TRUE)) %>%
+  ungroup %>%
+  mutate(avg = avg / max(avg) * 100,
+            avg_ideal = avg_ideal / max(avg_ideal) * 100)
 ```
 
 ### Econometric model

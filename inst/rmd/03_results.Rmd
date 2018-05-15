@@ -10,7 +10,7 @@
 n <- length(unique(ab_panel$oracle_number[ab_panel$date >= '2012-01-01' & ab_panel$date <= '2016-12-31']))
 ```
 
-We collected absenteeism and demographic data data on `r n` workers from 2012 through 2016. 
+We collected absenteeism and demographic data data on `r n` workers from 2013 through 2016. 
 
 ```{r, results='asis'}
 # x <- ab_panel %>%
@@ -63,7 +63,7 @@ kable(demo_table, format = 'html') %>% kable_styling()
 ```
 
 
-```{r, fig.width = 5, fig.height = 3.5, fig.align='center', fig.cap = 'Age distribution by sex and worker status'}
+```{r, fig.align='center', fig.cap = 'Age distribution by sex and worker status'}
 # x$age <- round(as.numeric(as.Date('2014-01-01') - x$date_of_birth) / 365.25, digits = 2)
 g1 <- ggplot(data = x,
        aes(x = jitter(agey, factor = 1000),
@@ -414,20 +414,108 @@ make_models_table(model_list = protection_models, the_caption = "All absenteeism
 ```
 
 
+## Sensitivity analysis
+
+The below shows average FE for year / worker, during malaria season, on a rainy day...
+
+```{r}
+expander <- function(x){sort(unique(unlist(model_data[,x])))}
+dummy <- expand.grid(season = expander('season'),
+                     months_since = expander('months_since'),
+                     rainy_day = expander('rainy_day'),
+                     herd = mean(model_data$herd),
+                     group = expander('group'))
+dummy$predicted <- NA
+
+groups <- sort(unique(dummy$group))
+for (i in 1:length(groups)){
+    message(i)
+    this_group <- groups[i]
+    indices <- which(dummy$group == this_group)
+    model <- protection_models[[this_group]]
+    fe <- getfe(model)
+    # Add back in the mean effect of fixed effects
+    add <- fe %>% group_by(fe) %>% summarise(effect = mean(effect)) %>% summarise(sum(effect)) %>% unlist %>% as.numeric
+    data <- dummy[indices,]  
+    # predict_felm(model = model, data = )
+    dummy$predicted[indices] <- 
+      (regtools::predict.felm(object = model,
+                             newdata = data,
+                             use.fe = FALSE) + add) * 100
+}
+
+ggplot(data = dummy %>% filter(rainy_day),
+       aes(x = months_since,
+           y = predicted,
+           color = season,
+           group = season)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~group, scales = 'free_y') +
+  scale_colour_manual(name = 'Malaria\nseason',
+                      values = c('blue', 'red')) +
+  theme_maragra() +
+  labs(x = 'IRS status',
+       y = 'Estimated absenteeism') #+
+  # theme(legend.position = 'right')
 
 
-## What would happen without IRS?
+```
+
+The below shows estimated importance of herd protection, and heterogeniety across groups.
+
+```{r}
+dummy <- expand.grid(season = expander('season'),
+                     months_since = expander('months_since'),
+                     rainy_day = expander('rainy_day'),
+                     herd = 0:1000,
+                     group = expander('group'))
+dummy$predicted <- NA
+
+
+groups <- sort(unique(dummy$group))
+for (i in 1:length(groups)){
+    message(i)
+    this_group <- groups[i]
+    indices <- which(dummy$group == this_group)
+    model <- protection_models[[this_group]]
+    fe <- getfe(model)
+    # Add back in the mean effect of fixed effects
+    add <- fe %>% group_by(fe) %>% summarise(effect = mean(effect)) %>% summarise(sum(effect)) %>% unlist %>% as.numeric
+    data <- dummy[indices,]  
+    dummy$predicted[indices] <- 
+      (regtools::predict.felm(object = model,
+                             newdata = data,
+                             use.fe = FALSE) + add) * 100
+}
+
+ggplot(data = dummy %>% filter(rainy_day, season == 'high'),
+       aes(x = herd,
+           y = predicted,
+           color = months_since,
+           group = months_since)) +
+  geom_line() +
+  facet_wrap(~group, scales = 'free_y') +
+  scale_colour_manual(name = 'IRS status',
+                      values = c('darkorange', 'darkgreen')) +
+  theme_maragra() +
+  labs(x = 'Herd protection score',
+       y = 'Estimated absenteeism')
+```
+
+
+### What would happen without IRS?
 
 The below chart shows the modeled average absenteeism rate during malaria season for permanent workers, by group type.
 
 ```{r}
 x <- model_data %>%
-  dplyr::filter(season == 'high',
+  dplyr::filter(season == 'high'#,
                 # group == groups[1],
-                permanent_or_temporary == 'Permanent'
+                # permanent_or_temporary == 'Permanent'
                 )
 x <- x [,grepl('predicted', names(x)) | names(x) == 'group']
-x <- x %>% gather(key, value, predicted_no_herd_no_irs:predicted_max_irs)
+x <- x %>% gather(key, value, predicted_max_herd_max_irs:predicted)
 dict <- data.frame(key = c('predicted', 
                            'predicted_no_herd',
                            'predicted_no_irs',
@@ -457,27 +545,81 @@ levs <- gsub(' ', '\n', c('No herd protection',
                                'No individual protection',
                                'No protection (herd or individual)',
                                'As is',
-                               'Protection: maximum herd',
                                'Protection: maximum IRS',
+                               'Protection: maximum herd',
                                'Protection: maximum IRS and herd'))
 plot_data$new_key <- factor(plot_data$new_key,
                        levels = levs)
 cols <- colorRampPalette(brewer.pal(n = 9,
-                                    name = 'Spectral'))(length(unique(plot_data$group)))
+                                    name = 'Set1'))(length(unique(plot_data$group)))
 
+library(ggrepel)
 ggplot(data = plot_data,
        aes(x = new_key,
            y = avg * 100,
            color = group)) +
-  geom_point() +
+  geom_point(size = 4) +
   theme_maragra() +
   theme(axis.text.x = element_text(angle = 90)) +
   labs(x = 'Scenario',
        y = 'Absenteeism rate') +
   geom_line(aes(group = group),
-            alpha = 0.3) +
+            alpha = 0.5,
+            size = 1) +
   scale_color_manual(name = '',
-                     values = cols)
+                     values = cols) #+
+  # ggrepel::geom_label_repel(aes(label = round(avg * 100, digits = 1)))
+```
+
+## Return on investment
+
+- Number of working days
+
+```{r, echo = TRUE}
+x <- ab_panel %>% group_by(date) %>% tally
+ggplot(data = x,aes(x = date,y = n)) + geom_line() +
+  labs(title = mean(x$n))
+```
+
+- Number of working days annually 
+
+```{r, echo = TRUE}
+options(scipen = '999')
+x <- ab_panel %>% mutate(year = as.numeric(format(date, '%Y'))) %>% group_by(year) %>% tally
+ggplot(data = x,aes(x = year,y = n)) + geom_line() +
+  labs(title = mean(x$n))
+```
+
+- Number of prevented absences per year
+
+```{r, echo = TRUE}
+ratio <- length(unique(ab_panel$oracle_number)) / length(unique(model_data$oracle_number))
+
+x <- model_data %>%
+  group_by(year = calendar_year) %>%
+  summarise(eligibles = n(),
+            absences = mean(as.numeric(absent), na.rm = TRUE) * n(),
+            counterfactual = mean(predicted_no_herd_no_irs,na.rm =TRUE) * n()) 
+y <- x %>%
+  summarise(x = mean(counterfactual) - mean(absences)) %>%
+  unlist * ratio
+# Annual prevented
+y
+x <- x %>%
+  mutate(prevented = counterfactual - absences)
+# Number of presences to prevent 1 case
+sum(x$eligibles) / sum(x$prevented)
+```
+
+```{r, eval = TRUE}
+# Clinical costs
+(y /
+  80) * # number of absences it takes to produce one company clinic positve
+  31.49 # cost per clinical case per ezenduka
+
+# Wage costs
+y *
+  4 # assuming USD
 ```
 
 \newpage
@@ -485,20 +627,21 @@ ggplot(data = plot_data,
 ## Robustness and generalizability 
 
 ```{r, echo = FALSE}
-ro_data <- ab_panel %>%
-  left_join(irs, by = c('date', 'unidade')) %>%
-  filter(days_since < 0) %>%
-  mutate(pre_irs = between(days_since, -10, -1)) %>%
-  # mutate(time_period = lendable::time_period_extract(date)) %>%
-  # mutate(time_period = as.character(time_period)) %>%
-  mutate(time_period = make_season(date = date)) %>%
-  mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) %>%
-  left_join(workers %>%
-              dplyr::select(oracle_number,
-                            sex,
-                            department,
-                            permanent_or_temporary),
-            by = 'oracle_number')
+ro_data <- model_data %>%
+# ro_data <- ab_panel %>%
+#   left_join(irs, by = c('date', 'unidade')) %>%
+#   filter(days_since < 0) %>%
+  mutate(pre_irs = between(days_since, -10, -1)) 
+#   # mutate(time_period = lendable::time_period_extract(date)) %>%
+#   # mutate(time_period = as.character(time_period)) %>%
+#   mutate(time_period = make_season(date = date)) %>%
+#   mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) %>%
+#   left_join(workers %>%
+#               dplyr::select(oracle_number,
+#                             sex,
+#                             department,
+#                             permanent_or_temporary),
+#             by = 'oracle_number')
 # ro_data$time_period <- as.character(ro_data$time_period)
 
 
@@ -523,8 +666,9 @@ make_model <- function(formula = 'absent ~ pre_irs + time_period'){
   out$Variable <- gsub('pre_irsTRUE', '10 days prior to IRS', out$Variable)
   out$Variable <- gsub('time_period', '', out$Variable)
   return(kable(out, format = "html") %>%
-  kable_styling() %>%
-    row_spec(row = which(grepl('prior', out$Variable)),background = "yellow"))
+  kable_styling()# %>%
+    # row_spec(row = which(grepl('prior', out$Variable)),background = "yellow")
+  )
 }
 ```
 
@@ -547,15 +691,12 @@ make_model <- function(formula = 'absent ~ pre_irs + time_period'){
 # make_model('absent ~ pre_irs*time_period + sex + department + permanent_or_temporary')
 
 # Adjust for seasonality and department
-make_model('absent ~ pre_irs*time_period + department')
+make_model('absent ~ pre_irs*season + group + rainy_day')
 ```
 
-The below shows our robustness check for sick only absenteeism. Unlike with all cause absenteeism, during malaria season, being in the period 10 days prior to IRS is associated with statistically greater likelihood of being absent for illness. In other words, it appears that there is somewhat of a feedback loop: when a worker misses work due to illness, his/her likelihood of getting IRS doubles in the next 10 days.\todo{What to do about this???}
+
 
 ```{r}
-make_model('absent_sick ~ pre_irs*time_period + department')
+# The below shows our robustness check for sick only absenteeism. Unlike with all cause absenteeism, during malaria season, being in the period 10 days prior to IRS is associated with statistically greater likelihood of being absent for illness. In other words, it appears that there is somewhat of a feedback loop: when a worker misses work due to illness, his/her likelihood of getting IRS doubles in the next 10 days.\todo{What to do about this???}
+# make_model('absent_sick ~ pre_irs*time_period + department')
 ```
-
-The second concern is that our quantification of return on investment is distorted by the fact that we treat IRS operations as essentially linear in nature, when in reality economies of scale, in-kind purchases and other factors likely make the true cost-per-spraying convex. We address this by creating three scenarios: (1) a "start-up" scenario in which we take into account all costs incurred by starting a program from scratch, (2) a "normal" scenario in which we match the assumptions with those used in this paper (ie, account for "wear-and-tear" depreciation but not vehicle purchase, etc.) and a (3) "absorbed costs" scenario which ignores all costs which are not directly incurred by the program.... xxx... \todo{Will address this with some sensitivity analysis}
-
-\newpage

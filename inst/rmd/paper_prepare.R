@@ -8,7 +8,8 @@ library(knitr)
 library(RColorBrewer)
 # library(lme4)
 library(lfe)
-
+library(restorepoint)
+library(regtools)
 if('prepared_data.RData' %in% dir()){
   load('prepared_data.RData')
 } else {
@@ -38,8 +39,6 @@ if('prepared_data.RData' %in% dir()){
     return(x)
   }
   
-  # filter for on-site only
-  
   model_data <-
     ab_panel %>%
     left_join(irs, by = c('unidade', 'date')) %>%
@@ -47,6 +46,7 @@ if('prepared_data.RData' %in% dir()){
     mutate(days_since = ifelse(is.na(days_since), 'Never',
                                ifelse(days_since < 0, 'Before',
                                       ifelse(days_since >= 12, '12+', as.character(add_zero(days_since, n = 2)))))) 
+  
   model_data <-
     model_data %>%
     mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) %>%
@@ -93,30 +93,17 @@ if('prepared_data.RData' %in% dir()){
   model_data <- model_data %>%
     mutate(months_since = days_since) %>%
     mutate(months_since = as.character(months_since)) %>%
-    mutate(months_since = ifelse(months_since %in% c(#'Never', 
-                                                     'Before', '00', '01',
-                                                     '02', '03', '04', '05', '06'),
-                                 months_since,
-                                 ifelse(months_since %in% c('07', '08',
-                                                            '09', '10', '11', '12+'),
-                                        '07+', months_since))) %>%
+    mutate(months_since = ifelse(months_since %in% c('00', '01',
+                                                     '02', '03', '04', '05'),
+                                 'After',
+                                 'Before')) %>%
     # Define whether every sprayed
     ungroup %>%
     group_by(oracle_number) %>%
     mutate(ever_sprayed = length(which(unidade %in% mc$unidade)) > 0) %>%
     ungroup %>%
-    # Correct the nevers
-    mutate(days_since = ifelse(days_since == 'Never' & ever_sprayed, 'Before', days_since)) %>%
     mutate(months_since = as.character(months_since)) %>%
-    mutate(months_since = ifelse(months_since == 'Never' & ever_sprayed, 'Before', months_since)) %>%
-    # Make never and before the same
-    # mutate(months_since = ifelse(months_since %in% c('Never', 'Before'), 'No IRS', months_since)) %>%
-    # mutate(months_since = factor(months_since, levels = unique(c('Never', 'Before', sort(unique(months_since))))))
-    # mutate(months_since = ifelse(is.na(months_since),
-    #                              'No IRS',
-    #                              ifelse(months_since != 'No IRS', 'IRS', 'No IRS'))) %>%
-    # mutate(months_since = factor(months_since, levels = unique(c('No IRS', sort(unique(months_since)))))) %>%
-    rename(on_site = ever_sprayed)
+    mutate(on_site = ever_sprayed)
   
   model_data <- model_data %>%
     mutate(months_since = factor(months_since, levels = unique(c('Before', sort(unique(months_since)))))) 
@@ -125,28 +112,8 @@ if('prepared_data.RData' %in% dir()){
   model_data$field <- ifelse(model_data$department == 'Field', 
                              'Field worker',
                              'Not field worker')
-  
-  
-  # # Model simple
-  # fit <- lm(absent ~ season * months_since + on_site, data = model_data)
-  # # summary(fit)
-  # 
-  # # Complex model
-  # fit_full <- lm(absent ~ season * months_since + on_site + sex + field + precipitation, data = model_data)
-  # 
-  models <- list()
-  # models <- list(
-  #   a = lm(absent ~ season * months_since + on_site, data = model_data),
-  #   b = lm(absent ~ season * months_since + on_site + sex, data = model_data),
-  #   c = lm(absent ~ season * months_since + on_site + sex + field, data = model_data),
-  #   # d = lm(absent ~ season * months_since + sex + department + rainy, data = model_data),
-  #   d = lm(absent ~ season * months_since + on_site + sex + field + rainy + permanent_or_temporary, data = model_data)
-  # )
-  
+
   model_data <- model_data %>% 
-    # mutate(group = paste0(ifelse(on_site, 'On site', 'Off site'), ' ',
-    #                          tolower(field)
-    #                          ))
     mutate(group = paste0(permanent_or_temporary, ' ',
                           tolower(field)))
 
@@ -175,49 +142,6 @@ if('prepared_data.RData' %in% dir()){
     left_join(irs %>%
                 dplyr::select(date, unidade, days_since),
               by = c('date', 'unidade'))
-  
-  # Create a supposed protection level based on time since IRS
-  # based on Tukei: https://malariajournal.biomedcentral.com/articles/10.1186/s12936-016-1652-4
-  
-  # # The below is not used
-  # x <- c(1:6)
-  # y <- (c(-3.45, -6.04, - 6.53, -0.17, -2.74, 5.27) + 27.61) / 27.61
-  # lo <- loess(y~x, span = 3)$fitted
-  # lo[lo > 1] <- 1
-  # lo <- 1-lo
-  # df <- data.frame(x,y,lo)
-  # df$months_since <- add_zero(df$x, n = 2)
-  # df$months_since[df$months_since == '06'] <- '06+'
-  # df <- df %>%
-  #   bind_rows(df[c(nrow(df), nrow(df)),] %>%
-  #               mutate(months_since = c('Before', 'Never')))
-  # 
-  # protection <- df %>%
-  #   dplyr::select(months_since, lo) %>%
-  #   dplyr::rename(protection = lo)
-  # 
-  # model_data <- left_join(model_data,
-  #                         protection,
-  #                         by = 'months_since') %>%
-  #   mutate(protection = ifelse(is.na(protection), 0, protection))
-  # 
-  
-  # model_data <- model_data %>%
-  #   mutate(months_since = 
-  #            ifelse(months_since %in% c('06+', 'No IRS'), 'No IRS',
-  #                   ifelse(is.na(months_since), 'No IRS',
-  #                          'IRS')))
-  
-  # Remove all the nevers!
-  model_data <- model_data %>%
-    filter(months_since != 'Never')
-  
-  model_data$months_since <- factor(model_data$months_since,
-                            levels = unique(c('Before', as.character(sort(unique(model_data$months_since))))))
-  # model_data$p <- ifelse(model_data$months_since == 'No IRS',
-  #                                    0,
-  #                                    as.numeric(model_data$months_since) + 1)
-  # model_data$p <- 1/model_data$p
   
   model_data$p <- ifelse(model_data$months_since %in% c('Before', 'Never'), 0, 1)
   
@@ -289,6 +213,7 @@ if('prepared_data.RData' %in% dir()){
       # (this is for modeling herd protection naively)
       herdy <- p * w
       herdy <- sum(herdy, na.rm = TRUE)
+      w_sum <- sum(w)
       
       
       counter <- counter + 1
@@ -301,7 +226,8 @@ if('prepared_data.RData' %in% dir()){
                              # herd = positivity,
                              n = n,
                              # s = s,
-                             herdy = herdy)
+                             herdy = herdy,
+                             w_sum = w_sum)
       out_list[[counter]] <- out_data
     }
   }
@@ -313,7 +239,8 @@ if('prepared_data.RData' %in% dir()){
     summarise(#herd = mean(herd, na.rm = TRUE),
               n = mean(n, na.rm = TRUE),
               #s = mean(s, na.rm = TRUE),
-              herdy = mean(herdy, na.rm = TRUE))
+              herdy = mean(herdy, na.rm = TRUE),
+              w_sum = mean(w_sum, na.rm = TRUE))
   
   # Join to model data
   model_data <- left_join(model_data, protection_df,
@@ -321,8 +248,6 @@ if('prepared_data.RData' %in% dir()){
   # model_data$herd <- model_data$s #model_data$n * model_data$herd
   model_data$herd <- NULL
   model_data$herd <- model_data$herdy
-  model_data$months_since <- factor(model_data$months_since,
-                                    levels = unique(c('Before', as.character(c(sort(unique(as.character(model_data$months_since))))))))
   model_data$rainy_day <- model_data$precipitation >= 0.01
   
   # Get hiv prevalence
@@ -345,12 +270,30 @@ if('prepared_data.RData' %in% dir()){
                           by = c('longitude_aura',
                                  'latitude_aura'))
   
+  save.image('temp.RData')
+
+  # Remove nas
+  model_data <- model_data %>%
+    filter(!is.na(season),
+           !is.na(months_since),
+           !is.na(oracle_number),
+           !is.na(absent),
+           !is.na(incidence),
+           !is.na(rainy_day),
+           !is.na(herd),
+           !is.na(malaria_year))
   
-  # model_data$months_since[model_data$days_since >= 183] <- 'No IRS'
-  # model_data$months_since <- ifelse(model_data$months_since != 'No IRS',
-  #                                   'IRS',
-  #                                   'No IRS')
-  save.image('~/Desktop/temp.RData')
+  # # Cut down from 4 to 3 groups
+  # model_data <- model_data %>%
+  #   filter(group != 'Temporary not field worker') %>%
+  #   mutate(group = ifelse(group == 'Permanent not field worker',
+  #                         'Non-field worker',
+  #                         group))
+  
+  # REMOVE THE NEVERS
+  model_data <- model_data %>%
+    filter(ever_sprayed)
+  
   fe_models <- list()
   sick_models <- list()
   protection_models <- list()
@@ -360,24 +303,15 @@ if('prepared_data.RData' %in% dir()){
   for (i in 1:length(groups)){
     message(i)
     this_group <- groups[i]
+    message(this_group)
     these_data <- model_data %>% filter(group == this_group)
-    these_data <- model_data %>% filter(group == this_group) %>%
-      filter(months_since != 'Never')
-    these_data$months_since <- as.character(these_data$months_since)
-    
-    these_data <- these_data %>%
-      mutate(months_since = ifelse(months_since %in% c('Before', 'Never'), 'Before',
-                                   'After'))
-    these_data$months_since <- factor(these_data$months_since,
-                                      levels = unique(c('Before', as.character(sort(unique(these_data$months_since))))))
+
     this_model <- felm(absent ~ season*months_since + rainy_day  | oracle_number + malaria_year | 0 | 0,
                        data = these_data)
     this_sick_model <- felm(absent_sick ~ season*months_since + rainy_day  | oracle_number + malaria_year| 0 | 0,
                             data = these_data)
     this_protection_model <- felm(absent ~ season*months_since + rainy_day + herd  | oracle_number + malaria_year | 0 | 0,
                        data = these_data)
-    # this_protection_model <- felm(absent ~ season*months_since + precipitation + herd | oracle_number + malaria_year | 0 | 0,
-    #                               data = these_data)
     fe_models[[i]] <- this_model
     sick_models[[i]] <- this_sick_model
     protection_models[[i]] <- this_protection_model
@@ -385,6 +319,109 @@ if('prepared_data.RData' %in% dir()){
   names(fe_models) <- groups
   names(sick_models) <- groups
   names(protection_models) <- groups
+  
+  # Get the herd protection score assuming that everyone nearby was protected
+  groups <- sort(unique(model_data$group))
+  herd_ideal <- 
+    model_data %>%
+    filter(!is.na(longitude_aura),
+           !is.na(latitude_aura)) %>%
+    group_by(oracle_number) %>%
+    summarise(lng = dplyr::first(longitude_aura),
+              lat = dplyr::first(latitude_aura)) %>%
+    ungroup
+  coordinates(herd_ideal) <- ~lng+lat
+  proj4string(herd_ideal) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
+  # Get distances
+  distances <- spDists(x = herd_ideal)
+  out <- apply(distances, 1, function(x){
+    x <- weighter(x)
+    x <- x[is.finite(x)]
+    x <- sum(x, na.rm = TRUE)
+    return(x)
+  })
+  herd_ideal$herd_ideal <- out
+  herd_ideal <- herd_ideal@data
+  # Join back to model_data
+  model_data <-
+    left_join(model_data,
+              herd_ideal)
+  
+  # devtools::install_github('skranz/regtools')
+  library(regtools)
+  # Define function similiar to "predict" but for felm
+  predict_felm <- function(model, data,
+                           irs0 = FALSE,
+                           irs_all = FALSE,
+                           herd0 = FALSE,
+                           herd_max = FALSE){
+    
+    # Make overwrites if necessary
+    # If IRS is 0 (for prediction purposes, overwrite)
+    if(irs0){
+      data$months_since <- factor('Before', levels = c('Before', 'After'))
+    }
+    if(herd0){
+      data$herd <- 0
+    }
+    if(irs_all){
+      data$months_since <- factor('After', levels = c('Before', 'After'))
+    }
+    if(herd_max){
+      data$herd <- data$herd_ideal
+    }
+    predicted <- regtools::predict.felm(object = model,
+                                        newdata = data,
+                                        use.fe = TRUE)
+    return(predicted)
+  }
+  
+  model_data$predicted <-
+    model_data$predicted_no_irs <-
+    model_data$predicted_no_herd <- 
+    model_data$predicted_no_herd_no_irs <-
+    model_data$predicted_max_irs <- 
+    model_data$predicted_max_herd <-
+    model_data$predicted_max_herd_max_irs <- 
+    NA
+  
+  for (i in 1:length(groups)){
+    message(i)
+    this_group <- groups[i]
+    indices <- which(model_data$group == this_group)
+    model <- protection_models[[this_group]]
+    data <- model_data[indices,]  
+    model_data$predicted[indices] <- 
+      predict_felm(model = model,
+              data = data)
+    model_data$predicted_no_irs[indices] <-
+      predict_felm(model = model,
+                   data = data,
+                   irs0 = TRUE)
+    model_data$predicted_no_herd[indices] <-
+      predict_felm(model = model,
+                   data = data,
+                   herd0 = TRUE)
+    model_data$predicted_no_herd_no_irs[indices] <-
+      predict_felm(model = model,
+                   data = data,
+                   herd0 = TRUE,
+                   irs0 = TRUE)
+    model_data$predicted_max_irs[indices] <-
+      predict_felm(model = model,
+                   data = data,
+                   irs_all = TRUE)
+    model_data$predicted_max_herd[indices] <- 
+      predict_felm(model = model,
+                   data = data,
+                   herd_max = TRUE)
+    model_data$predicted_max_herd_max_irs[indices] <- 
+      predict_felm(model = model,
+                   data = data,
+                   herd_max = TRUE,
+                   irs_all = TRUE)
+  }
+  
   
   # Plots of maps
   # Libraries
@@ -520,7 +557,7 @@ if('prepared_data.RData' %in% dir()){
   
   library(ggmap)
   # if('.hdf.RData' %in% dir()){
-    load('.hdf.RData')
+  load('.hdf.RData')
   # } else {
   # hdf <- ggmap::get_map(location = c(lon = mar$long, lat = mar$lat), maptype = 'satellite', zoom = 14)
   #   save(hdf, file = '.hdf.RData')
@@ -531,168 +568,6 @@ if('prepared_data.RData' %in% dir()){
     labs(title = 'iv')
   
   map_list <- list(g1,g2,g3,g4)
-  
-  # Get the herd protection score assuming that everyone nearby was protected
-  groups <- sort(unique(model_data$group))
-  herd_ideal <- 
-    model_data %>%
-    filter(!is.na(longitude_aura),
-           !is.na(latitude_aura)) %>%
-    group_by(oracle_number) %>%
-    summarise(lng = dplyr::first(longitude_aura),
-              lat = dplyr::first(latitude_aura)) %>%
-    ungroup
-  coordinates(herd_ideal) <- ~lng+lat
-  proj4string(herd_ideal) <- CRS("+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs")
-  # Get distances
-  distances <- spDists(x = herd_ideal)
-  out <- apply(distances, 1, function(x){
-    x <- weighter(x)
-    x <- x[is.finite(x)]
-    x <- sum(x, na.rm = TRUE)
-    return(x)
-  })
-  herd_ideal$herd_ideal <- out
-  herd_ideal <- herd_ideal@data
-  # Join back to model_data
-  model_data <-
-    left_join(model_data,
-              herd_ideal)
-  
-  
-  # Define function similiar to "predict" but for felm
-  predict_felm <- function(model, df,
-                           irs0 = FALSE,
-                           irs_all = FALSE,
-                           herd0 = FALSE,
-                           herd_max = FALSE){
-    # Extract fixed effects
-    fe <- getfe(model) %>%
-      dplyr::select(idx, effect)
-    fe$key <- row.names(fe)
-    # Extract the fixed effects
-    fe_oracle_number <- 
-      fe %>%
-      dplyr::filter(grepl('oracle', key)) %>%
-      dplyr::select(idx, effect) %>%
-      dplyr::rename(oracle_number = idx)
-    fe_malaria_year <- 
-      fe %>% 
-      dplyr::filter(grepl('year', key)) %>%
-      dplyr::select(idx, effect) %>%
-      dplyr::rename(malaria_year = idx)
-    # Get the coefficients for the non-fixed effects variables
-    betas <- model$beta
-    beta_names <- row.names(betas)
-    betas <- data_frame(var = beta_names, 
-                        beta = as.numeric(betas))
-    # Split up the vals, etc.
-    betas$variable <- gsub('high', '', betas$var)
-    betas$variable <- gsub('After', '', betas$variable)
-    betas$variable <- gsub('TRUE', '', betas$variable)
-
-    # Get the non fe parts
-    x <- model$X
-    
-    a <- data.frame(oracle_number = model$fe$oracle_number,
-                    malaria_year = model$fe$malaria_year)
-    data <- cbind(x, a)
-    
-    # Join the fe parts
-    data <- left_join(data,
-                      fe_malaria_year) %>%
-      dplyr::select(-malaria_year) %>%
-      dplyr::rename(malaria_year = effect) %>%
-      left_join(fe_oracle_number) %>%
-      dplyr::select(-oracle_number) %>%
-      dplyr::rename(oracle_number = effect)
-    
-    # Get the sum
-    betas <- data.frame(betas)
-    data <- data.frame(data)
-    
-    # Deal with the NAs in the model frame
-    is <- 1:nrow(df)
-    nas <- model$na.action
-    is <- is[!is %in% nas]
-    done <- rep(NA, nrow(df))
-    
-    # If IRS is 0 (for prediction purposes, overwrite)
-    if(irs0){
-      data$months_sinceAfter <- 0
-      data$seasonhigh.months_sinceAfter <- 0
-    }
-    if(herd0){
-      data$herd <- 0
-    }
-    if(irs_all){
-      data$months_sinceAfter <- 1
-      data$seasonhigh.months_sinceAfter <- 1
-    }
-    if(herd_max){
-      data$herd <- df$herd_ideal[is]
-    }
-    
-    out <- 
-      (betas$beta[betas$var == 'seasonhigh'] * data$seasonhigh) +
-      (betas$beta[betas$var == 'months_sinceAfter'] * data$months_sinceAfter) +
-      (betas$beta[betas$var == 'rainy_dayTRUE'] * data$rainy_dayTRUE) +
-      (betas$beta[betas$var == 'herd'] * data$herd) +
-      (betas$beta[betas$var == 'seasonhigh:months_sinceAfter'] * data$seasonhigh.months_sinceAfter) +
-      as.numeric(data$malaria_year) +
-      as.numeric(data$oracle_number)
-    
-    done[is] <- out
-    # done[nas] <- NA
-    return(done)
-  }
-  
-  model_data$predicted <-
-    model_data$predicted_no_irs <-
-    model_data$predicted_no_herd <- 
-    model_data$predicted_no_herd_no_irs <-
-    model_data$predicted_max_irs <- 
-    model_data$predicted_max_herd <-
-    model_data$predicted_max_herd_max_irs <- 
-    NA
-  
-  for (i in 1:length(groups)){
-    message(i)
-    this_group <- groups[i]
-    indices <- which(model_data$group == this_group)
-    model <- protection_models[[this_group]]
-    data <- model_data[indices,]  %>%
-      filter(months_since != 'Never')
-    model_data$predicted[indices] <- 
-      predict_felm(model = model,
-              df = data)
-    model_data$predicted_no_irs[indices] <-
-      predict_felm(model = model,
-                   df = data,
-                   irs0 = TRUE)
-    model_data$predicted_no_herd[indices] <-
-      predict_felm(model = model,
-                   df = data,
-                   herd0 = TRUE)
-    model_data$predicted_no_herd_no_irs[indices] <-
-      predict_felm(model = model,
-                   df = data,
-                   herd0 = TRUE,
-                   irs0 = TRUE)
-    model_data$predicted_max_irs[indices] <-
-      predict_felm(model = model,
-                   df = data,
-                   irs_all = TRUE)
-    model_data$predicted_max_herd[indices] <- 
-      predict_felm(model = model,
-                   df = data,
-                   herd_max = TRUE)
-    model_data$predicted_max_herd_max_irs[indices] <- 
-      predict_felm(model = model,
-                   df = data,
-                   herd_max = TRUE,
-                   irs_all = TRUE)
-  }
   
   save.image(file = 'prepared_data.RData')
   }
@@ -765,7 +640,7 @@ make_models_table <- function(model_list, the_caption = "Models with worker fixe
   breaker <- nrow(out_list[[1]])
   lengther <- length(out_list)
   breaks <- c(0, breaker * 1:(lengther))
-  k <- kable(df, format = "latex", caption = the_caption, booktabs = T, longtable = TRUE) %>%
+  k <- kable(df, format = "html", caption = the_caption, booktabs = T, longtable = TRUE) %>%
     kable_styling(latex_options = c("hold_position", "repeat_header"))
   for (i in 1:(length(breaks)-1)){
     message(i)

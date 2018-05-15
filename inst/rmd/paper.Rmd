@@ -12,8 +12,8 @@ output:
     keep_tex: yes
     latex_engine: xelatex
   word_document: default
-fig_width: 4
-fig_height: 2.6
+fig_width: 8
+fig_height: 6
 bibliography: bibliography.bib
 ---
 
