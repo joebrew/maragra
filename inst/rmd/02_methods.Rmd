@@ -190,10 +190,10 @@ Our model specification is as follows
 
 
 $$
-\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * (\hat{\beta}_2{IRS_{it}}*\hat{\beta}_3{IRStime_{it}}) +  \hat{\beta}_4{Herd_{it}} +  \alpha_i + \delta_t + \upsilon_{it}
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * IRS_{it} + \hat{\beta}_2{RainyDay_{t}} + \hat{\beta}_3{Herd_{it}} +  \alpha_i + \delta_t + \upsilon_{it}
 $$
 
-$\hat{Y}_{it}$ is the rate of absence. $\beta_{1}$ is the binary "season" variable, imputed from overall district clinical incidence. Our intervention is whether the residence of the worker in question was treated in the last year, and, if so, the time since treatment, represented, respectively, by $\beta_{2}$ and $\beta_{3}$. $\beta_{4}$ **represents the distance-weighted herd protection score**. $\alpha_i$ represents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term.
+$\hat{Y}_{it}$ is the rate of absence. $\beta_{1}$ is the binary "season" variable, imputed from overall district clinical incidence, interacted with our "treatment" condition: whether or not the worker in question's residence was sprayed with IRS in the preceding 6 months or not. $\beta_{2}$ is whether it was raining on that particular day or not.  $\beta_{3}$ represents the distance-weighted herd protection score. $\alpha_i$ represents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term.
 
 Our formula for return on investment can be described in a straightforward fashion...
 
