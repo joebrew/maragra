@@ -1,0 +1,384 @@
+---
+title: "Concept note: additional models"
+subtitle: "Pradhan, Sicuri, Brew"
+date: ''
+output: 
+  pdf_document:
+    keep_tex: true
+    latex_engine: xelatex
+    includes:
+      in_header: preamble.sty
+fig_width: 4
+fig_height: 2.6
+bibliography: bibliography.bib
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# csl: journal-of-health-economics.csl
+
+# Packages
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(RColorBrewer)
+library(extrafont)
+library(kableExtra)
+library(raster)
+loadfonts()
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               fig.height = 4,
+               fig.width = 5,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE,
+               dev = "cairo_pdf",
+               fig.pos="!h",
+               fig.align = 'center')
+opts_knit$set(width=75)
+options(xtable.comment = FALSE)
+
+```
+
+```{r, eval = TRUE}
+source('paper_prepare.R')
+```
+
+
+\begin{center}
+\begin{large}
+
+A few different approaches to modeling absenteeism in the Maragra data
+
+\end{large}
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\textbf{Overview}  
+\end{center}
+
+\vspace{5mm}
+\begin{center}
+\begin{changemargin}{3cm}{3cm} 
+
+This document contains methods and basic results for a few different modeling approaches, following a conversation and write-up with Menno Pradhan in May 2018. The purpose of this document is to make explicit the current models we have implemented, and some issues with them.
+
+\end{changemargin}
+\end{center}
+
+\vspace{20mm}
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+        \subsection*{Main points}
+        \begin{itemize}
+          \item I have implemented Menno's suggestions for more simple models.
+          \item The simplest models show no overall effect from IRS when not accounting for malaria season
+          \item I believe that the lack of an effect is due to seasonality's presence in the model as a fixed (additive) effect, rather than as an interaction with IRS
+        \end{itemize}
+        \vspace{2mm}
+    }%
+}
+
+\vfill
+\null
+
+\subsection*{Desinataires}
+\textbf{Elisa Sicuri; Menno Pradhan}
+
+\vspace{3mm}
+
+\newpage
+
+# The current approach 
+
+In the current draft of the paper (\href{https://docs.google.com/document/d/1bUWRBCgVcgjSPHchIQxiTG8Vwv5hV1GLU4Tlu386sWA/edit#}{HERE}
+), the model formula is:
+
+
+$$
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * IRS_{it} + \hat{\beta}_2{RainyDay_{t}} + \hat{\beta}_3{Herd_{it}} +  \alpha_i + \delta_t + \upsilon_{it}
+$$
+
+In R, using the `felm` library, this is written as follows:
+
+```{r, echo = FALSE}
+protection_models[[1]]$call
+```
+
+The above notation shows `absent` (binary 1,0) as a function of the interaction of binary `season` (high vs. low) and binary `months_since` (before vs. after) plus binary `rainy_day` (whether or not it rained on the particular day) plus continuous numeric `herd` (ie, the protection afforded by others) plus fixed effects for both the worker (`oracle_number`) and the year (`malaria_year`).  $\alpha_i$ represents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term. This model is run separately for the 4 different worker groups, yielding the following results:
+
+```{r, results = 'asis'}
+make_models_table(model_list = protection_models, the_caption = "All absenteeism with herd immunity: model results", type = 'latex', multiplier = 1)
+```
+
+In the above, "after" IRS application (ie, the 6 months following IRS) is associated with a significant reduction in absenteeism for both kinds of permanent workers, and does not have a signficiant association with a change in absenteeism for both kinds of temporary workers.
+
+# Suggested changes from Menno
+
+
+Menno sent a write-up on May 17th (see email with subject "suggestions for models") with some proposed changes to how we model absenteeism. What follows is an implementation of those suggestions. 
+
+## Model A (without seasonality)
+
+The below is a characterization of the approach Menno suggested:
+
+- We use monthly instead of daily data (modeling a percentage absenteeism rate rather than a binary).
+- We use fixed effects for year-month combination. 
+- We don't explicitly model for malaria season. 
+- We don't have any interaction terms.
+- We use dummies for months since IRS.
+- We use the most recent spraying as the time since IRS (ie, if 5 months ago, and 1 month ago, then the dummy is applied for 1 month ago but not 5 months ago).
+
+
+Using this approach, our panel data looks like this:
+
+```{r}
+# Create a model per menno's specifications
+menno_models <- list()
+
+menno_data <- model_data %>%
+  # filter(!is.na(days_since)) %>%
+  # filter(days_since >= -184, days_since <= 184) %>%
+  group_by(oracle_number, group, year_month) %>%
+  summarise(absent = length(which(absent)) / length(absent) * 100,
+            days = n(),
+            herd = mean(herd, na.rm = TRUE),
+            months_since_menno = dplyr::first(months_since_menno),
+            season = dplyr::first(season)) %>%
+  ungroup
+groups <- sort(unique(model_data$group))
+# library(lmerTest)
+# library(nlme)
+for (i in 1:length(groups)){
+  message(i)
+  this_group <- groups[i]
+  message(this_group)
+  these_data <- menno_data %>% filter(group == this_group)
+  this_menno_model <- felm(absent ~ months_since_menno    | oracle_number + year_month | 0 | 0,
+                                data = these_data)
+
+  menno_models[[i]] <- this_menno_model
+}
+names(menno_models) <- groups
+print(head(menno_data %>% filter(months_since_menno != 'Before') %>% sample_n(20) %>% dplyr::select(-season, -herd)))
+```
+
+The model formula was described in Menno's email.
+
+\includegraphics{images/menno}[width=3cm]
+
+Which translates into R as:
+
+```{r}
+menno_models[[1]]$call
+```
+
+Note that the `months_since_menno` variable has the following categories, and is treated as a "wide" dummy by the software in modeling:
+
+```{r}
+levels(menno_data$months_since_menno)
+```
+
+The results of this model look like this:
+
+
+```{r, results = 'asis'}
+make_models_table(model_list = menno_models, the_caption = "Simple models with year-month fixed effects", type = 'latex', multiplier = 1)
+```
+
+In the above, it is apparent that the effects of IRS appear to be either (a) in the opposite direction as expected or (b) non-signficant. Here is a visualization of IRS' apparent effect (relative to the "Before" period, which is the reference class). Were IRS effective, we would expect the black line to be below 0 (the red line).
+
+```{r}
+out_list <- list()
+for (i in 1:length(groups)){
+  this_group <- groups[[i]]
+  x <- coef(menno_models[[i]])
+  x <- x[grepl('months_since', names(x))]
+  names(x) <- 1:6
+  out_list[[i]] <- data.frame(group = this_group,
+                              month = names(x),
+                              coef = x)
+}
+out <- bind_rows(out_list)
+
+ggplot(data = out,
+       aes(x = month,
+           y = coef)) +
+  geom_line(aes(group = 1)) +
+  facet_wrap(~group) +
+  geom_hline(yintercept = 0, 
+             lty = 2,
+             col = 'red',
+             alpha = 0.6) +
+  labs(x = 'Months since IRS',
+       y = 'Coefficient')
+```
+
+What is going on here? Could it  be that IRS has a positive (ie, increases) impact on absenteeism? Let's look at the raw data, rather than the coefficients. The below chart shows absenteeism (as a percentage of the pre-IRS absenteeism average) for workers, broken down by season (row) and worker type (column), with point size reflecting the number of observations.
+
+```{r, fig.width = 8}
+pd <- menno_data %>%
+  group_by(season, months_since_menno, group) %>%
+  summarise(absenteeism_rate = mean(absent, na.rm = TRUE),
+            days = sum(days)) %>%
+  # summarise(absenteeism_rate = length(which(absent)) / length(absent) * 100) %>%
+  ungroup %>%
+  group_by(group, season) %>%
+  mutate(start = dplyr::first(absenteeism_rate)) %>%
+  mutate(p = absenteeism_rate / start * 100)
+
+options(scipen = '999')
+ggplot(data = pd %>% ungroup %>% 
+         mutate(season = paste0(season, ' season')) %>%
+         mutate(group = gsub(' worker', '', group)),
+       aes(x = months_since_menno,
+           y = p)) +
+  geom_point(aes(size = days)) +
+  geom_line(aes(group = 1), alpha = 0.4) +
+  facet_grid(season~group) +
+  geom_hline(yintercept = 100, 
+             color = 'red',
+             lty = 2) +
+  theme(axis.text.x = element_text(angle = 90)) +
+  scale_y_log10(breaks = seq(0, 500, 100)) +
+  labs(y = 'Absenteeism (relative to before IRS, log)',
+       x = 'Time') +
+  scale_size_continuous(name = 'Observations',
+                    breaks = c(10000, 100000, 5000000))
+
+```
+
+In the above chart, two things stand out:
+
+1. Variability is greatest among temporary workers.
+2. There appears to be a reduction in absenteeism post IRS for permanent workers _during the malaria season_, but not during the non-malaria season
+
+So, perhaps controlling for year-month through fixed effects isn't enough, since the effect of IRS _interacts_ with the season...
+
+
+## Model B (with seasonality)
+
+Using this approach, our panel data looks like this:
+
+```{r}
+# Create a model per menno's specifications
+menno_models <- list()
+
+for (i in 1:length(groups)){
+  message(i)
+  this_group <- groups[i]
+  message(this_group)
+  these_data <- menno_data %>% filter(group == this_group)
+  this_menno_model <- felm(absent ~ months_since_menno*season  | oracle_number + year_month | 0 | 0,
+                                data = these_data)
+
+  menno_models[[i]] <- this_menno_model
+}
+names(menno_models) <- groups
+print(head(menno_data %>% filter(months_since_menno != 'Before') %>% sample_n(20) %>% dplyr::select(-herd)))
+```
+
+Our new model specification (in R) is:
+
+```{r}
+menno_models[[1]]$call
+```
+
+The results of this model look like this:
+
+
+```{r, results = 'asis'}
+make_models_table(model_list = menno_models, the_caption = "Simple models with year-month fixed effects and seasonality-IRS interaction term", type = 'latex')
+```
+
+The below shows model coefficients:
+
+```{r, fig.width = 8}
+out_list <- list()
+for (i in 1:length(groups)){
+  this_group <- groups[[i]]
+  x <- clean_up_model(menno_models[[i]], multiplier = 1)
+  x <- x %>%
+    filter(grepl('IRS status', Term),
+           grepl('season', Term)) 
+  # Malaria season
+  df1 <- data.frame(group = this_group,
+                              month = 1:6,
+                              coef = x$Estimate,
+                    season = 'high')
+  
+  x <- clean_up_model(menno_models[[i]], multiplier = 1)
+  x <- x %>%
+    filter(grepl('IRS status', Term),
+           !grepl('season', Term)) 
+  # Malaria season
+  df2 <- data.frame(group = this_group,
+                              month = 1:6,
+                              coef = x$Estimate,
+                    season = 'low')
+  out_list[[i]] <- bind_rows(df1, df2) 
+}
+out <- bind_rows(out_list)
+x <- strsplit(out$coef, ' ')
+x <- lapply(x, function(x){x[1]})
+x <- unlist(x)
+out$coef <- as.numeric(as.character(x))
+ggplot(data = out,
+       aes(x = month,
+           y = coef)) +
+  geom_line(aes(group = 1)) +
+  facet_grid(season~group) +
+  geom_hline(yintercept = 0, 
+             lty = 2,
+             col = 'red',
+             alpha = 0.6) +
+  labs(x = 'Months since IRS',
+       y = 'Coefficient')
+```
+
+
+## Model C (with seasonality and herd score)
+
+We now introduce herd immunity to the model. This is introduced as an additive effect; perhaps it should be interactive with IRS? Using this approach, our panel data looks like this:
+
+```{r}
+# Create a model per menno's specifications
+menno_models <- list()
+
+for (i in 1:length(groups)){
+  message(i)
+  this_group <- groups[i]
+  message(this_group)
+  these_data <- menno_data %>% filter(group == this_group)
+  this_menno_model <- felm(absent ~ months_since_menno*season  | oracle_number + year_month | 0 | 0,
+                                data = these_data)
+
+  menno_models[[i]] <- this_menno_model
+}
+names(menno_models) <- groups
+print(head(menno_data %>% filter(months_since_menno != 'Before') %>% sample_n(20) ))
+```
+
+Our new model specification (in R) is:
+
+```{r}
+menno_models[[1]]$call
+```
+
+The results of this model look like this:
+
+
+```{r, results = 'asis'}
+make_models_table(model_list = menno_models, the_caption = "Simple models with year-month fixed effects, seasonality-IRS interaction term, and herd score", type = 'latex')
+```
+

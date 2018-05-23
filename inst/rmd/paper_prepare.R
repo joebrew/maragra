@@ -1,4 +1,5 @@
 # Packages
+library(sp)
 library(tidyverse)
 library(knitr)
 library(Hmisc)
@@ -25,19 +26,7 @@ if('prepared_data.RData' %in% dir()){
   weather <- maragra::weather
   workers <- maragra::workers
   
-  # Define function for adding zero
-  add_zero <- function (x, n) {
-    x <- as.character(x)
-    adders <- n - nchar(x)
-    adders <- ifelse(adders < 0, 0, adders)
-    for (i in 1:length(x)) {
-      if (!is.na(x[i])) {
-        x[i] <- paste0(paste0(rep("0", adders[i]), collapse = ""),
-                       x[i], collapse = "")
-      }
-    }
-    return(x)
-  }
+  # Create model data
   
   model_data <-
     ab_panel %>%
@@ -147,7 +136,6 @@ if('prepared_data.RData' %in% dir()){
   
   # Estimate a protection factor based on the weighted protection 
   # scores of nearby houses
-  library(sp)
   dates <- sort(unique(model_data$date))
   out_list <- list()
   
@@ -290,10 +278,10 @@ if('prepared_data.RData' %in% dir()){
   #                         'Non-field worker',
   #                         group))
   
-  # REMOVE THE NEVERS
-  model_data <- model_data %>%
-    filter(ever_sprayed)
-  
+  # # REMOVE THE NEVERS
+  # model_data <- model_data %>%
+  #   filter(ever_sprayed)
+  # 
   fe_models <- list()
   sick_models <- list()
   protection_models <- list()
@@ -572,7 +560,7 @@ if('prepared_data.RData' %in% dir()){
   save.image(file = 'prepared_data.RData')
   }
 
-clean_up_model <- function(x){
+clean_up_model <- function(x, multiplier = 100){
   # extract coefficients
   coefs <- data.frame(coef(summary(x)))
   # use normal distribution to approximate p-value
@@ -580,7 +568,7 @@ clean_up_model <- function(x){
   ps <- coefs$p.z
   x = broom::tidy(x)
   for(j in 2:(ncol(x) -1)){
-    x[,j] <- x[,j] * 100
+    x[,j] <- x[,j] * multiplier
   }
   x$term <- gsub('seasonhigh', 'Malaria season', x$term)    
   x$term <- gsub('seasonlow', 'Low malaria season', x$term)
@@ -613,14 +601,14 @@ clean_up_model <- function(x){
   return(x)
 }
 
-make_models_table <- function(model_list, the_caption = "Models with worker fixed effects"){
+make_models_table <- function(model_list, the_caption = "Models with worker fixed effects", type = 'html', multiplier = 100){
   
   out_list <- list()
   for(i in 1:length(model_list)){
     message(i)
     this_model <- names(model_list)[i]
     the_model <- model_list[[which(names(model_list) == this_model)]]
-    the_model <- clean_up_model(the_model)
+    the_model <- clean_up_model(the_model, multiplier = multiplier)
     names(the_model)[2] <- this_model
     out_list[[i]] <- the_model
   }
@@ -640,7 +628,7 @@ make_models_table <- function(model_list, the_caption = "Models with worker fixe
   breaker <- nrow(out_list[[1]])
   lengther <- length(out_list)
   breaks <- c(0, breaker * 1:(lengther))
-  k <- kable(df, format = "html", caption = the_caption, booktabs = T, longtable = TRUE) %>%
+  k <- kable(df, format = type, caption = the_caption, booktabs = T, longtable = TRUE) %>%
     kable_styling(latex_options = c("hold_position", "repeat_header"))
   for (i in 1:(length(breaks)-1)){
     message(i)
@@ -661,4 +649,27 @@ make_season <- function(date){
                 'Malaria season', 'Off season')
   out <- factor(out, levels = c('Off season', 'Malaria season'))
   return(out)
+}
+
+# Create a year-month variable
+model_data$year_month <-
+  paste0(model_data$calendar_year, 
+         '_', model_data$calendar_month)
+
+# Create a months since variable for menno's model (actually months since)
+model_data <-
+  model_data %>%
+  mutate(months_since_menno = days_since %/% 30) %>%
+  mutate(months_since_menno = months_since_menno + 1) %>%
+  mutate(months_since_menno = ifelse(months_since_menno < 1 |
+                                       months_since_menno > 6,
+                                     'Before',
+                                     add_zero(months_since_menno, n = 2))) %>%
+  mutate(months_since_menno = ifelse(is.na(months_since_menno), 'Before',
+                                     months_since_menno)) %>%
+  mutate(months_since_menno = factor(months_since_menno,
+                                     levels = unique(c('Before', sort(unique(months_since_menno))))))
+
+if(!'model_data.csv' %in% dir()){
+  write_csv(model_data, 'model_data.csv')
 }
