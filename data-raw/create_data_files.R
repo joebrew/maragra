@@ -285,6 +285,9 @@ if('ab_expanded.RData' %in% dir()){
   }
   ab_expanded <- bind_rows(ab_expanded)
   ab_expanded$absent <- TRUE
+  # Remove any potential duplicates
+  ab_expanded <- ab_expanded %>%
+    dplyr::distinct(oracle_number, date, .keep_all = TRUE)
   save(ab_expanded,
        file = 'ab_expanded.RData')
 }
@@ -314,7 +317,9 @@ ab_panel <-
   # and anything in 2017, which also appears untrustable
   dplyr::filter(date <= '2016-12-31')
 
-
+# Remove any potential duplicates
+ab_panel <- ab_panel %>%
+  dplyr::distinct(oracle_number, date, .keep_all = TRUE)
 
 # DSS bairros data
 library(rgdal)
@@ -1048,12 +1053,12 @@ mc <-
 expand_irs <- function(date,
                        chemical,
                        unidade){
-  data_frame(date = seq(date - 364,
-                        date + 364,
+  data_frame(date = seq(date - 730,
+                        date + 730,
                         by = 1),
              chemical = chemical,
              unidade = unidade,
-             days_since = -364:364)
+             days_since = -730:730)
 }
 results <- list()
 for (i in 1:nrow(mc)){
@@ -1061,7 +1066,7 @@ for (i in 1:nrow(mc)){
                     chemical = mc$insecticida[i],
                     unidade = mc$unidade[i])
   results[[i]] <- out
-  message(i)
+  # message(i)
 }
 
 # Combine
@@ -1092,31 +1097,31 @@ joined <- full_join(after, before)
 joined <- joined %>%
   arrange(unidade, date)
 
-# Flag a period which is both before and after (not suitable for modeling)
-joined <-
-  joined %>%
-  mutate(ok_for_model =
-           is.na(days_until) |
-           is.na(days_since))
-irs <- joined; rm(joined)
+# If both before and after, but greater than 270 days after, use the before
+cutter <- 548
 
-# Remove the not ok ones and calculate days
-irs <- irs %>%
-  filter(ok_for_model) %>%
-  mutate(days = ifelse(is.na(days_since), days_until,
-                       ifelse(is.na(days_until), days_since, NA))) %>%
-  mutate(chemical = ifelse(is.na(days_since), chemical_before,
-                           ifelse(is.na(days_until), chemical_after, NA))) %>%
-  mutate(days_since = days) %>%
-  dplyr::select(date, unidade, days_since, chemical)
+x <- joined %>%
+  # If in the period between 0 and cutter (ie, just after IRS)
+  # make "days_since" refer to that;
+  # otherwise, make it refer to days until
+  mutate(chemical = ifelse(!is.na(days_since) & days_since <= cutter,
+                           chemical_before,
+                           chemical_after)) %>%
+  mutate(days_since = ifelse(!is.na(days_since) & days_since <= cutter,
+         days_since,
+         days_until))
 
-# irs <-
-#   irs %>%
-#   group_by(date, unidade) %>%
-#   summarise(days_since = min(days_since),
-#             days_until = max(days_since),
-#             chemical = dplyr::first(chemical[days_since == min(days_since)]))
-# irs <- irs %>% ungroup
+irs <- x %>%
+  dplyr::select(date, unidade, chemical, days_since)
+irs <- irs %>% 
+  # arrange from most recent, so as to keep most recent
+  dplyr::arrange(unidade, desc(date))
+
+# Given the above cutter mutation, there should be no repeats
+# but remove duplicates just in case
+irs <-
+  irs %>%
+  dplyr::distinct(date, unidade, .keep_all = TRUE)
 
 # Bring an unidade into workers
 # only merging on those with an acceptably low match
@@ -1203,7 +1208,95 @@ bairros_maragra_fabrica <- x[x$maragra_fabrica,]
 # the_bairro <- spTransform(the_bairro, CRS("+proj=utm +zone=36 +datum=WGS84 +units=m") )
 # the_fabrica <- spTransform(the_fabrica, CRS("+proj=utm +zone=36 +datum=WGS84 +units=m") )
 
+# Get itemized costs
+periods <- paste0(2011:2016, '-', 2012:2017)
+fxs <- c(28.85,
+         28.31,
+         29.93,
+         30.75,
+         38.85,
+         63.42)
+itemized_list <- list()
+for(i in 1:length(periods)){
+  this_period <- periods[i]
+  this_sheet <- read_excel('Costs.xlsx',
+                           sheet = this_period,
+                           skip = 1) %>%
+    mutate(period = this_period) %>%
+    mutate(fx = fxs[i]) %>%
+    mutate(usd = MT / fx)
+  itemized_list[[i]] <- this_sheet
+}
+itemized <- bind_rows(itemized_list)
+costs_itemized <- itemized
+
+costs_itemized <- costs_itemized %>%
+  filter(!is.na(Account)) %>%
+  mutate(area = Account) %>%
+  mutate(area = ifelse(grepl('WAGES', area), 'Human resources', area)) %>%
+  mutate(area = ifelse(area %in% c('LUBRICANTS', 'TYRES & TUBES',
+                                   'VEHICLE MAINTENANCE', 'DIESEL'),
+                       'Vehicles', area)) %>%
+  mutate(area = ifelse(area %in% c('PENSION FUND CONTRIBUTIONS',
+                                   'SALARIES BASIC', 'HOUSING ALLOWANCE',
+                                   'LEAVE PAY PROVISION'), 'Human resources', area)) %>%
+  mutate(area = ifelse(area %in% toupper(c('Equipment maintenance',
+                                           'Protective clothing',
+                                           'Tools',
+                                           'Consumables')),
+                       'Equipment', area)) %>%
+  mutate(area = ifelse(area %in% c('ENVIRONMENTAL MONITORING',
+                                   'TRAVEL (FOREIGN)'),
+                       'Other', area)) %>%
+  group_by(period, area) %>%
+  summarise(total = sum(usd, na.rm = TRUE)) %>%
+  ungroup %>%
+  mutate(area = tolower(area)) %>%
+  mutate(area = Hmisc::capitalize(area))
+
+# Remove transport and replace manually
+costs_itemized <- costs_itemized %>%
+  filter(area != 'Vehicles')
+
+
+# Manually enter cost data (provided by Kizito, in `Costs Transport.xlsx`)
+transport <- data_frame(period = c('2011-2012',
+                               '2012-2013',
+                               '2013-2014',
+                               '2014-2015',
+                               '2015-2016',
+                               '2016-2017'),
+                    mzn = c(rep(327000, 3), # just an estimate since these years we don't have data for
+                            334773.08,
+                            327219.56,
+                            432052.46),
+                    fx = c(28.85,
+                           28.31,
+                           29.93,
+                           30.75,
+                           38.85,
+                           63.42)) %>%
+  mutate(usd = mzn / fx) 
+# Restructure to put in itemized format
+transport <- transport %>%
+  dplyr::rename(total = usd) %>%
+  mutate(area = 'Transportation') %>%
+  dplyr::select(period, area, total)
+
+# Combine
+costs_itemized <- costs_itemized %>%
+  bind_rows(transport) %>%
+  arrange(period, area)
+
+# Get a non -itemized version
+costs <- costs_itemized %>%
+  group_by(period) %>%
+  summarise(total = sum(total))
+
 # Save for use in package
+devtools::use_data(costs_itemized, overwrite = TRUE)
+devtools::use_data(costs, overwrite = TRUE)
+# devtools::use_data(costs_raw, overwrite = TRUE)
 devtools::use_data(hiv_prevalence, overwrite = TRUE)
 devtools::use_data(bes,
                    overwrite = TRUE)

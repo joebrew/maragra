@@ -1,0 +1,296 @@
+---
+title: "Concept note: sequential models"
+subtitle: "Pradhan, Sicuri, Brew"
+date: ''
+output: 
+  pdf_document:
+    keep_tex: true
+    latex_engine: xelatex
+    includes:
+      in_header: preamble.sty
+fig_width: 6
+fig_height: 6
+bibliography: bibliography.bib
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# csl: journal-of-health-economics.csl
+
+# Packages
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(RColorBrewer)
+library(extrafont)
+library(kableExtra)
+library(raster)
+loadfonts()
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               fig.height = 6,
+               fig.width = 7,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE,
+               dev = "cairo_pdf",
+               fig.pos="!h",
+               fig.align = 'center')
+opts_knit$set(width=75)
+options(xtable.comment = FALSE)
+
+```
+
+```{r, eval = TRUE}
+source('paper_prepare.R')
+```
+
+
+\begin{center}
+\begin{large}
+
+A few different approaches to modeling absenteeism in the Maragra data
+
+\end{large}
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\textbf{Overview}  
+\end{center}
+
+\vspace{5mm}
+\begin{center}
+\begin{changemargin}{3cm}{3cm} 
+
+This document contains the results (both tabular and visual) of running different permutations of variables through linear fixed effects models, with the purpose of understanding the relationship between IRS and worker absenteeism.
+
+\end{changemargin}
+\end{center}
+
+\vspace{20mm}
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+        \subsection*{Main points}
+        \begin{itemize}
+          \item Meant for internal review
+          \item Uses loops to permutate different variable combinations in models
+          \item Charts added (with only relevant variables) for quick interpretation
+        \end{itemize}
+        \vspace{2mm}
+    }%
+}
+
+\vfill
+\null
+
+\subsection*{Desinataires}
+\textbf{Elisa Sicuri; Menno Pradhan}
+
+\vspace{3mm}
+
+\newpage
+
+# The current approach 
+
+In the current draft of the paper (\href{https://docs.google.com/document/d/1bUWRBCgVcgjSPHchIQxiTG8Vwv5hV1GLU4Tlu386sWA/edit#}{HERE}
+), the model formula is:
+
+
+$$
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * IRS_{it} + \hat{\beta}_2{RainyDay_{t}} + \hat{\beta}_3{Herd_{it}} +  \alpha_i + \delta_t + \upsilon_{it}
+$$
+
+In R, using the `felm` library, this is written as follows:
+
+```{r, echo = FALSE}
+protection_models[[1]]$call
+```
+
+The above notation shows `absent` (binary 1,0) as a function of the interaction of binary `season` (high vs. low) and binary `months_since` (before vs. after) plus binary `rainy_day` (whether or not it rained on the particular day) plus continuous numeric `herd` (ie, the protection afforded by others) plus fixed effects for both the worker (`oracle_number`) and the year (`malaria_year`).  $\alpha_i$ represents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term. This model is run separately for the 4 different worker groups, yielding the following results:
+
+```{r, results = 'asis'}
+make_models_table(model_list = protection_models, the_caption = "All absenteeism with herd immunity: model results", type = 'latex', multiplier = 1)
+```
+
+In the above, "after" IRS application (ie, the 6 months following IRS) is associated with a significant reduction in absenteeism for both kinds of permanent workers, and does not have a signficiant association with a change in absenteeism for both kinds of temporary workers.
+
+# Sequential models
+
+What follows are different combinations of variables in the same modeling structure (linear fixed effects using R's `felm` library, with different models for the 4 different worker types).
+
+```{r}
+make_model <- function(call = 'absent ~ season*months_since + rainy_day + herd  | oracle_number + malaria_year'){
+  sequential_models <- list()
+  groups <- sort(unique(model_data$group))
+  # library(lmerTest)
+  # library(nlme)
+  for (i in 1:length(groups)){
+    message(i)
+    this_group <- groups[i]
+    message(this_group)
+    these_data <- model_data %>% filter(group == this_group)
+    this_model <- felm(as.formula(paste0(call, ' | 0 | 0')),
+                       data = these_data)
+    sequential_models[[i]] <- this_model
+  }
+  names(sequential_models) <- groups
+  return(sequential_models)
+}
+display_model <- function(made_model,
+                          caption = '',
+                          type = 'latex',
+                          multiplier = 100){
+  make_models_table(model_list = made_model,
+                    the_caption = caption,
+                    type = type,
+                    multiplier = multiplier)
+}
+# display_model(make_model())
+
+# Create data frame of different scenarios
+library(combinat)
+
+model_data$before_after <- model_data$months_since
+model_data$time_since <- model_data$months_since_menno
+scenarios <-
+  expand.grid(interaction = c('season * before_after',
+                              'season * time_since',
+                              'incidence * before_after',
+                              'incidence * time_since'),
+              terms = c('rainy_day', 'herd', 'rainy_day + herd'),
+              fe = c('oracle_number', 'malaria_year', 'year_month', 
+                     'oracle_number + malaria_year',
+                     'oracle_number + year_month',
+                     'oracle_number',
+                     '0'),
+              stringsAsFactors = FALSE) %>%
+  mutate(formula = paste0('absent ~ ', interaction, ' + ',
+                          terms, ' | ', fe)) %>%
+  mutate(description = 
+           paste0('Absenteeism as a function of ',
+                  '(interaction of ', gsub('*', 'and', interaction, fixed = TRUE),
+                  ') + ', terms, ' with ',
+                  ifelse(fe == '0', 'no fixed effects',
+                         ' the following fixed effects: '),
+                  ifelse(fe == '0', '',
+                         gsub(' + ', ' and ', fe, fixed = TRUE))))
+
+# Create some dummy data
+dum <- expand.grid(season = sort(unique(model_data$season)),
+                   time_since = sort(unique(model_data$time_since)),
+                   rainy_day = sort(unique(model_data$rainy_day)),
+                   incidence = quantile(model_data$incidence, probs = c(0.1, 0.9)),
+                   herd = quantile(model_data$herd, probs = c(0.1, 0.9)),
+                   group = sort(unique(model_data$group)))
+
+plot_model <- function(made_model = made_model){
+  plot_data <- data.frame(
+    variable = unlist(lapply(made_model, function(x){paste0(names(coef(x)))})),
+    coefficient = as.numeric(as.character(unlist(lapply(made_model, function(x){paste0(coef(x))}))))
+  )
+  plot_data <- plot_data %>%
+    mutate(group = rep(groups, each = nrow(plot_data) / 4))
+  row.names(plot_data) <- NULL
+  
+  plot_data <- plot_data %>%
+    filter(!variable %in% c('incidence', 'herd', 'rainy_dayTRUE',
+                            '(Intercept)', 'seasonhigh')) #%>%
+    # mutate(!grepl('incidence', variable))
+  plot_data$variable <- gsub('time_since', 'Months post IRS: ', plot_data$variable)
+  has_season <- any(grepl('seasonhigh', plot_data$variable))
+  plot_data$variable <- gsub('seasonhigh', 'Malaria season', plot_data$variable)    
+  plot_data$variable <- gsub('seasonlow', 'Low malaria season', plot_data$variable)
+  # plot_data$variable <- gsub('months_since', 'Months since IRS: ', plot_data$variable)
+  plot_data$variable <- gsub('months_since', 'IRS status=', plot_data$variable)
+  plot_data$variable <- gsub('department', 'Department: ', plot_data$variable)
+  plot_data$variable <- gsub('precipitation', 'Precipitation (mm) ', plot_data$variable)
+  plot_data$variable <- gsub('maragra_fabricaTRUE', 'Living at factory', plot_data$variable)
+  plot_data$variable <- gsub('sexM', 'Male', plot_data$variable)
+  plot_data$variable <- gsub('permanent_or_temporaryTemporary', 'Temp contract', plot_data$variable)
+  plot_data$variable <- gsub('rainy_dayTRUE', 'Rainy day', plot_data$variable)
+  plot_data$variable <- gsub('rainyTRUE', 'Rainy day', plot_data$variable)
+  plot_data$variable <- gsub('on_siteTRUE', 'On site', plot_data$variable)
+  plot_data$variable <- gsub('on_siteFALSE', 'Off site', plot_data$variable)
+  plot_data$variable <- gsub('fieldNot field worker', 'Not field worker', plot_data$variable)
+  plot_data$variable <- gsub('herd', 'Herd protection', plot_data$variable)
+  plot_data$variable <- gsub('before_after', 'IRS time=', plot_data$variable)
+  plot_data$variable <- gsub('time_since', 'Months after=', plot_data$variable)
+  plot_data$variable <- gsub('incidence', 'Incidence', plot_data$variable)
+
+  ggplot(data = plot_data,
+         aes(x = variable,
+             y = coefficient)) +
+    facet_wrap(~group) +
+    geom_bar(stat = 'identity',
+             alpha = 0.6) +
+    theme(axis.text.x = element_text(angle = 90)) +
+    labs(x = '',
+         y = 'Coefficient') +
+    geom_label(aes(x = variable,
+                   y = coefficient + (0.05 * max(coefficient)),
+                   label = round(coefficient, digits = 4)),
+               size = 2,
+               alpha = 0.5) +
+    geom_hline(yintercept = 0, color = 'red', lty = 2, alpha = 0.6)
+}
+  
+```
+
+# 0. Months since absenteeism only
+
+```{r, results = 'asis'}
+call <- 'absent ~ time_since | 0'
+made_model <- make_model(call = call)
+display_model(made_model = made_model)
+plot_model(made_model = made_model)
+```
+
+\newpage
+
+```{r}
+rmds <- c()
+titles <- c()
+nn <- nrow(scenarios)
+# nn <- 10
+for(i in 1:nn){
+  titles[i] <- paste0(i, '. ', scenarios$description[i])
+  rmds[i] <- 
+    paste0("call <- '",scenarios$formula[i], "'
+made_model <- make_model(call = call)
+display_model(made_model = made_model);
+plot_model(made_model = made_model)
+")
+}
+
+chunks <- paste0('***\n## ',
+                 titles, 
+                 "\n***\n```{r, results = 'asis'}\n\n",
+                 rmds,
+                 "\n```\n\n\\newpage\n\n")
+
+# Write our order / child-calls to a doc
+file_connection <- file('children.Rmd')
+writeLines(paste0('---\noutput: pdf_document\n---\n\n', 
+                  chunks), 
+           file_connection)
+close(file_connection)
+
+```
+
+```{r child='children.Rmd', echo = FALSE}
+```
+
+```{r, results='hide'}
+# Having already called the auto-generated children.Rmd, we can delete it
+file.remove('children.Rmd')
+```
+

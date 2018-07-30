@@ -585,6 +585,9 @@ clean_up_model <- function(x, multiplier = 100){
   x$term <- gsub('on_siteFALSE', 'Off site', x$term)
   x$term <- gsub('fieldNot field worker', 'Not field worker', x$term)
   x$term <- gsub('herd', 'Herd protection', x$term)
+  x$term <- gsub('before_after', 'IRS time=', x$term)
+  x$term <- gsub('time_since', 'Months after=', x$term)
+  x$term <- gsub('incidence', 'Incidence', x$term)
   names(x) <- Hmisc::capitalize(names(x))
   names(x) <- gsub('.', ' ', names(x), fixed = TRUE)
   x$`P value` <- NA
@@ -672,4 +675,77 @@ model_data <-
 
 if(!'model_data.csv' %in% dir()){
   write_csv(model_data, 'model_data.csv')
+}
+if(!'dummy_data.csv' %in% dir()){
+  ids <- sample(unique(model_data$oracle_number), 200)
+  dummy_data <- model_data %>%
+    filter(oracle_number %in% ids) %>%
+    mutate(oracle_number = as.numeric(factor(oracle_number)))
+  dummy_data$year_month <- paste0(dummy_data$calendar_year, dummy_data$calendar_month)
+  
+  dummy_data <- dummy_data %>%
+    dplyr::select(oracle_number,
+                  date,
+                  absent,
+                  incidence,
+                  season,
+                  permanent_or_temporary,
+                  department,
+                  sex,
+                  precipitation,
+                  rainy_day,
+                  months_since,
+                  ever_sprayed,
+                  group,
+                  calendar_year,
+                  calendar_month,
+                  year_month,
+                  malaria_year,
+                  days_since,
+                  herd,
+                  months_since_menno)
+  write_csv(dummy_data, 'dummy_data.csv')
+  dummy_dictionary <- data_frame(
+    variable = c('oracle_number',
+                 'date',
+                 'absent',
+                 'incidence',
+                 'season',
+                 'permanent_or_temporary',
+                 'department',
+                 'sex',
+                 'precipitation',
+                 'rainy_day',
+                 'months_since',
+                 'ever_sprayed',
+                 'group',
+                 'calendar_year',
+                 'calendar_month',
+                 'malaria_year',
+                 'days_since',
+                 'herd',
+                 'months_since_menno'),
+    meaning = c('Unique ID Number',
+                'The calendar date of the observation',
+                'Whether the worker was absent or present',
+                'Local clinical malaria incidence',
+                'Whether it was high or low malaria season, per district incidence, on the date in question',
+                'Whether the worker had a permanent or temporary contract',
+                'The department of the worker',
+                'The sex of the worker',
+                'The amount of precipitation in ml on the date in question',
+                'Whether there was any rain on the date in question',
+                'Binary: whether the date was before IRS (ie, any time greater than 6 months after previous IRS, or a case where IRS never occurred), or after IRS (ie, 184 days or fewer after IRS spraying)',
+                'Whether the house in question was ever sprayed',
+                'The combination of permanent/temporary status and work site',
+                'The year',
+                'The month',
+                'The malaria season',
+                'The number of days since IRS; in the case of multiple IRS episodes, the most recent IRS episode is the only one taken into account.',
+                'The indirect protection score afforded by neighbors on the date in question',
+                'The amount of time since IRS (using months, rather than days)'))
+  write_csv(dummy_dictionary, 'dummy_dictionary.csv')
+  save(dummy_data, file = 'dummy_data.RData')
+} else {
+  dummy_data <- read_csv('dummy_data.csv')
 }

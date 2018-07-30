@@ -67,6 +67,9 @@ Having run this, you'll now have the following datasets for analysis:
 -   census
 -   clinic
 -   clinic\_agg
+-   costs
+-   costs\_itemized
+-   costs\_raw
 -   hiv\_prevalence
 -   irs
 -   mc
