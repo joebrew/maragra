@@ -4,7 +4,8 @@
 \alias{generate_maragra_clinical_malaria_incidence}
 \title{Generate Maragra clinical malaria incidence report}
 \usage{
-generate_maragra_clinical_malaria_incidence(date = NULL, output_dir = NULL,
+generate_maragra_clinical_malaria_incidence(date = NULL,
+  output_dir = NULL,
   output_file = "malaria_clinical_malaria_incidence.html")
 }
 \arguments{

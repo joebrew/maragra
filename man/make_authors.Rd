@@ -7,23 +7,26 @@
 make_authors(authors = data.frame(name = c("Joe Brew", "Kizito Gondo",
   "Elton Dorkin", "Menno Pradhan", "Laia Cirera", "Elisa Sicuri"), email =
   c("joe@databrew.cc", "KGondo@illovo.co.za", "EDorkin@illovo.co.za",
-  "m.p.pradhan@vu.nl", "laia.cirera@isglobal.org", "elisa.sicuri@isglobal.org"),
-  affilitation = c("isglobal,cism,vu", "ma", "ma", "vu,uva", "isglobal,cism",
-  "isglobal,cism,icl"), footnote = c("Corresponding Author", rep("", 5)),
-  stringsAsFactors = FALSE), institutions = data.frame(code = c("isglobal",
-  "icl", "cism", "vu", "uva", "ma"), institution =
-  c("Barcelona Institute for Global Health", "Imperial College London",
-  "Centro de Investigação em Saúde de Manhiça", "VU University Amsterdam",
-  "University of Amsterdam",
-  "Maragra Açucar SA, Subsidiary of Illovo Sugar Ltd"), country = c("Spain",
-  "UK", "Mozambique", "Netherlands", "Netherlands", "Mozambique"), address =
+  "m.p.pradhan@vu.nl", "laia.cirera@isglobal.org",
+  "elisa.sicuri@isglobal.org"), affilitation = c("isglobal,cism,vu", "ma",
+  "ma", "vu,uva", "isglobal,cism", "isglobal,cism,icl"), footnote =
+  c("Corresponding Author", rep("", 5)), stringsAsFactors = FALSE),
+  institutions = data.frame(code = c("isglobal", "icl", "cism", "vu",
+  "uva", "ma"), institution = c("Barcelona Institute for Global Health",
+  "Imperial College London",
+  "Centro de Investigação em Saúde de Manhiça",
+  "VU University Amsterdam", "University of Amsterdam",
+  "Maragra Açucar SA, Subsidiary of Illovo Sugar Ltd"), country =
+  c("Spain", "UK", "Mozambique", "Netherlands", "Netherlands",
+  "Mozambique"), address =
   c("c/ Rosselló, 132, 5è 2a. 08036, Barcelona, Spain",
   "South Kensington Campus, London SW7 2AZ, U.K.",     
   "Vila da Manhiça, Bairro Cambeve, Rua 12, Distrito da Manhiça, CP 1929, Maputo, Mozambique",
   "De Boelelaan 1105, 1081 HV Amsterdam, Netherlands",
   "REC E, Roetersstraat 11, Amsterdam, Netherlands",
-  "CP 2789, Maputo, Mozambique"), stringsAsFactors = FALSE), cat_it = TRUE,
-  include_address = TRUE, include_country = TRUE, seperator = "\\n")
+  "CP 2789, Maputo, Mozambique"), stringsAsFactors = FALSE),
+  cat_it = TRUE, include_address = TRUE, include_country = TRUE,
+  seperator = "\\n")
 }
 \arguments{
 \item{authors}{A dataframe with columns: name, email, affiliation, footnote}

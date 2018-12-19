@@ -45,6 +45,7 @@ make_date_columns <- function(df){
 ab <- readr::read_csv('HRS - Leave Applications.csv')
 ab2 <- readr::read_csv('HRS - Leave Applications - Sheet 2.csv')
 ab <- bind_rows(ab, ab2)
+ab <- ab %>% dplyr::distinct(.keep_all = TRUE)
 rm(ab2)
 
 # Clean up column names
@@ -210,18 +211,12 @@ workers <-
          contract_end_date = as.Date(contract_end_date),
          company_entry_date = as.Date(company_entry_date))
 
-# Need to clean job_title through standardization !!!
-
-
-
-
-##### COMBINED
-
 # We need to get worker eligible days into an expanded (panel) format
 expandify <- function(oracle_number = 'abc',
                       start = as.Date('2015-01-01'),
                       end = as.Date('2015-01-15')){
-  if(is.na(start) | is.na(end)){
+  if(is.na(start) | is.na(end) |
+     start > end){
     out <- data_frame(oracle_number = as.character(rep(NA, 0)),
                       date = as.Date(rep(NA, 0)))
   } else {
@@ -238,18 +233,80 @@ expandify <- function(oracle_number = 'abc',
 if('eligible_working_days.RData' %in% dir()){
   load('eligible_working_days.RData')
 } else {
+  
+  # CGIs are the temp workers (those that get contract end dates)
+  # Let's see when their last absences were
+  temp <- ab %>%
+    dplyr::select(-employee_indicator_type, -department) %>%
+    left_join(workers %>% 
+                mutate(permanent_or_temporary =
+                         ifelse(employee_indicator_type_desc %in% c('TEMPORARY AGRIC',
+                                                                    'FTC INDUSTRIAL'),
+                                'Temporary',
+                                'Permanent')) %>%
+                mutate(department =
+                         ifelse(grepl('CIVLS|HUMAN RESOURCES|RISK', department_name),
+                                'Administrative',
+                                ifelse(grepl('CANE|ADMIN', department_name),
+                                       'Field',
+                                       'Factory'))) %>%
+                mutate(group = paste0(permanent_or_temporary,
+                                      ' ', department)) %>%
+                
+                dplyr::select(group, oracle_number, employee_indicator_type, contract_start_date))# %>%
+    # filter(employee_indicator_type %in% c('C', 'G', 'I')) %>%
+    # filter(contract_start_date >= '2016-01-01')
+  x <- temp %>%
+    filter(group == 'Temporary Field') %>%
+    group_by(oracle_number) %>%
+    summarise( date = max(leave_from_date, na.rm = TRUE)) %>%
+    group_by(date) %>% 
+    tally
+  ggplot(data = x %>%
+           filter(date >= '2016-08-01'),
+         aes(x =date,
+             y = n)) +
+    geom_bar(stat = 'identity')
+  
+  
+  
+  
   eligible_working_days <- list()
   nrw <- nrow(workers)
   for(i in 1:nrw){
+    no_good <- FALSE
     message(i, ' of ', nrw)
     worker_type <- workers$employee_indicator_type[i]
-    if(worker_type == 'C'){
-      start_date <- workers$contract_start_date[i]
-      end_date <- workers$contract_end_date[i]
-    } else {
-      start_date <- workers$company_entry_date[i]
-      end_date <- as.Date('2017-03-31')
+    is_temp <- FALSE
+    if(worker_type %in% c('C', 'G', 'I')){
+      is_temp <- TRUE
     }
+    this_worker <- workers[i,]
+    start_date <- this_worker$contract_start_date
+    if(is.na(start_date)){
+      start_date <- this_worker$company_entry_date
+    }
+    end_date <- this_worker$contract_end_date
+    if(is.na(end_date)){
+      if(is_temp){
+        no_good <- TRUE
+      }
+      this_ab <- ab %>% filter(oracle_number == this_worker$oracle_number)
+      if(nrow(this_ab) == 0){
+        # The day at which many workers left
+        end_date <- as.Date('2017-03-31')
+      } else {
+        end_date <- max(this_ab$leave_to_date, na.rm = TRUE) - 1
+        if(end_date < start_date){
+          end_date <- as.Date('2017-03-31')
+        }
+      }
+    }
+    if(no_good){
+      end_date <- NA
+      start_date <- NA
+    }
+    
     eligible_working_days[[i]] <-
       expandify(oracle_number = workers$oracle_number[i],
                 start = start_date,
@@ -258,6 +315,15 @@ if('eligible_working_days.RData' %in% dir()){
 
   # Bind all together
   eligible_working_days <- bind_rows(eligible_working_days)
+  x <- eligible_working_days %>%
+    group_by(date) %>%
+    tally
+  ggplot(data = x %>% filter(date >= '2013-01-01',
+                             date<= '2016-01-01'),
+         aes(x = date,
+             y = n)) +
+    geom_point() +
+    geom_line()
   save(eligible_working_days,
        file = 'eligible_working_days.RData')
 }
@@ -1292,6 +1358,12 @@ costs_itemized <- costs_itemized %>%
 costs <- costs_itemized %>%
   group_by(period) %>%
   summarise(total = sum(total))
+
+# Manually remove flagged workers (those that don't show up in eligible
+# working days due to lack of contract end date)
+valid_ids <- sort(unique(eligible_working_days$oracle_number))
+ab_panel <- ab_panel %>%
+  filter(oracle_number %in% valid_ids)
 
 # Save for use in package
 devtools::use_data(costs_itemized, overwrite = TRUE)
