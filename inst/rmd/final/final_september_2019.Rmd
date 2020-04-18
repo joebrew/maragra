@@ -1,0 +1,242 @@
+---
+title: "Final analysis for paper"
+date: ''
+subtitle: Brew, Pradhan, Sicuri
+bibliography: bibliography.bib
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# csl: journal-of-health-economics.csl
+
+# Packages
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(RColorBrewer)
+library(extrafont)
+library(kableExtra)
+library(raster)
+loadfonts()
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               fig.height = 4,
+               fig.width = 5,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE,
+               dev = "cairo_pdf",
+               fig.pos="!h",
+               fig.align = 'center')
+opts_knit$set(width=75)
+options(xtable.comment = FALSE)
+```
+
+```{r, eval = TRUE}
+source('prepare_data.R')
+```
+
+
+# September 2019 stuff
+
+## Table of observations
+
+```{r}
+library(table1)
+message('We observed ', nrow(model_data), ' worker-days among ', length(unique(model_data$oracle_number)), ' unique workers. Overall absence rate was ', length(which(model_data$absent)))
+
+# Table of those absences
+vars <- list('field',
+          'permanent_or_temporary',
+           'sex')
+table1::label(model_data$field) <- 'Worker location'
+table1::label(model_data$permanent_or_temporary) <- 'Worker contract'
+table1::label(model_data$sex) <- 'Worker sex'
+model_data$year <- as.numeric(format(model_data$date, '%Y'))
+table1::label(model_data$year) <- 'Year'
+
+table1::table1(~field + permanent_or_temporary + sex | year , data = model_data)
+```
+
+## Table of absences
+
+```{r}
+calculate <- function(var){
+  out <- 
+  final_data %>%
+    mutate(year = format(date, '%Y')) %>%
+    # mutate(on_site = ifelse(on_site,
+    #                                 # 'On site',
+    #                                 # 'Off site'),
+    #        rainy = ifelse(rainy,
+    #                       'Rainy',
+    #                       'Dry')) %>%
+    # filter(!is.na(rainy)) %>%
+  group_by_(var, 'year') %>%
+  summarise(absences = length(which(absent)),
+            eligibles = length(absent),
+            workers = length(unique(oracle_number))) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) 
+  names(out)[1] <- 'variable'
+  out$val <- paste0(round(out$absenteeism_rate, digits = 1),
+                    '%')#,
+                    # ')',
+                    # '\n',
+                    # ' (workers:', out$workers,
+                    # ')')
+  out <- 
+    out %>%
+    dplyr::select(variable, year, val)
+  
+  out <- out %>%
+    spread(key = year,
+           value = val)
+  out$variable <- as.character(out$variable)
+  new_var <- #ifelse(var == 'on_site',
+                    # 'Residence',
+                    ifelse(var == 'rainy',
+                           'Precipitation',
+                           var)
+  # )
+  left <- data.frame(x = c(new_var, rep('', (nrow(out) - 1))))
+  out <- cbind(left, out)
+  names(out)[1:2] <- c('Variable', 'x')
+  # out$variable[1] <- paste0(Hmisc::capitalize(new_var), ': ', out$variable[1])
+  return(out)
+}
+out_list <- list()
+vars <- c(#'season', 
+           'field',
+          'permanent_or_temporary',
+           'sex'#,
+           # 'on_site',
+           # 'rainy'
+          )
+for(i in 1:length(vars)){
+  x <- calculate(var = vars[i])
+  out_list[[i]] <- x
+}
+ab_table <- bind_rows(out_list)
+ab_table$Variable <- Hmisc::capitalize(ab_table$Variable)
+# ab_table$Variable[ab_table$Variable == 'Season'] <- 'Malaria season'
+ab_table$Variable[ab_table$Variable == 'Field'] <- 'Worker type'
+ab_table$Variable[ab_table$Variable == 'Permanent_or_temporary'] <- 'Contract'
+ab_table$x <- Hmisc::capitalize(ab_table$x)
+names(ab_table)[2] <- ''
+ab_table$`2016`[is.na(ab_table$`2016`)] <- '0%'
+kable(ab_table, format = 'html') %>% kable_styling(full_width = FALSE)
+```
+
+
+
+
+# Scenarios: policy simulations
+
+## Cost of max strategy
+
+```{r}
+x = simulations %>%
+  arrange(oracle_number, date) %>%
+  mutate(first_day = protection == 1 & dplyr::lag(protection, 1) != 1) %>%
+  filter(maragra_bairro) %>%
+  group_by(strategy) %>%
+  summarise(day1 = length(which(first_day)))
+x
+
+y <- maragra::costs_itemized %>% filter(area == 'Pesticides')
+y <- y[3:6,]
+sum(y$total)
+```
+
+## Breakdown
+
+```{r}
+sim_data <- simulations
+sim_data$idx <- sim_data$oracle_number
+fe <- getfe(final_model)
+predictions <- exp(predict(final_model_lm, sim_data, interval = 'confidence'))-1
+predictions <- data.frame(predictions)
+# Add the fixed effects
+fixed_effects <- left_join(sim_data,
+                           data.frame(fe) %>% dplyr::select(idx, effect) %>%
+                             mutate(idx = as.character(idx))) %>%
+  .$effect
+fixed_effects <- as.numeric(fixed_effects)
+
+predictions$fit <- predictions$fit + fixed_effects
+predictions$lwr <- predictions$lwr + fixed_effects
+predictions$upr <- predictions$upr + fixed_effects
+
+# combine other info
+predictions <- predictions %>% bind_cols(sim_data %>% dplyr::select(date, absent, strategy, permanent_or_temporary)) %>%
+  mutate(absent = as.numeric(absent)) %>%
+  filter(!is.na(fit))
+
+simple <- predictions %>%
+  group_by(strategy) %>%
+  summarise(n = n(),
+            actual_absences = sum(absent),
+            predicted_absences = sum(fit, na.rm = TRUE),
+            actual = mean(absent, na.rm = TRUE),
+            predicted = mean(fit, na.rm = TRUE)) %>%
+  dplyr::rename(value = predicted) %>%
+  dplyr::select(strategy, value, predicted_absences)
+
+zero <- predictions %>%
+  filter(strategy == 'Zero') %>%
+  mutate(year = as.numeric(format(date, '%Y'))) %>%
+  group_by(year) %>%
+  summarise(n = n(),
+            actual_absences = sum(absent),
+            predicted_absences = sum(fit, na.rm = TRUE),
+            actual = mean(absent, na.rm = TRUE),
+            predicted = mean(fit, na.rm = TRUE)) %>%
+  mutate(avoided = predicted_absences - actual_absences)
+  # dplyr::rename(value = predicted) %>%
+  # dplyr::select(permanent_or_temporary, value, predicted_absences)
+
+```
+
+
+
+```{r}
+ggplot(data = simple,
+       aes(x = strategy,
+           y = value )) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           color = 'black') +
+  labs(y = 'Absenteeism rate',
+       x = 'Strategy') +
+  geom_label(aes(label = round(value, digits = 3)),
+             nudge_y = -0.005) +
+  theme_maragra() +
+  theme(axis.text.x = element_text(size = 15))
+```
+
+```{r}
+simple
+ggplot(data = simple,
+       aes(x = strategy,
+           y = predicted_absences)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           color = 'black') +
+  labs(y = 'Absenteeism rate',
+       x = 'Strategy') 
+```
+
+
+# Manuscript draft
+
+Draft of the paper \href{https://docs.google.com/document/d/1bUWRBCgVcgjSPHchIQxiTG8Vwv5hV1GLU4Tlu386sWA/edit#}{HERE}.
+
+
+# Bibliography

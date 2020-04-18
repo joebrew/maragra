@@ -1,15 +1,18 @@
 ---
 title: "Final analysis for paper"
-subtitle: "Brew, Pradhan, Sicuri"
 date: ''
-output: 
+fig_height: 2.6
+output:
   pdf_document:
-    keep_tex: true
-    latex_engine: xelatex
     includes:
       in_header: preamble.sty
+    keep_tex: yes
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
 fig_width: 4
-fig_height: 2.6
+always_allow_html: true
+subtitle: Brew, Pradhan, Sicuri
 bibliography: bibliography.bib
 ---
 
@@ -39,9 +42,11 @@ opts_chunk$set(echo=FALSE,
                comment=NA,
                message=FALSE,
                warning=FALSE,
-               dev = "cairo_pdf",
+               # dev = "cairo_pdf",
                fig.pos="!h",
                fig.align = 'center')
+knitr::opts_chunk$set(error = FALSE)
+
 opts_knit$set(width=75)
 options(xtable.comment = FALSE)
 ```
@@ -50,13 +55,45 @@ options(xtable.comment = FALSE)
 source('prepare_data.R')
 ```
 
+# Calculate household protection
+
+```{r}
+
+```
+
 
 # Manuscript draft
 
-Draft of the paper (\href{https://docs.google.com/document/d/1bUWRBCgVcgjSPHchIQxiTG8Vwv5hV1GLU4Tlu386sWA/edit#}{HERE}
+Draft of the paper \href{https://docs.google.com/document/d/1bUWRBCgVcgjSPHchIQxiTG8Vwv5hV1GLU4Tlu386sWA/edit#}{HERE}.
 
+
+# Classify protection plot
+
+```{r}
+pd <- data_frame(days_since = 1:230)
+pd$protection <- classify_protection(pd$days_since)
+
+ggplot(data = pd,
+       aes(x = days_since,
+           y = protection)) +
+  geom_area(fill = 'lightblue', alpha = 0.8,
+            lwd = 0.2,
+            color = 'black') +
+  geom_vline(xintercept = 0,
+             lty = 2, alpha = 0.6) +
+  theme_maragra() +
+  labs(x = 'Days since IRS application',
+       y = 'Protection score')
+```
 
 # Descriptive overview
+
+```{r}
+desc <- final_data %>%
+  group_by(permanent_or_temporary) %>%
+  summarise(workers = length(unique(oracle_number)),
+            days = n())
+```
 
 ## Herd-only protection score
 
@@ -98,9 +135,10 @@ ggplot(data = x,
 ## Individual-only protection score
 
 ```{r}
-pq <- quantile(final_data$protection,
-               seq(0, 1, 0.1))
-pq <- sort(unique(pq))
+pq <- sort(unique(final_data$protection))
+# pq <- quantile(final_data$protection,
+#                seq(0, 1, 0.1))
+# pq <- sort(unique(pq))
 x <- final_data %>%
   # mutate(protection_cat = protection_var) %>%
   mutate(protection_cat = ifelse(protection <= pq[2],
@@ -162,10 +200,13 @@ ggplot(data = x,
        aes(x = `Quantile`,
            y = `Absenteeism rate`)) +
   geom_bar(stat = 'identity',
-           alpha = 0.6,
-           color = 'black') +
+           alpha = 0.8,
+           color = 'black',
+           lwd = 0.2,
+           fill = 'lightblue') +
   labs(x = 'Protection score quantile') +
-  facet_wrap(~Group)
+  facet_wrap(~Group) +
+  theme_maragra()
 ```
 
 
@@ -222,7 +263,9 @@ The below table shows the results of the model devised thus far.
 ```
 
 ```{r}
+# Combined protection
 summary(final_model)
+
 ```
 
 
@@ -232,26 +275,44 @@ summary(final_model)
 The below charts show predicted absenteeism rates at different rain and protection levels.
 
 ```{r}
+# on <- sort(unique(final_data$oracle_number))
 fake <- expand.grid(#group = sort(unique(monthly$group)),
   rain_var = rq,
   protection_var = pq)#,
-fake$predicted <- fake$predicted_upr <- fake$predicted_lwr<- NA
+fake$predicted <- NA #fake$predicted_upr <- fake$predicted_lwr<- NA
 
 fe <- getfe(final_model)
+# # fake <- left_join(fake, fe %>% dplyr::select(idx, effect, obs), 
+# #                                              by = c('oracle_number'= 'idx'))
 predictions <- exp(predict(final_model_lm, fake, interval = 'confidence'))-1
 # predictions <- data.frame(predictions)
-# # Add the fixed effects
-# fixed_effects <- fe$effect
-
+# # # Add the fixed effects
+fixed_effects <- fe$effect
+# 
 fake$predicted<- predictions[,1]
 fake$predicted_upr <- predictions[,3]
 fake$predicted_lwr <- predictions[,2]
+# 
+# # # Add fixed effects
+# # fake <- fake %>%
+# #   mutate(predicted = predicted + effect,
+# #          predicted_upr = predicted_upr + effect,
+# #          predicted_lwr = predicted_lwr + effect)
+# 
+# pd <- fake %>%
+#   filter(protection_var == pq[1]) 
+# ggplot(data = pd,
+#        aes(x = rain_var,
+#            y = predicted)) +
+#   geom_point()
+
+
 ```
 
 ### Precipitation's effect
 
-```{r}
-ggplot(data = fake %>% filter(protection_var == pq[1]),
+```{r, eval = FALSE}
+g1 <- ggplot(data = fake %>% filter(protection_var == pq[1]),
        aes(x = rain_var,
            y = predicted)) +
   geom_point() +
@@ -262,13 +323,10 @@ ggplot(data = fake %>% filter(protection_var == pq[1]),
               fill = 'darkorange') +
   labs(y = 'Predicted absenteeism rate',
        x = '1-3 month precipitation lag',
-       title = 'Lagged precipitation and absenteeism')
-```
+       title = 'Lagged precipitation and absenteeism') +
+  theme_maragra()
 
-### IRS protection's effect
-
-```{r}
-ggplot(data = fake %>% filter(rain_var == rq[1]),
+g2 <- ggplot(data = fake %>% filter(rain_var == rq[1]),
        aes(x = protection_var,
            y = predicted)) +
   geom_point() +
@@ -279,8 +337,13 @@ ggplot(data = fake %>% filter(rain_var == rq[1]),
               fill = 'darkorange') +
   labs(y = 'Predicted absenteeism rate',
        x = 'Protection index',
-       title = 'IRS-afforded protection and absenteeism')
+       title = 'IRS-afforded protection and absenteeism') +
+  theme_maragra()
+
+Rmisc::multiplot(g1, g2, cols = 2)
 ```
+
+
 
 ### Simulations
 
@@ -302,7 +365,7 @@ predictions$lwr <- predictions$lwr + fixed_effects
 predictions$upr <- predictions$upr + fixed_effects
 
 # combine other info
-predictions <- predictions %>% bind_cols(sim_data %>% dplyr::select(date, absent, strategy)) %>%
+predictions <- predictions %>% bind_cols(sim_data %>% dplyr::select(date, absent, strategy, permanent_or_temporary)) %>%
   mutate(absent = as.numeric(absent)) %>%
   filter(!is.na(fit))
 
@@ -316,7 +379,78 @@ simple <- predictions %>%
   dplyr::rename(value = predicted) %>%
   dplyr::select(strategy, value, predicted_absences)
 
+zero <- predictions %>%
+  filter(strategy == 'Zero') %>%
+  mutate(year = as.numeric(format(date, '%Y'))) %>%
+  group_by(year) %>%
+  summarise(n = n(),
+            actual_absences = sum(absent),
+            predicted_absences = sum(fit, na.rm = TRUE),
+            actual = mean(absent, na.rm = TRUE),
+            predicted = mean(fit, na.rm = TRUE)) %>%
+  mutate(avoided = predicted_absences - actual_absences)
+  # dplyr::rename(value = predicted) %>%
+  # dplyr::select(permanent_or_temporary, value, predicted_absences)
+
 kable(simple)
+
+# Eligible working days
+sum(zero$n)
+# Absences
+sum(zero$actual_absences)
+# Actual absence rate
+sum(zero$actual_absences) / sum(zero$n)
+# Would have observed
+sum(zero$predicted_absences)
+# Predicted - observ
+sum(zero$predicted_absences) - sum(zero$actual_absences)
+# Overall reduction from
+sum(zero$predicted_absences) / sum(zero$n)
+# To
+sum(zero$actual_absences) / sum(zero$n)
+# Number of working days permanent vs temp
+table(predictions$permanent_or_temporary[predictions$strategy=='Real'])
+# Absences avoided among permanent workers
+predictions %>% filter(strategy == 'Zero') %>% group_by(permanent_or_temporary) %>% summarise(n = n(),
+            actual_absences = sum(absent),
+            predicted_absences = sum(fit, na.rm = TRUE),
+            actual = mean(absent, na.rm = TRUE),
+            predicted = mean(fit, na.rm = TRUE)) %>%
+  mutate(avoided = predicted_absences - actual_absences) %>%
+  # decline due to irs
+  mutate(decline = predicted - actual)
+# One absence every n days
+sum(zero$n) / sum(zero$avoided)
+# Annual reduction in absence
+mean(zero$avoided[zero$year < 2016])
+# Cost per absence avoided
+68984 / 4183
+# Percentage of absence among permanent workers
+x = predictions %>%
+  filter(strategy == 'Zero') %>%
+  # filter(date < '2016-01-01') %>%
+  group_by(permanent_or_temporary) %>%
+  summarise(absences = sum(absent),
+            predicted = sum(fit)) %>%
+  mutate(averted = predicted - absences) %>%
+  mutate(p = averted / sum(averted))
+x
+# Weighted average cost
+y = sum(c(25, 5) * x$p)
+y
+# Cost of treatment per absence
+22 / 80
+# Total savings per aversion
+0.275 + y
+# Total yearly savings
+(0.275 + y) * 4183
+# Total yearly savings
+((0.275 + y) * 4183) - 68984
+# ROI
+((0.275 + y) * 4183) / 68984
+# Additional max strategy
+simple
+47943-42131
 ```
 
 ```{r}
@@ -332,6 +466,34 @@ ggplot(data = simple,
              nudge_y = -0.005)
 ```
 
+
+```{r}
+# paste0(
+#   "Of the ", nrow(simulations[simulations$strategy == 'Real',]),
+#   " eligible working days in our panel, we observed ", nrow(simulations[simulations$strategy == 'Real' & simulations$absent,]), 
+#   " absences. Using the above approach, we estimate that we would have observed ",
+#   length(which(simulations$absent[simulations$strategy == 'Zero'])),
+#   " had it not been for the firm's IRS program, for a total of ",
+#   length(which(simulations$absent[simulations$strategy == 'Zero'])) - length(which(simulations$absent[simulations$strategy == 'Real'])),
+#   " avoided absences. This translates to an overall reduction in absenteeism from ",
+#   round(length(which(simulations$absent[simulations$strategy == 'Zero'])) / nrow(simulations %>% filter(strategy == 'Zero')) * 100, digits = 2),
+#   "% (without its IRS program) to the observed ", round(length(which(final_data$absent)) / nrow(final_data) * 100, digits = 2),"%.
+# The number of working-days observed among permanent workers (",
+# length(which(final_data$permanent_or_temporary == 'Permanent')),") was nearly thrice that of those of temporary workers (", 
+# length(which(final_data$permanent_or_temporary == 'Temporary')),
+# ").") 
+# 
+# 
+# 
+# paste0(
+#   "By the same token, the number of absences avoided among permanent workers (39,890) was far greater than that of temporary workers (8,972). The latter had a greater relative decline in absenteeism due to IRS (from 9.3% to 3.91%) relative to the former (from 14.2% to 11%), but the aggregate numbers are less consequential since (a) temporary workers have a lower baseline absenteeism rate and (b) they work, by definition, fewer days. In total, the IRS program is estimated to prevent one absence every 26.6 working days.
+# Annually, this translates to approximately 4,076 avoided absences per year (slightly greater than the simple splicing of the overall figure into the 4-year study period, since we did not have complete data for all worker types).
+# "
+# )
+```
+
+
+
 ```{r}
 ggplot(data = simple,
        aes(x = strategy,
@@ -340,13 +502,15 @@ ggplot(data = simple,
            alpha = 0.6,
            color = 'black') +
   labs(y = 'Absenteeism rate',
-       x = 'Strategy') 
+       x = 'Strategy') +
+  geom_label(aes(label = round(predicted_absences, digits = 3)),
+             nudge_y = -10000)
 ```
 
 
 # Costs
 
-```{r}
+```{r, eval = FALSE}
 x <- final_data %>%
   left_join(irs %>% dplyr::select(date, unidade, days_since))
 
@@ -386,5 +550,720 @@ ggplot(data = out,
 # Identification problems (no external spraying, no home spraying, unobserved govt - omitted variable bias dealt with through worker and time fixed effects.)
 # Exploring herd protection through various functional forms
 ```
+
+# Charts for paper
+
+
+```{r, results='asis'}
+# x <- ab_panel %>%
+#   left_join(workers %>%
+#               dplyr::select(oracle_number, date_of_birth, permanent_or_temporary, sex))
+x <- final_data
+x <- x %>% left_join(workers %>% dplyr::select(oracle_number, date_of_birth))
+x$age <-as.numeric(as.Date('2014-01-01') - x$date_of_birth) / 365.25
+x$agey <- x$age
+x$age <- round(x$age, digits = -1)
+x$status <- x$permanent_or_temporary
+
+
+calculate <- function(var= 'sex',
+                      data){
+  out <- 
+    data %>%
+    group_by_(var) %>%
+    summarise(`Number of workers` = length(unique(oracle_number)),
+              `Number of days observed` = n()) %>%
+    # summarise(`Treatment workers` = length(unique(oracle_number[!months_since %in% c('Never', 'Before')])),
+    #           `Treatment days` = length(oracle_number[!months_since %in% c('Never', 'Before')]),
+    #           `Control workers` = length(unique(oracle_number[months_since %in% c('Never', 'Before')])),
+    #           `Control days` = length(oracle_number[months_since %in% c('Never', 'Before')])) %>%
+    ungroup() %>%
+    # mutate(p = round(n / sum(n) * 100, digits = 2)) %>%
+    mutate(variable = '') 
+    names(out)[1] <- ' '
+    out$variable[1] <- Hmisc::capitalize(var)
+    
+    out <- out %>% dplyr::select(variable, ` `, 
+                                 `Number of workers`, `Number of days observed`)
+                                 # `Treatment workers`, `Treatment days`, `Control workers`, `Control days`)
+    out$` ` <- as.character(out$` `)
+  return(out)
+}
+out_list <- list()
+vars <- c('department', 
+           'sex',
+           'status',
+           'age')
+for(i in 1:length(vars)){
+  message(i)
+  y <- calculate(var = vars[i], data = x)
+  out_list[[i]] <- y
+}
+demo_table <- bind_rows(out_list)
+names(demo_table)[1:2] <- c('Variable', ' ')
+kable(demo_table, format = 'html') %>% kable_styling()
+# print(xtable::xtable(demo_table,
+#                      caption = 'Overall worker characteristics',
+#                      align = c('r', 'r', rep('l', 5))),
+#       include.rownames = FALSE)
+
+```
+
+
+
+```{r, fig.width = 6, fig.height = 3.5, fig.align='center', fig.cap = 'i. Monthly total precipitation in the Maniça district; ii. Average monthly temperature (bars) during the study period, as well as monthly maximum (red) and minimum (blue) temperatures'}
+x <- weather %>%
+  mutate(month = format(date, '%m')) %>%
+  mutate(year = format(date, '%Y')) %>%
+  mutate(date = as.Date(paste0(year, '-', month, '-01'))) %>%
+  group_by(date) %>%
+  summarise(precipitation = sum(precipitation, na.rm = TRUE),
+            temp_max = max(temp_max, na.rm = TRUE),
+            temp_min = min(temp_min, na.rm = TRUE),
+            temp = mean(temp))
+# x <- gather(x, key, value,precipitation:temp)
+
+g1 <- ggplot(data = x,
+       aes(x = date,
+           y = precipitation)) +
+  geom_bar(stat = 'identity',
+           fill = 'lightblue',
+           size = 0.1) +
+  theme_maragra() +
+  theme(axis.text.x = element_text(angle = 0)) +
+  labs(x = 'Month',
+       y = 'Milimeters',
+       title = 'A. Monthly precipitation') +
+  scale_x_date(labels = scales::date_format("%Y")) 
+
+g2 <- ggplot(data = x,
+            aes(x = date,
+                y = temp)) +
+  # geom_bar(stat = 'identity', fill = 'grey', size = 0.1) +
+  geom_line(aes(y = temp_max),
+             color = 'darkred', 
+             alpha = 0.5) +
+  geom_line(aes(y = temp_min),
+             color = 'blue', 
+             alpha = 0.5) +
+  # geom_linerange(aes(ymin = temp_min,
+  #                    ymax = temp_max),
+  #                alpha = 0.6,
+  #                color = 'blue') +
+   theme_maragra() +
+  theme(axis.text.x = element_text(angle = 0)) +
+  labs(x = 'Month',
+       y = 'Degrees (Celcius)',
+       title = 'B. Monthly temperature') +
+  scale_x_date(labels = scales::date_format("%Y"))
+Rmisc::multiplot(g1, g2, cols = 2)
+```
+
+
+
+```{r, fig.cap = 'Clinical malaria (district of Manhiça), all-cause absenteeism among Maragra workers, sick absenteeism among Maragra workers, positive cases at company clinic, and test positivity rate at company clinic', fig.height=5, fig.width=8}
+# BES incidence
+g1 <- 
+  ggplot(data = bes %>%
+           mutate(season = ifelse(p >= median(p), 'High season',
+                                  'Low season')) %>%
+           filter(weekdays(date) == 'Monday',
+                  date <= '2016-12-01'),
+       aes(x = date,
+           y = p)) +
+  geom_point(alpha = 0.6,
+             aes(color = season),
+             size = 0.2) +
+  geom_line(alpha = 0.1) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Incidence',
+       title = 'A: Annualized district clinical\nmalaria incidence per 1,000') +
+  scale_color_manual(name = '',
+                     values = c('red', 'black')) + 
+  guides(color = guide_legend(ncol = 1)) +
+  theme(legend.position = c(.8, .8),
+        legend.text = element_text(size = 5),
+        legend.background = element_rect(fill=alpha('white', 0))) +
+  theme(axis.title.x = element_blank())
+
+# Absenteeism rate
+g2_data <- final_data %>%
+  # filter(date <= '2016-12-01') %>%
+  group_by(month = as.Date(paste0(format(date, '%Y-%m'), '-01')), permanent_or_temporary) %>%
+  summarise(absences = length(which(absent)),
+            # absences_sick = length(which(absent_sick)),
+            
+            eligibles = n()) %>%
+  mutate(absenteeism_rate = absences / eligibles * 100)
+
+g2 <- ggplot(data = g2_data,
+             aes(x = month,
+                 y = absenteeism_rate,
+                 lty = permanent_or_temporary)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Absenteeism rate',
+       title = 'B: Monthly absenteeism rate') +
+  scale_linetype_manual(name = '', values = c(1,4)) +
+  theme(legend.position = c(.84, .8)) +
+  guides(lty = guide_legend(ncol = 1)) +
+    theme(axis.title.x = element_blank())
+
+
+
+# Weather
+g4 <-
+  ggplot(data = weather %>%
+           group_by(date = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+           summarise(precipitation = sum(precipitation, na.rm = TRUE)),
+         aes(x = date,
+             y = precipitation)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Mililiters',
+       title = 'D: Monthly precipitation') +  theme(axis.title.x = element_blank())
+
+
+# Clinical incidence of malaria
+g5 <- clinic_agg %>%
+  filter(date >= '2013-01-01', date <= '2016-12-31') %>%
+  # mutate(date = as.Date(paste0(year, '-', month, '-01'))) %>%
+  group_by(date) %>%
+  summarise(tested = sum(tested),
+            positive = sum(positive)) %>%
+  ungroup %>%
+  mutate(percent_positive = positive / tested * 100) %>%
+  ggplot(aes(x = date,
+             y = positive)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Cases',
+       title = 'C: Monthly malaria cases\nat company clinic') +
+    theme(axis.title.x = element_blank())
+
+
+g6 <- clinic_agg %>%
+  filter(date >= '2013-01-01', date <= '2016-12-31') %>%
+  # mutate(date = as.Date(paste0(year, '-', month, '-01'))) %>%
+  group_by(date) %>%
+  summarise(tested = sum(tested),
+            positive = sum(positive)) %>%
+  ungroup %>%
+  mutate(percent_positive = positive / tested * 100) %>%
+  ggplot(aes(x = date,
+             y = percent_positive)) +
+  geom_line(alpha = 0.6) +
+  theme_maragra(base_size = 9) +
+  labs(x = 'Date',
+       y = 'Cases',
+       title = 'D: Monthly malaria test positivity rate\nat company clinic') +
+    theme(axis.title.x = element_blank())
+
+# Rmisc::multiplot(g1, g2, g3,
+#                  # g4, 
+#                  g5, g6, layout = matrix(c(1, 1, 2, 3, 4, 5), nrow=2, byrow=TRUE)) 
+Rmisc::multiplot(g1,  g5,g2, g6, cols = 2)
+```
+
+
+```{r}
+fumigations <- mc %>%
+  filter(date >= '2013-01-01',
+         date <= '2016-12-31')
+n_fumigations <- nrow(fumigations)
+n_buildings <- sum(fumigations$casas_cobertas, na.rm = TRUE)
+unique_agregados <- length(unique(fumigations$unidade))
+people_sprayed <- length(unique(final_data$oracle_number[final_data$days_since != 'Never']))
+people_observed <- length(unique(final_data$oracle_number))
+pr <- function(x){prettyNum(x, big.mark = ',')}
+```
+
+**Fumigations**: During the period from January 1st, 2013 through December 31st, 2016, the Maragra Malaria Control Unit carried out `r pr(n_fumigations)` episodes of fumigation of residential "agregados" (household combinations), for a total of `r pr(n_buildings)` building-fumigation combinations. The total number of unique agregados sprayed during this period was `r pr(unique_agregados)`. Among the `r pr(people_observed)` workers for whom we have reliable absenteeism and residential data, `r pr(people_sprayed)` had their homes fumigated at least once (the majority of workers live off of the facility).
+
+```{r}
+dry_days <- length(which(weather$precipitation > 0))
+n_days <- length(weather$precipitation)
+p_dry <- round(dry_days / n_days * 100)
+amount_rain <- round(mean(weather$precipitation[weather$precipitation > 0], na.rm = T), digits = 2)
+x <- weather %>%
+  group_by(month = format(date, '%m')) %>%
+  summarise(precipitation = mean(precipitation, na.rm = TRUE))
+```
+
+
+
+**Absences**: We observed `r pr(nrow(ab_panel))` unique worker-days among the `r pr(people_observed)` workers. The all-period average absenteeism rate was `r round(100 * sum(ab_panel$absent) / nrow(ab_panel), digits = 2)`%, though this rate varied widely as a function of worker department, sex, residence, and season (table 1).
+
+
+```{r, results='asis'}
+calculate <- function(var){
+  out <- 
+  final_data %>%
+    mutate(year = format(date, '%Y')) %>%
+    # mutate(on_site = ifelse(on_site,
+    #                                 # 'On site',
+    #                                 # 'Off site'),
+    #        rainy = ifelse(rainy,
+    #                       'Rainy',
+    #                       'Dry')) %>%
+    # filter(!is.na(rainy)) %>%
+  group_by_(var, 'year') %>%
+  summarise(absences = length(which(absent)),
+            eligibles = length(absent),
+            workers = length(unique(oracle_number))) %>%
+  ungroup %>%
+  mutate(absenteeism_rate = absences / eligibles * 100) 
+  names(out)[1] <- 'variable'
+  out$val <- paste0(round(out$absenteeism_rate, digits = 1),
+                    '%')#,
+                    # ')',
+                    # '\n',
+                    # ' (workers:', out$workers,
+                    # ')')
+  out <- 
+    out %>%
+    dplyr::select(variable, year, val)
+  
+  out <- out %>%
+    spread(key = year,
+           value = val)
+  out$variable <- as.character(out$variable)
+  new_var <- #ifelse(var == 'on_site',
+                    # 'Residence',
+                    ifelse(var == 'rainy',
+                           'Precipitation',
+                           var)
+  # )
+  left <- data.frame(x = c(new_var, rep('', (nrow(out) - 1))))
+  out <- cbind(left, out)
+  names(out)[1:2] <- c('Variable', 'x')
+  # out$variable[1] <- paste0(Hmisc::capitalize(new_var), ': ', out$variable[1])
+  return(out)
+}
+out_list <- list()
+vars <- c('field', 'permanent_or_temporary', 'sex')
+# vars <- c(#'season', 
+#            'field',
+#           'permanent_or_temporary',
+#            'sex')#,
+#            # 'on_site',
+#            # 'rainy'
+#           # )
+for(i in 1:length(vars)){
+  x <- calculate(var = vars[i])
+  out_list[[i]] <- x
+}
+ab_table <- bind_rows(out_list)
+ab_table$Variable <- Hmisc::capitalize(ab_table$Variable)
+# ab_table$Variable[ab_table$Variable == 'Season'] <- 'Malaria season'
+ab_table$Variable[ab_table$Variable == 'Field'] <- 'Worker type'
+ab_table$Variable[ab_table$Variable == 'Permanent_or_temporary'] <- 'Contract'
+ab_table$x <- Hmisc::capitalize(ab_table$x)
+names(ab_table)[2] <- ''
+kable(ab_table, format = 'html') %>% kable_styling()
+# print(xtable::xtable(ab_table,
+#                      caption = 'Absenteeism rate by year and worker characteristics',
+#                      align = c('r', 'r', 'l', rep('l', 4))),
+#       include.rownames = FALSE)
+```
+
+
+```{r}
+ov_ab <- round(100 * mean(ab_panel$absent[between(ab_panel$date, as.Date('2012-01-01'), as.Date('2016-12-31'))]), digits = 2)
+
+ov_cl <- length(which(between(clinic$date, as.Date('2012-01-01'), as.Date('2016-12-31'))))
+```
+
+**Precipitation**: Of the `r n_days` days observed, `r dry_days` had no rainfall at all (ie, approximately two-thirds). On days for which there was any rainfall at all, the average amount was approximately `r amount_rain` centimeters. Rain was most common in December and January (average of 5-5.5 cm daily) and least common in August and September (average of 0.5 cm daily). Days with any rainfall saw more absenteeism than days with no rainfall (Figure 6, panel A) and among days with any rainfall, more precipitation was associated with greater absenteeism (Figure 6, panel B) (correlation coefficient of 0.25).
+
+```{r, fig.cap = 'Rainfall and absenteeism: association of any rainfall with absenteeism rate (left) and association of rainfall amount and absenteeism (right)', fig.height=3.5, fig.width=7, fig.align='center'}
+bi_data <- final_data %>%
+  group_by(date) %>%
+  mutate(any_rain = mean(precipitation, na.rm = TRUE) > 0) %>%
+  ungroup %>%
+  filter(!is.na(any_rain)) %>%
+  mutate(any_rain = ifelse(any_rain, 'Some rain', 'No rain')) %>%
+  group_by(any_rain, date) %>%
+  summarise(absenteeism = mean(absent) * 100)
+bi_data_simple <- bi_data %>%
+  group_by(any_rain) %>%
+  summarise(absenteeism = mean(absenteeism))
+p1 <- ggplot(data = bi_data,
+       aes(x = any_rain,
+           y = absenteeism)) +
+  geom_jitter(alpha = 0.3, size = 0.5) +
+  geom_violin(alpha = 0.4, fill = 'lightblue') +
+  scale_y_log10() +
+  theme_maragra() +
+  geom_point(data = bi_data_simple,
+             aes(x = any_rain,
+                 y = absenteeism),
+             alpha = 0.8) +
+  geom_text(data = bi_data_simple,
+             aes(x = any_rain,
+                 y = absenteeism,
+                 label = paste0(round(absenteeism, digits = 2), '\n(median)')),
+             color = 'black') +
+  labs(x = '',
+       y = 'Absenteeism rate (log scale)',
+       title = 'A')
+
+plot_data <- final_data %>%
+  group_by(date) %>%
+  summarise(precipitation = mean(precipitation, na.rm = TRUE),
+            absenteeism = mean(absent)) %>%
+  ungroup %>%
+  filter(precipitation > 0.1)
+p2 <- ggplot(data = plot_data,
+       aes(x = precipitation,
+           y = absenteeism * 100)) +
+  geom_point(alpha = 0.3, size = 0.5) +
+  scale_x_log10() +
+  geom_smooth() +
+  # scale_y_log10() +
+  theme_maragra() +
+  labs(x = 'Daily precipitation (log scale)',
+       y = 'Absenteeism rate', 
+       title = 'B')
+Rmisc::multiplot(p1, p2, cols = 2)
+```
+
+
+
+
+```{r, fig.align = 'center', fig.cap = 'Distribution of herd protection score in panel data', eval = F}
+pd <- final_data %>%
+  group_by(protection) %>% tally
+ggplot(data = pd,
+       aes(x = protection,
+           y = n)) +
+  geom_bar(stat = 'identity',
+           fill = 'lightblue',
+               alpha = 0.6) +
+  theme_maragra() +
+  labs(x = 'Herd protection score',
+       y = 'Density')
+```
+
+\newpage
+
+
+
+## Sensitivity analysis
+
+
+```{r, eval = FALSE}
+
+# The below shows average FE for year / worker, during malaria season, on a rainy day...
+
+expander <- function(x){sort(unique(unlist(final_data[,x])))}
+dummy <- expand.grid(#season = expander('season'),
+                     months_since = expander('months_since'),
+                     rainy_day = expander('rainy_day'),
+                     herd = mean(final_data$herd),
+                     group = expander('group'))
+dummy$predicted <- NA
+
+groups <- sort(unique(dummy$group))
+for (i in 1:length(groups)){
+    message(i)
+    this_group <- groups[i]
+    indices <- which(dummy$group == this_group)
+    model <- protection_models[[this_group]]
+    fe <- getfe(model)
+    # Add back in the mean effect of fixed effects
+    add <- fe %>% group_by(fe) %>% summarise(effect = mean(effect)) %>% summarise(sum(effect)) %>% unlist %>% as.numeric
+    data <- dummy[indices,]  
+    # predict_felm(model = model, data = )
+    dummy$predicted[indices] <- 
+      (regtools::predict.felm(object = model,
+                             newdata = data,
+                             use.fe = FALSE) + add) * 100
+}
+
+ggplot(data = dummy %>% filter(rainy_day),
+       aes(x = months_since,
+           y = predicted,
+           color = season,
+           group = season)) +
+  geom_line() +
+  geom_point() +
+  facet_wrap(~group, scales = 'free_y') +
+  scale_colour_manual(name = 'Malaria\nseason',
+                      values = c('blue', 'red')) +
+  theme_maragra() +
+  labs(x = 'IRS status',
+       y = 'Estimated absenteeism') #+
+  # theme(legend.position = 'right')
+
+# The below shows estimated importance of herd protection, and heterogeniety across groups.
+
+
+dummy <- expand.grid(season = expander('season'),
+                     months_since = expander('months_since'),
+                     rainy_day = expander('rainy_day'),
+                     herd = 0:1000,
+                     group = expander('group'))
+dummy$predicted <- NA
+
+
+groups <- sort(unique(dummy$group))
+for (i in 1:length(groups)){
+    message(i)
+    this_group <- groups[i]
+    indices <- which(dummy$group == this_group)
+    model <- protection_models[[this_group]]
+    fe <- getfe(model)
+    # Add back in the mean effect of fixed effects
+    add <- fe %>% group_by(fe) %>% summarise(effect = mean(effect)) %>% summarise(sum(effect)) %>% unlist %>% as.numeric
+    data <- dummy[indices,]  
+    dummy$predicted[indices] <- 
+      (regtools::predict.felm(object = model,
+                             newdata = data,
+                             use.fe = FALSE) + add) * 100
+}
+
+ggplot(data = dummy %>% filter(rainy_day, season == 'high'),
+       aes(x = herd,
+           y = predicted,
+           color = months_since,
+           group = months_since)) +
+  geom_line() +
+  facet_wrap(~group, scales = 'free_y') +
+  scale_colour_manual(name = 'IRS status',
+                      values = c('darkorange', 'darkgreen')) +
+  theme_maragra() +
+  labs(x = 'Herd protection score',
+       y = 'Estimated absenteeism')
+```
+
+
+### What would happen without IRS?
+
+
+```{r, eval = FALSE}
+
+# The below chart shows the modeled average absenteeism rate during malaria season for permanent workers, by group type.
+
+x <- final_data %>%
+  # dplyr::filter(season == 'high'#,
+  #               # group == groups[1],
+  #               # permanent_or_temporary == 'Permanent'
+  #               )
+x <- x [,grepl('predicted', names(x)) | names(x) == 'group']
+x <- x %>% gather(key, value, predicted_max_herd_max_irs:predicted)
+dict <- data.frame(key = c('predicted', 
+                           'predicted_no_herd',
+                           'predicted_no_irs',
+                           'predicted_no_herd_no_irs',
+                           'predicted_max_herd_max_irs',
+                           'predicted_max_herd',
+                           'predicted_max_irs'),
+                   new_key = c('As is',
+                               'No herd protection',
+                               'No individual protection',
+                               'No protection (herd or individual)',
+                               'Protection: maximum IRS and herd',
+                               'Protection: maximum herd',
+                               'Protection: maximum IRS'))
+
+x <- left_join(x,
+               dict)
+plot_data <- x %>%
+  mutate(new_key = gsub(' ', '\n', new_key)) %>%
+  group_by(group, 
+           new_key) %>%
+  summarise(avg = mean(value, na.rm = TRUE),
+            med = median(value, na.rm = TRUE),
+            upr = quantile(value, 0.75, na.rm = TRUE),
+            lwr = quantile(value, 0.25, na.rm = TRUE))
+levs <- gsub(' ', '\n', c('No herd protection',
+                               'No individual protection',
+                               'No protection (herd or individual)',
+                               'As is',
+                               'Protection: maximum IRS',
+                               'Protection: maximum herd',
+                               'Protection: maximum IRS and herd'))
+plot_data$new_key <- factor(plot_data$new_key,
+                       levels = levs)
+cols <- colorRampPalette(brewer.pal(n = 9,
+                                    name = 'Set1'))(length(unique(plot_data$group)))
+
+library(ggrepel)
+ggplot(data = plot_data,
+       aes(x = new_key,
+           y = avg * 100,
+           color = group)) +
+  geom_point(size = 4) +
+  theme_maragra() +
+  theme(axis.text.x = element_text(angle = 90)) +
+  labs(x = 'Scenario',
+       y = 'Absenteeism rate') +
+  geom_line(aes(group = group),
+            alpha = 0.5,
+            size = 1) +
+  scale_color_manual(name = '',
+                     values = cols) #+
+  # ggrepel::geom_label_repel(aes(label = round(avg * 100, digits = 1)))
+```
+
+## Return on investment
+
+Costs
+
+```{r}
+costs <- maragra::costs
+mean(costs$total)
+
+# 14152 avoided absences
+
+74103 / 14152
+
+# # Working days per year
+# x <- ab_panel %>%
+#   mutate(year = as.numeric(format(date, '%Y'))) %>%
+#   # remove 2016, since smaller sample
+#   filter(year != 2016) %>%
+#   group_by(year) %>%
+#   tally %>%
+#   summarise(x = mean(n))
+# x
+# 
+# x$x / 26.6 # number of days to prevent an absence
+
+```
+
+- Number of working days
+
+```{r, echo = TRUE}
+x <- ab_panel %>% group_by(date) %>% tally
+ggplot(data = x,aes(x = date,y = n)) + geom_line() +
+  labs(title = mean(x$n))
+```
+
+- Number of working days annually 
+
+```{r, echo = TRUE}
+options(scipen = '999')
+x <- ab_panel %>% mutate(year = as.numeric(format(date, '%Y'))) %>% group_by(year) %>% tally
+ggplot(data = x,aes(x = year,y = n)) + geom_line() +
+  labs(title = mean(x$n))
+```
+
+- Number of prevented absences per year
+
+```{r, echo = TRUE, eval = FALSE}
+ratio <- length(unique(ab_panel$oracle_number)) / length(unique(final_data$oracle_number))
+
+x <- final_data %>%
+  group_by(year = format(date, '%Y')) %>%
+  summarise(eligibles = n(),
+            absences = mean(as.numeric(absent), na.rm = TRUE) * n(),
+            counterfactual = mean(predicted_no_herd_no_irs,na.rm =TRUE) * n()) 
+y <- x %>%
+  summarise(x = mean(counterfactual) - mean(absences)) %>%
+  unlist * ratio
+# Annual prevented
+y
+x <- x %>%
+  mutate(prevented = counterfactual - absences)
+# Number of presences to prevent 1 case
+sum(x$eligibles) / sum(x$prevented)
+```
+
+```{r, eval = FALSE}
+# Clinical costs
+(y /
+  80) * # number of absences it takes to produce one company clinic positve
+  31.49 # cost per clinical case per ezenduka
+
+# Wage costs
+y * c(3.5, 22)
+  # 4 # assuming USD
+```
+
+\newpage
+
+## Robustness and generalizability 
+
+```{r, echo = FALSE, eval = FALSE}
+ro_data <- final_data %>%
+# ro_data <- ab_panel %>%
+#   left_join(irs, by = c('date', 'unidade')) %>%
+#   filter(days_since < 0) %>%
+  mutate(pre_irs = between(days_since, -10, -1)) 
+#   # mutate(time_period = lendable::time_period_extract(date)) %>%
+#   # mutate(time_period = as.character(time_period)) %>%
+#   mutate(time_period = make_season(date = date)) %>%
+#   mutate(absent_sick = ifelse(is.na(absent_sick), FALSE, absent_sick)) %>%
+#   left_join(workers %>%
+#               dplyr::select(oracle_number,
+#                             sex,
+#                             department,
+#                             permanent_or_temporary),
+#             by = 'oracle_number')
+# ro_data$time_period <- as.character(ro_data$time_period)
+
+
+make_model <- function(formula = 'absent ~ pre_irs + time_period'){
+  ro_model <- glm(as.formula(formula), 
+                data = ro_data,
+                family = binomial('logit'))
+  coefs <- exp(coef(ro_model))
+  ci <- confint(ro_model)
+  ci <- exp(ci)
+  out <- data.frame(Variable = names(coefs),
+                    Estimate = coefs,
+                    Lower = ci[,1],
+                    Upper = ci[,2])
+  row.names(out) <- NULL
+  out$`P value` <- coef(summary(ro_model))[,4]
+  out$Significant <- ifelse(out$`P value` <= 0.001, 'xxx',
+                            ifelse(out$`P value` <= 0.01, 'xx',
+                                   ifelse(out$`P value` <= 0.05, 'x',
+                                          '')))
+  out$Variable <- as.character(out$Variable)
+  out$Variable <- gsub('pre_irsTRUE', '10 days prior to IRS', out$Variable)
+  out$Variable <- gsub('time_period', '', out$Variable)
+  return(kable(out, format = "html") %>%
+  kable_styling()# %>%
+    # row_spec(row = which(grepl('prior', out$Variable)),background = "yellow")
+  )
+}
+```
+
+```{r, echo = FALSE, results = 'asis'}
+
+# # BASIC FORMULA
+# make_model('absent ~ pre_irs + time_period')
+
+# # BASIC FORMULA WITH INTERACTIONS
+# make_model('absent ~ pre_irs*time_period')
+
+# # BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX
+# make_model('absent ~ pre_irs*time_period + sex')
+# 
+# # BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT
+# make_model('absent ~ pre_irs*time_period + sex + department')
+# 
+# 
+# # BASIC FORMULA WITH INTERACTIONS AND ADJUSTING FOR SEX AND DEPARTMENT AND STATUS
+# make_model('absent ~ pre_irs*time_period + sex + department + permanent_or_temporary')
+
+# Adjust for seasonality and department
+# make_model('absent ~ pre_irs*season + group + rainy_day')
+```
+
+
+
+```{r}
+# The below shows our robustness check for sick only absenteeism. Unlike with all cause absenteeism, during malaria season, being in the period 10 days prior to IRS is associated with statistically greater likelihood of being absent for illness. In other words, it appears that there is somewhat of a feedback loop: when a worker misses work due to illness, his/her likelihood of getting IRS doubles in the next 10 days.\todo{What to do about this???}
+# make_model('absent_sick ~ pre_irs*time_period + department')
+```
+
 
 # Bibliography

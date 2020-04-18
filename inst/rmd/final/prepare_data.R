@@ -12,6 +12,18 @@ library(lfe)
 library(restorepoint)
 library(regtools)
 
+# classify_protection <- function(days_since){
+#   x <- 21:204
+#   y <- dplyr::percent_rank(x)
+#   y <- rev(y)
+#   out <- rep(NA, length(days_since))
+#   for(i in 1:length(days_since)){
+#     out[i] <-ifelse(days_since[i] %in% x, 
+#                     y[x == days_since[i]],
+#                     0)
+#   }
+#   out
+# }
 
 classify_protection <- function(days_since){
   ifelse(days_since < 21 | days_since > (183+21),
@@ -29,6 +41,8 @@ classify_protection <- function(days_since){
                                                    0.2,
                                                    0)))))))
 }
+
+
 
 
 if('prepared_data.RData' %in% dir()){
@@ -138,9 +152,13 @@ if('prepared_data.RData' %in% dir()){
                               education,
                               floor_material)) %>%
     # Bring in some data for weather
-    left_join(weather) %>%
-    ########## !!!!!!!!!!!!!!! REMOVING 2016
-    filter(date <= '2015-12-31')
+    left_join(weather)
+  
+    ########## !!!!!!!!!!!!!!! REMOVING 2016 for temp workers
+  model_data <- model_data %>%
+    filter(permanent_or_temporary == 'Permanent' |
+             (permanent_or_temporary == 'Temporary' & date <= '2015-12-31'))
+
   
   # Since ad and factory are same, keep same
   model_data$field <- ifelse(model_data$department == 'Field', 
@@ -245,7 +263,7 @@ if('prepared_data.RData' %in% dir()){
       val <- df$protection * weighter(x)
       # Infinite means distance was 0/self; remove
       val[is.infinite(val)] <- NA
-      sum(val, na.rm = TRUE)})
+      mean(val, na.rm = TRUE)}) # used to be sum
     right <- data.frame(lat = df$lat[!is.na(df$lat)],
                         lng = df$lng[!is.na(df$lng)],
                         herd = out)
@@ -278,12 +296,10 @@ if('prepared_data.RData' %in% dir()){
   }
   model_data <- bind_rows(out_list)
   
+  save.image('checkpoint.RData')
   # Create a single "protection" score which combines
   # herd protection and individual protection
-  model_data$combined_protection  <-
-    # Assuming 50 meters
-    (model_data$protection * weighter(0.05)) +
-    model_data$herd_protection
+
 
   
   # Plots of maps
@@ -435,11 +451,12 @@ if('prepared_data.RData' %in% dir()){
   save.image(file = 'prepared_data.RData')
 }
 
-# Final data - only the ever sprayed
+### !!!!!!!!!!
+# Note: this repeats later
+# # Final data - only the ever sprayed
+# final_data <- model_data
 final_data <- model_data %>%
-  filter(ever_sprayed) %>%
-  # Temporary fix pending newer data
-  filter(date <= '2016-01-01')
+  filter(ever_sprayed)
 
 # Remove christmas
 final_data <- final_data %>%
@@ -525,23 +542,37 @@ if('simulations.RData' %in% dir()){
   save(simulations, file = 'simulations.RData')
 }
 
+combine_protection <- function(df){
+  df %>%
+    mutate(combined_protection = herd_protection  + (protection * weighter(0.5)))
+}
+
+model_data <- model_data %>% combine_protection()
+simulations <- simulations %>% combine_protection()
+
 # Some variable things
-model_data$rain_var <- model_data$precipitation_lag_15_60
+model_data$rain_var <- model_data$precipitation_lag_15_90
 model_data$protection_var <- model_data$combined_protection
-simulations$combined_protection <- (simulations$protection * weighter(0.05)) +
-  simulations$herd_protection
-simulations$rain_var <- simulations$precipitation_lag_15_60
+
+simulations$rain_var <- simulations$precipitation_lag_15_90
 simulations$protection_var <- simulations$combined_protection
 
-# Final data - only the ever sprayed
+#
+# final_data <- model_data
+# # Final data - only the ever sprayed
 final_data <- model_data %>%
   filter(ever_sprayed) %>%
-  # Temporary fix pending newer data
-  filter(date <= '2016-01-01')
+#   # Temporary fix pending newer data
+   filter(date <= '2016-01-01')
+
 
 final_model <- felm(log(absent+1) ~ protection_var + (rain_var) | oracle_number | 0 | 0,
                     data = final_data)
+
 summary(final_model)
+# final_model_sep <- felm(log(absent+1) ~ individual_protection + herd_protection + (rain_var) | oracle_number | 0 | 0,
+#                     data = final_data)
+# summary(final_model_sep)
 final_model_lm <- lm(log(absent+1) ~ protection_var + (rain_var),
                      data = final_data)
 
@@ -651,6 +682,19 @@ make_season <- function(date){
   out <- factor(out, levels = c('Off season', 'Malaria season'))
   return(out)
 }
+
+
+# Specific phrases
+# The total number of unique agregados sprayed during this period was 3,998. 
+#Among the 4835 workers for whom we have both reliable absenteeism and residential data, 
+length(unique(model_data$oracle_number))
+#  634 had their homes fumigated at least once (the majority of workers live off of the facility).
+model_data %>% group_by(oracle_number) %>% summarise(ever_sprayed = dplyr::first(ever_sprayed)) %>%
+  group_by(ever_sprayed) %>% tally
+
+
+# Visualizations
+
 
 
 # Build up simulations
