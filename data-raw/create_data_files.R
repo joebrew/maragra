@@ -61,9 +61,9 @@ ab <- ab %>%
          date_captured = format_date(date_captured),
          date_signed_leave_form_rec = format_date(date_signed_leave_form_rec))
 
-# Keep only post 2013
+# Keep only post 2012
 ab <- ab %>%
-  filter(leave_from_date >= '2013-01-01')
+  filter(leave_from_date >= '2012-01-01')
 
 # Keep only relevant columns
 ab <-
@@ -213,8 +213,8 @@ workers <-
 
 # We need to get worker eligible days into an expanded (panel) format
 expandify <- function(oracle_number = 'abc',
-                      start = as.Date('2015-01-01'),
-                      end = as.Date('2015-01-15')){
+                      start = NULL,#as.Date('2015-01-01'),
+                      end = NULL){#as.Date('2015-01-15')){
   if(is.na(start) | is.na(end) |
      start > end){
     out <- data_frame(oracle_number = as.character(rep(NA, 0)),
@@ -229,46 +229,65 @@ expandify <- function(oracle_number = 'abc',
   return(out)
 }
 
+
+
+# Expand absences
+if('ab_expanded.RData' %in% dir()){
+  load('ab_expanded.RData')
+} else {
+  ab_expanded <- list()
+  nra <- nrow(ab)
+  for (i in 1:nra){
+    message(i, ' of ', nra)
+    this_oracle_number <- ab$oracle_number[i]
+    sub_data <- ab[i,]
+    x <- expandify(oracle_number = this_oracle_number,
+                   start = sub_data$leave_from_date,
+                   end = sub_data$leave_to_date)
+    x <- left_join(x,
+                   y = sub_data %>%
+                     dplyr::select(oracle_number,
+                                   leave_type,
+                                   leave_taken),
+                   by = 'oracle_number')
+    ab_expanded[[i]] <- x
+  }
+  ab_expanded <- bind_rows(ab_expanded)
+  ab_expanded$absent <- TRUE
+  # Remove any potential duplicates
+  ab_expanded <- ab_expanded %>%
+    dplyr::distinct(oracle_number, date, .keep_all = TRUE)
+  save(ab_expanded,
+       file = 'ab_expanded.RData')
+}
+
 # Go through each worker and get the eligible working days
 if('eligible_working_days.RData' %in% dir()){
   load('eligible_working_days.RData')
 } else {
   
-  # CGIs are the temp workers (those that get contract end dates)
-  # Let's see when their last absences were
-  temp <- ab %>%
-    dplyr::select(-employee_indicator_type, -department) %>%
-    left_join(workers %>% 
-                mutate(permanent_or_temporary =
-                         ifelse(employee_indicator_type_desc %in% c('TEMPORARY AGRIC',
-                                                                    'FTC INDUSTRIAL'),
-                                'Temporary',
-                                'Permanent')) %>%
-                mutate(department =
-                         ifelse(grepl('CIVLS|HUMAN RESOURCES|RISK', department_name),
-                                'Administrative',
-                                ifelse(grepl('CANE|ADMIN', department_name),
-                                       'Field',
-                                       'Factory'))) %>%
-                mutate(group = paste0(permanent_or_temporary,
-                                      ' ', department)) %>%
-                
-                dplyr::select(group, oracle_number, employee_indicator_type, contract_start_date))# %>%
-    # filter(employee_indicator_type %in% c('C', 'G', 'I')) %>%
-    # filter(contract_start_date >= '2016-01-01')
-  x <- temp %>%
-    filter(group == 'Temporary Field') %>%
-    group_by(oracle_number) %>%
-    summarise( date = max(leave_from_date, na.rm = TRUE)) %>%
-    group_by(date) %>% 
-    tally
-  ggplot(data = x %>%
-           filter(date >= '2016-08-01'),
-         aes(x =date,
-             y = n)) +
-    geom_bar(stat = 'identity')
-  
-  
+  # # CGIs are the temp workers (those that get contract end dates)
+  # # Let's see when their last absences were
+  # temp <- ab %>%
+  #   dplyr::select(-employee_indicator_type, -department) %>%
+  #   left_join(workers %>% 
+  #               mutate(permanent_or_temporary =
+  #                        ifelse(employee_indicator_type_desc %in% c('TEMPORARY AGRIC',
+  #                                                                   'FTC INDUSTRIAL'),
+  #                               'Temporary',
+  #                               'Permanent')) %>%
+  #               mutate(department =
+  #                        ifelse(grepl('CIVLS|HUMAN RESOURCES|RISK', department_name),
+  #                               'Administrative',
+  #                               ifelse(grepl('CANE|ADMIN', department_name),
+  #                                      'Field',
+  #                                      'Factory'))) %>%
+  #               mutate(group = paste0(permanent_or_temporary,
+  #                                     ' ', department)) %>%
+  #               
+  #               dplyr::select(group, oracle_number, employee_indicator_type, contract_start_date))# %>%
+  # filter(employee_indicator_type %in% c('C', 'G', 'I')) %>%
+  # filter(contract_start_date >= '2016-01-01')
   
   
   eligible_working_days <- list()
@@ -302,6 +321,13 @@ if('eligible_working_days.RData' %in% dir()){
         }
       }
     }
+    if(is_temp){
+      # Get last absence for temp workers and remove
+      last_ab <- ab_expanded %>%
+        filter(oracle_number %in% this_worker$oracle_number) %>%
+        filter(date == max(date)) %>% .$date
+      # Don't count any temp worker for more than 6 months past last absence
+    }
     if(no_good){
       end_date <- NA
       start_date <- NA
@@ -312,51 +338,63 @@ if('eligible_working_days.RData' %in% dir()){
                 start = start_date,
                 end = end_date)
   }
-
+  
   # Bind all together
   eligible_working_days <- bind_rows(eligible_working_days)
-  x <- eligible_working_days %>%
-    group_by(date) %>%
-    tally
-  ggplot(data = x %>% filter(date >= '2013-01-01',
-                             date<= '2016-01-01'),
-         aes(x = date,
-             y = n)) +
-    geom_point() +
-    geom_line()
+  # temp_ids <- workers %>% filter(employee_indicator_type %in% c('C', 'G', 'I')) %>% .$oracle_number
+  # x <- eligible_working_days %>%
+  #   filter(oracle_number %in% temp_ids) %>%
+  #   group_by(date) %>%
+  #   tally
+  # ggplot(data = x %>% filter(date >= '2013-01-01',
+  #                            date<= '2016-01-01'),
+  #        aes(x = date,
+  #            y = n)) +
+  #   geom_point() +
+  #   geom_line()
   save(eligible_working_days,
        file = 'eligible_working_days.RData')
 }
+# hist(temp$contract_end_date[format(temp$contract_start_date, '%Y') == '2014'], breaks = 300)
+# pd <- eligible_working_days %>%
+#   left_join(workers %>% dplyr::select(oracle_number, employee_indicator_type, contract_start_date, contract_end_date)) %>%
+#   filter(employee_indicator_type %in% c('C', 'G', 'I')) %>%
+#   mutate(start_month = as.Date(paste0(format(contract_start_date, '%Y-%m'), '-01')),
+#          start_year = as.Date(paste0(format(contract_start_date, '%Y'), '-01-01')),
+#          end_month = as.Date(paste0(format(contract_end_date, '%Y-%m'), '-01')),
+#          end_year = as.Date(paste0(format(contract_end_date, '%Y'), '-01-01')),
+#          year_month = as.Date(paste0(format(date, '%Y-%m'), '-01')))
+# 
+# pdx <- pd %>%
+#   group_by(year_month, end_year) %>% tally %>%
+#   mutate(end_year = format(end_year, '%Y'))
+# ggplot(data = pdx,
+#        aes(x = year_month,
+#            y = n)) +
+#   geom_bar(stat = 'identity',
+#            aes(fill = end_year)) +
+#   xlim(as.Date(c('2009-01-01', '2015-12-31'))) +
+#   scale_fill_manual(name = 'End of contract',
+#                     values = rainbow(length(unique(pdx$end_year))))
 
-# Expand absences
-if('ab_expanded.RData' %in% dir()){
-  load('ab_expanded.RData')
-} else {
-  ab_expanded <- list()
-  nra <- nrow(ab)
-  for (i in 1:nra){
-    message(i, ' of ', nra)
-    this_oracle_number <- ab$oracle_number[i]
-    sub_data <- ab[i,]
-    x <- expandify(oracle_number = this_oracle_number,
-                   start = sub_data$leave_from_date,
-                   end = sub_data$leave_to_date)
-    x <- left_join(x,
-                   y = sub_data %>%
-                     dplyr::select(oracle_number,
-                                   leave_type,
-                                   leave_taken),
-                   by = 'oracle_number')
-    ab_expanded[[i]] <- x
-  }
-  ab_expanded <- bind_rows(ab_expanded)
-  ab_expanded$absent <- TRUE
-  # Remove any potential duplicates
-  ab_expanded <- ab_expanded %>%
-    dplyr::distinct(oracle_number, date, .keep_all = TRUE)
-  save(ab_expanded,
-       file = 'ab_expanded.RData')
-}
+
+pd <- ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number, employee_indicator_type, contract_start_date, contract_end_date)) %>%
+    filter(employee_indicator_type %in% c('C', 'G', 'I')) %>%
+    mutate(start_month = as.Date(paste0(format(contract_start_date, '%Y-%m'), '-01')),
+           start_year = as.Date(paste0(format(contract_start_date, '%Y'), '-01-01')),
+           end_month = as.Date(paste0(format(contract_end_date, '%Y-%m'), '-01')),
+           end_year = as.Date(paste0(format(contract_end_date, '%Y'), '-01-01')),
+           year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  filter(start_year == '2014-01-01') %>%
+  group_by(year_month) %>%
+  summarise(numerator = length(which(absent)),
+            denominator = n()) %>%
+  mutate(p = numerator / denominator * 100)
+ggplot(data = pd,
+       aes(x = year_month,
+           y = p)) +
+  geom_line()
 
 # Join with absences
 ab_panel <- left_join(x = eligible_working_days,
@@ -1332,7 +1370,7 @@ transport <- data_frame(period = c('2011-2012',
                                '2014-2015',
                                '2015-2016',
                                '2016-2017'),
-                    mzn = c(rep(327000, 3), # just an estimate since these years we don't have data for
+                    mzn = c(rep(30000, 3), # just an estimate since these years we don't have data for
                             334773.08,
                             327219.56,
                             432052.46),
@@ -1365,7 +1403,77 @@ valid_ids <- sort(unique(eligible_working_days$oracle_number))
 ab_panel <- ab_panel %>%
   filter(oracle_number %in% valid_ids)
 
+# Use the "grade" field from the ab data and update the workers / ab / ab_panel data with the value
+# for each grade. "NOT ACTIVE" refers to temporary workers
+wages <- bind_rows(
+  tibble(
+    department = c('Factory', 'Factory', 'Factory', 'Factory', 'Factory'),
+    year = c(2014, 2014, 2014, 2014, 2014),
+    grade = c('A1A', 'A1', 'A2', 'A3', 'B1'),
+    monthly = c(3675, 4000, 4100, 4500, 4930)),
+  tibble(department = c('Field', 'Field', 'Field', 'Field', 'Field'),
+         year = c(2014, 2014, 2014, 2014, 2014),
+         grade = c('A1A', 'A1', 'A2', 'A3', 'B1'),
+         monthly = c(3025, 3300, 3400, 3660, 4930)),
+  
+  tibble(department = c('Factory', 'Factory', 'Factory', 'Factory', 'Factory'),
+         year = c(2015, 2015, 2015, 2015, 2015),
+         grade = c('A1A', 'A1', 'A2', 'A3', 'B1'),
+         monthly = c(3875, 4250, 4350, 4760, 5230)),
+  tibble(department = c('Field', 'Field', 'Field', 'Field', 'Field'),
+         year = c(2015, 2015, 2015, 2015, 2015),
+         grade = c('A1A', 'A1', 'A2', 'A3', 'B1'),
+         monthly = c(3200, 3525, 3670, 3950, 5230)),
+  
+  tibble(department = c('Factory', 'Factory', 'Factory', 'Factory', 'Factory'),
+         year = c(2016, 2016, 2016, 2016, 2016),
+         grade = c('A1A', 'A1', 'A2', 'A3', 'B1'),
+         monthly = c(4040, 4435, 4540, 4955, 5500)),
+  tibble(department = c('Field', 'Field', 'Field', 'Field', 'Field'),
+         year = c(2016, 2016, 2016, 2016, 2016),
+         grade = c('A1A', 'A1', 'A2', 'A3', 'B1'),
+         monthly = c(3360, 3670, 3820, 4120, 5500)),
+  tibble(department = c("Field", "Field", "Field", "Field", "Field"),
+         grade = c('NOT ACTIVE', 'NOT ACTIVE', 'NOT ACTIVE', 'NOT ACTIVE', 'NOT ACTIVE'),
+         year = c(2014,2014,2014,2014,2014),
+         monthly = c(6318, 6318, 6318, 6318, 6318)),
+  tibble(department = c("Field", "Field", "Field", "Field", "Field"),
+         grade = c('NOT ACTIVE', 'NOT ACTIVE', 'NOT ACTIVE', 'NOT ACTIVE', 'NOT ACTIVE'),
+         year = c(2015,2015,2015,2015,2015),
+         monthly = c(6318, 6318, 6318, 6318, 6318)),
+  tibble(department = c("Field", "Field", "Field", "Field", "Field"),
+         grade = c('NOT ACTIVE', 'NOT ACTIVE', 'NOT ACTIVE', 'NOT ACTIVE', 'NOT ACTIVE'),
+         year = c(2016,2016,2016,2016,2016),
+         monthly = c(6318, 6318, 6318, 6318, 6318))
+)
+# Linear model to get 2013 values
+fit <- lm(monthly ~ department + year + grade, data = wages)
+new_data <- tibble(department = c('Field', 'Field', 'Field', 'Field', 'Field', 'Factory', 'Factory', 'Factory', 'Factory', 'Factory', 'Field', 'Field', 'Field', 'Field', 'Field'),
+                   year = rep(2013, 15),
+                   grade = c(rep(c('A1A', 'A1', 'A2', 'A3', 'B1'), 2), rep('NOT ACTIVE', 5)))
+new_data$monthly <- predict(fit, new_data)
+wages <- bind_rows(new_data, wages)
+# Convert to USD
+converter <- tibble(year = 2013:2016,
+                    converter = 0.1 * c(0.33, 0.29, 0.22, 0.14))
+wages <- left_join(wages, converter)
+wages$monthly_usd <- wages$monthly * wages$converter
+#  Get daily values
+wages$daily <- wages$monthly / 22
+wages$daily_usd <- wages$monthly_usd / 22
+wages <- wages %>% dplyr::distinct(department, year, grade, .keep_all = TRUE)
+
+# Join the daily usd values to the absenteeism data
+ab_panel <- ab_panel %>%
+  left_join(ab %>% dplyr::distinct(oracle_number, grade)) %>%
+  left_join(workers %>% dplyr::distinct(oracle_number, department)) %>%
+  mutate(year = as.numeric(format(date, '%Y'))) %>%
+  left_join(wages %>% dplyr::select(grade, department, year, daily_usd)) %>%
+  # Estimate for those for whom we do not have wages
+  mutate(daily_usd = ifelse(is.na(daily_usd), 20, daily_usd))
+
 # Save for use in package
+devtools::use_data(wages, overwrite = TRUE)
 devtools::use_data(costs_itemized, overwrite = TRUE)
 devtools::use_data(costs, overwrite = TRUE)
 # devtools::use_data(costs_raw, overwrite = TRUE)

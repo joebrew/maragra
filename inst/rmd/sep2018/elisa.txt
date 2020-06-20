@@ -1,0 +1,11 @@
+- precipitation vs. incidence (or other indicators): precip
+- fixed effects and generalizability
+- fixed effects and other controls
+- "secular" trends in decline
+- CONSIDER: (i) fixed effect for "holiday" season (jan-dec); (ii) remove holiday season as form of robustness check
+- SHOW IN PAPER: over time chart of precipitation and incidence
+- monthly data and converting to "protection" scores
+- monthly and rainy day effects
+
+- Use daily model keeping 0-1 and see what happens (taking into account the rainy day)
+- Look at different variations: flood, dry, extremes, daily, etc.

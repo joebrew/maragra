@@ -4,8 +4,7 @@
 \alias{run_all_analyses}
 \title{Run all analyses}
 \usage{
-run_all_analyses(only = NULL, except = NULL, date = NULL,
-  output_dir = NULL)
+run_all_analyses(only = NULL, except = NULL, date = NULL, output_dir = NULL)
 }
 \arguments{
 \item{only}{A vector of .Rmd file names (excluding path) to be knitted}

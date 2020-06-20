@@ -1,0 +1,298 @@
+---
+title: "Concept note: Maragra model approach"
+subtitle: "Pradhan, Sicuri, Brew"
+date: ''
+output: 
+  pdf_document:
+    keep_tex: true
+    latex_engine: xelatex
+    includes:
+      in_header: preamble.sty
+fig_width: 4
+fig_height: 2.6
+bibliography: bibliography.bib
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# csl: journal-of-health-economics.csl
+
+# Packages
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(RColorBrewer)
+library(extrafont)
+library(kableExtra)
+library(raster)
+loadfonts()
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               fig.height = 4,
+               fig.width = 5,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE,
+               dev = "cairo_pdf",
+               fig.pos="!h",
+               fig.align = 'center')
+opts_knit$set(width=75)
+options(xtable.comment = FALSE)
+```
+
+```{r, eval = TRUE}
+source('prepare_data.R')
+```
+
+
+\begin{center}
+\begin{large}
+
+Maragra models
+
+\end{large}
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\textbf{Overview}  
+\end{center}
+
+\vspace{5mm}
+\begin{center}
+\begin{changemargin}{3cm}{3cm} 
+
+This document contains methods and basic results for a few different modeling approaches. It was produced in September 2018 in Amsterdam. The purpose of this document is to give an overview of the modeling approached employed so far, as well as provide a summary of results.
+
+\end{changemargin}
+\end{center}
+
+\vspace{20mm}
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+        \subsection*{Main points}
+        \begin{itemize}
+          \item We have combined individual and indirect protection into one index
+          \item We have simplified our model approach
+          \item Results are consistent/coherent
+        \end{itemize}
+        \vspace{2mm}
+    }%
+}
+
+\vfill
+\null
+
+\subsection*{Desinataires}
+\textbf{Elisa Sicuri; Menno Pradhan}
+
+\vspace{3mm}
+
+\newpage
+
+# The previous approach 
+
+In the draft of the paper (\href{https://docs.google.com/document/d/1bUWRBCgVcgjSPHchIQxiTG8Vwv5hV1GLU4Tlu386sWA/edit#}{HERE}
+), the model formula is:
+
+
+$$
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{Season}_{t} * IRS_{it} + \hat{\beta}_2{RainyDay_{t}} + \hat{\beta}_3{Herd_{it}} +  \alpha_i + \delta_t + \upsilon_{it}
+$$
+
+In R, using the `felm` library, this is written as follows:
+
+```{r, echo = FALSE}
+protection_models[[1]]$call
+```
+
+The above notation shows `absent` (binary 1,0) as a function of the interaction of binary `season` (high vs. low) and binary `months_since` (before vs. after) plus binary `rainy_day` (whether or not it rained on the particular day) plus continuous numeric `herd` (ie, the protection afforded by others) plus fixed effects for both the worker (`oracle_number`) and the year (`malaria_year`).  $\alpha_i$ represents the time invariant worker fixed effects, and $\delta_i$ represents the fixed effect of the particular malaria season. $\upsilon$ is the error term. This model is run separately for the 4 different worker groups, yielding the following results:
+
+```{r, results = 'asis'}
+make_models_table(model_list = protection_models, the_caption = "All absenteeism with herd immunity: model results", type = 'latex', multiplier = 1)
+```
+
+In the above, "after" IRS application (ie, the 6 months following IRS) is associated with a significant reduction in absenteeism for both kinds of permanent workers, and does not have a signficiant association with a change in absenteeism for both kinds of temporary workers.
+
+# The new approach
+
+The new approach, discussed September 26 2018, is characterized by the following:
+
+1. We assume that the sum of "spraying" and rainfall is what determines the quantity of malaria-infectious mosquitoes at any given time.
+2. We assume that rainfall's effect is best captured by lagging 4-13 weeks prior to the date of observation [@Wu_2017].
+3. We assume that the relationship between this sum takes on an exponential shape.
+4. We model separately for worker types (permanent vs. temporary and factory vs. field).
+5. We assume that other factors (age, sex, etc.) not captured by the above do not interact with absenteeism or the effect of IRS.
+6. We assume that the protection afforded by IRS is a function of distance to that IRS, and are indifferent to (a) the relative coverage of IRS in your area (the absolute quantity of chemical being the only thing that matters) and (b) whether the IRS is at your house or elsewhere (the distance to the IRS being the only thing that matters)
+
+## Specification
+
+$$
+\hat{Y_{it}} = \hat{\beta}_{0} +  \hat{\beta}_{1}\text{exp(protection)}_{it}  + \hat{\beta}_{2}\text{Rain}_{it} +  \alpha_i + \upsilon_{it}
+$$
+
+The above notation shows `absent` (binary 1,0) as a function of the exponentiation of the `protection` variable (the summation of individual plus indirectly conferred protection) and the `rain` variable (the summed lag of rainfall from 4-13 weeks).  $\alpha_i$ represents the time invariant worker fixed effects, $\upsilon$ is the error term. 
+
+## Code
+
+In R, our new model looks like this
+
+```{r, echo = FALSE}
+final_model$call
+```
+
+Where `protection` is the sum of all nearby IRS, weighted by the inverse of the distance from the residence of the person (including the person's own residence, set at a distance of 10 meters).
+
+
+## Data structure
+
+```{r}
+head(monthly)
+```
+
+## Data summary
+
+```{r}
+library(cowplot)
+ggplot(data = monthly,
+       aes(x = absent)) +
+  geom_histogram(fill = 'grey',
+                 color = 'black') +
+  labs(x = 'Absenteeism rate',
+       y = 'Count',
+       title = 'Distribution of monthly absenteeism rate')
+```
+
+
+```{r}
+ggplot(data = monthly,
+       aes(x = protection)) +
+  geom_histogram(fill = 'grey',
+                 color = 'black') +
+  labs(x = 'Protection score',
+       y = 'Count',
+       title = 'Distribution of protection score')
+```
+
+```{r}
+ggplot(data = monthly,
+       aes(x = precipitation_lag2_3)) +
+  geom_histogram(fill = 'grey',
+                 color = 'black') +
+  labs(x = 'Precipitation lag',
+       y = 'Count',
+       title = 'Distribution of 2-3 month precipitation lag')
+
+```
+
+\newpage
+
+## Results
+
+The below table shows the results of the model devised thus far. 
+
+```{r, results = 'asis'}
+make_final_table(model = final_model, the_caption = "Model results", type = 'latex', multiplier = 1000)
+```
+
+
+
+## Intepretation
+
+The below charts show predicted absenteeism rates at different rain and protection levels.
+
+```{r}
+fake <- expand.grid(#group = sort(unique(monthly$group)),
+                    precipitation_lag1_3 = seq(0, 18, by = 3),
+                    protection = seq(0,7, by = 1))#,
+fake$predicted <- fake$predicted_upr <- fake$predicted_lwr<- NA
+
+fe <- getfe(final_model)
+predictions <- exp(predict(final_model_lm, fake, interval = 'confidence'))-1
+# predictions <- data.frame(predictions)
+# # Add the fixed effects
+# fixed_effects <- fe$effect
+
+fake$predicted<- predictions[,1]
+fake$predicted_upr <- predictions[,3]
+fake$predicted_lwr <- predictions[,2]
+```
+
+### Precipitation's effect
+
+```{r}
+ggplot(data = fake %>% filter(protection == 1),
+       aes(x = precipitation_lag1_3,
+           y = predicted)) +
+  geom_point() +
+  geom_line() +
+  geom_ribbon(aes(ymin = predicted_lwr,
+                  ymax = predicted_upr),
+              alpha = 0.4,
+              fill = 'darkorange') +
+  labs(y = 'Predicted absenteeism rate',
+       x = '1-3 month precipitation lag',
+       title = 'Lagged precipitation and absenteeism')
+```
+
+### IRS protection's effect
+
+```{r}
+ggplot(data = fake %>% filter(precipitation_lag1_3 == 3),
+       aes(x = protection,
+           y = predicted)) +
+  geom_point() +
+  geom_line() +
+  geom_ribbon(aes(ymin = predicted_lwr,
+                  ymax = predicted_upr),
+              alpha = 0.4,
+              fill = 'darkorange') +
+  labs(y = 'Predicted absenteeism rate',
+       x = 'Protection index',
+       title = 'IRS-afforded protection and absenteeism')
+```
+
+
+
+```{r}
+# MODEL WITH MENNO
+#fit <- lm(log(absent+1) ~ protection + precipitation_lag2_3, data = monthly)
+#ci <- confint(fit)
+# Segregate by working group
+# Add worker fixed effects
+# Time fixed effects?
+# Plot months and see if it's working
+
+
+# # fitbi <- glm(absent ~ protection + precipitation_lag2_3, data = monthly,
+# #              family = binomial('logit'))
+# # Logit model
+# ci <- exp(confint(fitbi))
+# data.frame(coefs = exp(coef(fitbi)),
+#            lwr = ci[,1],
+#            upr = ci[,2],
+#            p = coef(summary(fitbi))[,4])
+```
+
+
+```{r}
+# Introduction is really all that matters - specifying contribution, summarizing results
+# Journal of Health Economics (1) and then Health Economics (2).
+# Elisa: American Journal of Health Economics (from American Health Economic Society)
+# Ensure that we explicitly explain these 21 days issue to rule out reverse causality.
+# Large firms are big enough to capture externalities
+# What is the effect of anti-malaria campaign on worker producitivity
+# Data special
+# Identification problems (no external spraying, no home spraying, unobserved govt - omitted variable bias dealt with through worker and time fixed effects.)
+# Exploring herd protection through various functional forms
+```
+
+# Bibliography

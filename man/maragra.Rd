@@ -3,8 +3,4 @@
 \docType{package}
 \name{maragra}
 \alias{maragra}
-\alias{maragra-package}
 \title{maragra.}
-\description{
-maragra.
-}

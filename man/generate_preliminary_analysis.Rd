@@ -4,8 +4,11 @@
 \alias{generate_preliminary_analysis}
 \title{Generate preliminary analysis report}
 \usage{
-generate_preliminary_analysis(date = NULL, output_dir = NULL,
-  output_file = "maragra_preliminary_analysis.html")
+generate_preliminary_analysis(
+  date = NULL,
+  output_dir = NULL,
+  output_file = "maragra_preliminary_analysis.html"
+)
 }
 \arguments{
 \item{date}{A date to be printed on the report. If \code{NULL} (the 

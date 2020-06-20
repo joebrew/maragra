@@ -1,0 +1,579 @@
+---
+title: "Maragra update: December 2018"
+subtitle: "Brew, Pradhan, Sicuri"
+date: ''
+output: 
+  pdf_document:
+    keep_tex: true
+    latex_engine: xelatex
+    includes:
+      in_header: preamble.sty
+fig_width: 4
+fig_height: 2.6
+bibliography: bibliography.bib
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# csl: journal-of-health-economics.csl
+
+# Packages
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(RColorBrewer)
+library(extrafont)
+library(kableExtra)
+library(raster)
+loadfonts()
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               fig.height = 4,
+               fig.width = 5,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE,
+               dev = "cairo_pdf",
+               fig.pos="!h",
+               fig.align = 'center')
+opts_knit$set(width=75)
+options(xtable.comment = FALSE)
+```
+
+```{r, eval = TRUE}
+source('prepare_data.R')
+```
+
+
+\begin{center}
+\begin{large}
+
+Maragra models
+
+\end{large}
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\textbf{Overview}  
+\end{center}
+
+\vspace{5mm}
+\begin{center}
+\begin{changemargin}{3cm}{3cm} 
+
+This document contains an overview of the modeling approach and simulations results.
+
+\end{changemargin}
+\end{center}
+
+\vspace{20mm}
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+        \subsection*{Main points}
+        \begin{itemize}
+          \item We have a new modeling approach
+          \item We have carried out basic simulations for several malaria control strategies
+          \item Results are consistent/coherent
+          \item We have not yet implemented geographical variation
+        \end{itemize}
+        \vspace{2mm}
+    }%
+}
+
+\vfill
+\null
+
+\subsection*{Desinataires}
+\textbf{Elisa Sicuri; Menno Pradhan}
+
+\vspace{3mm}
+
+\newpage
+
+# Current paper
+
+Draft of the paper (\href{https://docs.google.com/document/d/1bUWRBCgVcgjSPHchIQxiTG8Vwv5hV1GLU4Tlu386sWA/edit#}{HERE}
+
+# Code
+
+In R, our model looks like this
+
+```{r, echo = FALSE}
+final_model$call
+```
+
+Where `protection` is the sum of all nearby IRS, weighted by the inverse of the distance from the residence of the person (including the person's own residence).
+
+\newpage
+
+# Reproduction of charts
+
+## Number of workers by department
+
+```{r}
+plot_data <- ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  mutate(group = department) %>%
+  # mutate(field = ifelse(department == 'Field', 
+  #                            'Field worker',
+  #                            'Not field worker')) %>%
+  # mutate(group = paste0(permanent_or_temporary, ' ',
+  #                         tolower(field))) %>%
+  group_by(group, year_month) %>%
+  summarise(n = length(unique(oracle_number)))
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = n,
+           color = group)) +
+  geom_line()
+```
+
+## Number of temporary workers over time
+
+```{r}
+plot_data <- ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  # mutate(group = department) %>%
+  mutate(group = ifelse(department == 'Field',
+                             'Field worker',
+                             'Not field worker')) %>%
+  # mutate(group = paste0(permanent_or_temporary, ' ',
+  #                         tolower(field))) %>%
+  group_by(group, year_month) %>%
+  summarise(n = length(unique(oracle_number)))
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = n,
+           color = group)) +
+  geom_line()
+```
+
+## Absenteeism rate over time
+
+
+```{r}
+plot_data <- ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  mutate(group = department) %>%
+  # mutate(group = ifelse(department == 'Field',
+  #                            'Field worker',
+  #                            'Not field worker')) %>%
+  # mutate(group = paste0(permanent_or_temporary, ' ',
+  #                         tolower(field))) %>%
+  group_by(group, year_month) %>%
+  summarise(abs = length(which(absent)),
+            eligibles = n()) %>%
+  mutate(ab_rate = abs / eligibles * 100)
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = ab_rate,
+           color = group)) +
+  geom_line()
+```
+
+## Absenteeism rate over time by worker type
+
+
+```{r}
+plot_data <- ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  # mutate(group = department) %>%
+  mutate(field = ifelse(department == 'Field',
+                             'Field worker',
+                             'Not field worker')) %>%
+  mutate(group = paste0(permanent_or_temporary, ' ',
+                          tolower(field))) %>%
+  group_by(group, year_month) %>%
+  summarise(abs = length(which(absent)),
+            eligibles = n()) %>%
+  mutate(ab_rate = abs / eligibles * 100)
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = ab_rate,
+           color = group)) +
+  geom_line()
+```
+
+## Number of workers over time by worker type
+
+```{r}
+plot_data <- ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  # mutate(group = department) %>%
+  mutate(field = ifelse(department == 'Field',
+                             'Field worker',
+                             'Not field worker')) %>%
+  mutate(group = paste0(permanent_or_temporary, ' ',
+                          tolower(field))) %>%
+  group_by(group, year_month) %>%
+  summarise(n = length(unique(oracle_number)))
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = n,
+           color = group)) +
+  geom_line()
+```
+
+
+
+# Descriptive overview
+
+## Herd-only protection score
+
+
+```{r}
+pq <- quantile(final_data$herd_protection)
+x <- final_data %>%
+  # mutate(protection_cat = protection_var) %>%
+  mutate(protection_cat = ifelse(herd_protection <= pq[2],
+                                 'Protection 1',
+                                 ifelse(herd_protection <= pq[3],
+                                        'Protection 2',
+                                        ifelse(herd_protection <= pq[4],
+                                               'Protection 3',
+                                               ifelse(herd_protection <= pq[5],
+                                                      'Protection 4',
+                                                      NA))))) %>%
+  group_by(protection_cat) %>%
+  summarise(ab_rate = length(which(absent))/ n() * 100)
+
+names(x) <- c('Quantile', 'Absenteeism rate')
+kable(x)
+```
+
+```{r}
+ggplot(data = x,
+       aes(x = `Quantile`,
+           y = `Absenteeism rate`)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           color = 'black') +
+  labs(x = 'Protection score quantile')
+```
+
+
+\newpage
+
+
+## Individual-only protection score
+
+```{r}
+pq <- quantile(final_data$protection,
+               seq(0, 1, 0.1))
+pq <- sort(unique(pq))
+x <- final_data %>%
+  # mutate(protection_cat = protection_var) %>%
+  mutate(protection_cat = ifelse(protection <= pq[2],
+                                 'Protection 1',
+                                 ifelse(protection <= pq[3],
+                                        'Protection 2',
+                                        ifelse(protection <= pq[4],
+                                               'Protection 3',
+                                               ifelse(protection <= (pq[5] + 0.1),
+                                                      'Protection 4',
+                                                      NA))))) %>%
+  group_by(protection_cat) %>%
+  summarise(ab_rate = length(which(absent))/ n() * 100)
+
+names(x) <- c('Quantile', 'Absenteeism rate')
+kable(x)
+```
+
+```{r}
+ggplot(data = x,
+       aes(x = `Quantile`,
+           y = `Absenteeism rate`)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           color = 'black') +
+  labs(x = 'Protection score quantile')
+```
+
+
+\newpage
+
+
+## Overall protection score 
+
+
+```{r}
+pq <- quantile(final_data$protection_var)
+x <- final_data %>%
+  # mutate(protection_cat = protection_var) %>%
+  mutate(protection_cat = ifelse(protection_var <= pq[2],
+                                 'Protection 1',
+                                 ifelse(protection_var <= pq[3],
+                                        'Protection 2',
+                                        ifelse(protection_var <= pq[4],
+                                               'Protection 3',
+                                               ifelse(protection_var <= pq[5],
+                                                      'Protection 4',
+                                                      NA))))) %>%
+  group_by(protection_cat, group) %>%
+  summarise(ab_rate = length(which(absent))/ n() * 100) %>%
+  ungroup
+
+names(x) <- c('Quantile', 'Group', 'Absenteeism rate')
+kable(x)
+```
+
+```{r}
+ggplot(data = x,
+       aes(x = `Quantile`,
+           y = `Absenteeism rate`)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           color = 'black') +
+  labs(x = 'Protection score quantile') +
+  facet_wrap(~Group)
+```
+
+
+\newpage
+
+
+## Precipitation lag
+
+```{r}
+rq <- quantile(final_data$rain_var, na.rm = TRUE)
+x <- final_data %>%
+  # mutate(protection_cat = protection_var) %>%
+  mutate(protection_cat = ifelse(rain_var <= rq[2],
+                                 'Protection 1',
+                                 ifelse(rain_var <= rq[3],
+                                        'Protection 2',
+                                        ifelse(rain_var <= rq[4],
+                                               'Protection 3',
+                                               ifelse(rain_var <= rq[5],
+                                                      'Protection 4',
+                                                      NA))))) %>%
+  group_by(protection_cat, group) %>%
+  summarise(ab_rate = length(which(absent))/ n() * 100) %>%
+  ungroup %>%
+  filter(!is.na(protection_cat))
+
+names(x) <- c('Quantile', 'Group', 'Absenteeism rate')
+kable(x)
+```
+
+```{r}
+ggplot(data = x,
+       aes(x = `Quantile`,
+           y = `Absenteeism rate`)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           color = 'black') +
+  labs(x = 'Lagged precipitation score quantile') +
+  facet_wrap(~Group)
+```
+
+
+\newpage
+
+
+# Results
+
+
+## Regression table
+The below table shows the results of the model devised thus far. 
+
+```{r, results = 'asis'}
+# make_final_table(model = final_model, the_caption = "Model results", type = 'latex', multiplier = 10000)
+```
+
+```{r}
+summary(final_model)
+```
+
+
+
+## Intepretation
+
+The below charts show predicted absenteeism rates at different rain and protection levels.
+
+```{r}
+fake <- expand.grid(#group = sort(unique(monthly$group)),
+  rain_var = rq,
+  protection_var = pq)#,
+fake$predicted <- fake$predicted_upr <- fake$predicted_lwr<- NA
+
+fe <- getfe(final_model)
+predictions <- exp(predict(final_model_lm, fake, interval = 'confidence'))-1
+# predictions <- data.frame(predictions)
+# # Add the fixed effects
+# fixed_effects <- fe$effect
+
+fake$predicted<- predictions[,1]
+fake$predicted_upr <- predictions[,3]
+fake$predicted_lwr <- predictions[,2]
+```
+
+### Precipitation's effect
+
+```{r}
+ggplot(data = fake %>% filter(protection_var == pq[1]),
+       aes(x = rain_var,
+           y = predicted)) +
+  geom_point() +
+  geom_line() +
+  geom_ribbon(aes(ymin = predicted_lwr,
+                  ymax = predicted_upr),
+              alpha = 0.4,
+              fill = 'darkorange') +
+  labs(y = 'Predicted absenteeism rate',
+       x = '1-3 month precipitation lag',
+       title = 'Lagged precipitation and absenteeism')
+```
+
+### IRS protection's effect
+
+```{r}
+ggplot(data = fake %>% filter(rain_var == rq[1]),
+       aes(x = protection_var,
+           y = predicted)) +
+  geom_point() +
+  geom_line() +
+  geom_ribbon(aes(ymin = predicted_lwr,
+                  ymax = predicted_upr),
+              alpha = 0.4,
+              fill = 'darkorange') +
+  labs(y = 'Predicted absenteeism rate',
+       x = 'Protection index',
+       title = 'IRS-afforded protection and absenteeism')
+```
+
+### Simulations
+
+```{r}
+sim_data <- simulations
+sim_data$idx <- sim_data$oracle_number
+fe <- getfe(final_model)
+predictions <- exp(predict(final_model_lm, sim_data, interval = 'confidence'))-1
+predictions <- data.frame(predictions)
+# Add the fixed effects
+fixed_effects <- left_join(sim_data,
+                           data.frame(fe) %>% dplyr::select(idx, effect) %>%
+                             mutate(idx = as.character(idx))) %>%
+  .$effect
+fixed_effects <- as.numeric(fixed_effects)
+
+predictions$fit <- predictions$fit + fixed_effects
+predictions$lwr <- predictions$lwr + fixed_effects
+predictions$upr <- predictions$upr + fixed_effects
+
+# combine other info
+predictions <- predictions %>% bind_cols(sim_data %>% dplyr::select(date, absent, strategy)) %>%
+  mutate(absent = as.numeric(absent)) %>%
+  filter(!is.na(fit))
+
+simple <- predictions %>%
+  group_by(strategy) %>%
+  summarise(n = n(),
+            actual_absences = sum(absent),
+            predicted_absences = sum(fit, na.rm = TRUE),
+            actual = mean(absent, na.rm = TRUE),
+            predicted = mean(fit, na.rm = TRUE)) %>%
+  dplyr::rename(value = predicted) %>%
+  dplyr::select(strategy, value, predicted_absences)
+
+kable(simple)
+```
+
+```{r}
+ggplot(data = simple,
+       aes(x = strategy,
+           y = value)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           color = 'black') +
+  labs(y = 'Absenteeism rate',
+       x = 'Strategy') +
+  geom_label(aes(label = round(value, digits = 3)),
+             nudge_y = -0.005)
+```
+
+```{r}
+ggplot(data = simple,
+       aes(x = strategy,
+           y = predicted_absences)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           color = 'black') +
+  labs(y = 'Absenteeism rate',
+       x = 'Strategy') 
+```
+
+
+# Costs
+
+```{r}
+x <- final_data %>%
+  left_join(irs %>% dplyr::select(date, unidade, days_since))
+
+out <- data.frame(
+  strategy = c('Max',
+               'Real',
+               'Time-optimized',
+               'Zero'),
+  sprays = c(nrow(final_data) / 60,
+             length(which(x$days_since == 0)),
+             length(which(format(final_data$date, '%m-%d') == '12-11')),
+             0
+  )
+) %>%
+  mutate(sprays = sprays / length(unique(final_data$oracle_number)))
+
+kable(out)
+ggplot(data = out,
+       aes(x = strategy,
+           y = sprays)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           color = 'black') +
+  labs(y = 'Number of sprays per person',
+       x = 'Strategy') 
+
+```
+
+```{r}
+# Introduction is really all that matters - specifying contribution, summarizing results
+# Journal of Health Economics (1) and then Health Economics (2).
+# Elisa: American Journal of Health Economics (from American Health Economic Society)
+# Ensure that we explicitly explain these 21 days issue to rule out reverse causality.
+# Large firms are big enough to capture externalities
+# What is the effect of anti-malaria campaign on worker producitivity
+# Data special
+# Identification problems (no external spraying, no home spraying, unobserved govt - omitted variable bias dealt with through worker and time fixed effects.)
+# Exploring herd protection through various functional forms
+```
+
+# Bibliography

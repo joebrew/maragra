@@ -259,6 +259,7 @@ if('prepared_data.RData' %in% dir()){
                                  'latitude_aura'))
   
   save.image('temp.RData')
+  
 
   # Remove nas
   model_data <- model_data %>%
@@ -271,48 +272,200 @@ if('prepared_data.RData' %in% dir()){
            !is.na(herd),
            !is.na(malaria_year))
   
-  # # Cut down from 4 to 3 groups
-  # model_data <- model_data %>%
-  #   filter(group != 'Temporary not field worker') %>%
-  #   mutate(group = ifelse(group == 'Permanent not field worker',
-  #                         'Non-field worker',
-  #                         group))
+  # Get lagged rainfally
+  rain_lag <- function(x){
+    dplyr::lag(x, 22) + 
+      dplyr::lag(x, 23) + 
+      dplyr::lag(x, 24) + 
+      dplyr::lag(x, 25) + 
+      dplyr::lag(x, 26) + 
+      dplyr::lag(x, 27) + 
+      dplyr::lag(x, 28) + 
+      dplyr::lag(x, 29) + 
+      dplyr::lag(x, 30) + 
+      dplyr::lag(x, 31) + 
+      dplyr::lag(x, 32) + 
+      dplyr::lag(x, 33) + 
+      dplyr::lag(x, 34) + 
+      dplyr::lag(x, 35) + 
+      dplyr::lag(x, 36) + 
+      dplyr::lag(x, 37) + 
+      dplyr::lag(x, 38) + 
+      dplyr::lag(x, 39) + 
+      dplyr::lag(x, 40) + 
+      dplyr::lag(x, 41) + 
+      dplyr::lag(x, 42) + 
+      dplyr::lag(x, 43) + 
+      dplyr::lag(x, 44) + 
+      dplyr::lag(x, 45) + 
+      dplyr::lag(x, 46) + 
+      dplyr::lag(x, 47) + 
+      dplyr::lag(x, 48) + 
+      dplyr::lag(x, 49) + 
+      dplyr::lag(x, 50) + 
+      dplyr::lag(x, 51) + 
+      dplyr::lag(x, 52) + 
+      dplyr::lag(x, 53) + 
+      dplyr::lag(x, 54) + 
+      dplyr::lag(x, 55) + 
+      dplyr::lag(x, 56) + 
+      dplyr::lag(x, 57) + 
+      dplyr::lag(x, 58) + 
+      dplyr::lag(x, 59) + 
+      dplyr::lag(x, 60) + 
+      dplyr::lag(x, 61) + 
+      dplyr::lag(x, 62) + 
+      dplyr::lag(x, 63) + 
+      dplyr::lag(x, 64) + 
+      dplyr::lag(x, 65) + 
+      dplyr::lag(x, 66) + 
+      dplyr::lag(x, 67) + 
+      dplyr::lag(x, 68) + 
+      dplyr::lag(x, 69) + 
+      dplyr::lag(x, 70) + 
+      dplyr::lag(x, 71) + 
+      dplyr::lag(x, 72) + 
+      dplyr::lag(x, 73) + 
+      dplyr::lag(x, 74) + 
+      dplyr::lag(x, 75) + 
+      dplyr::lag(x, 76) + 
+      dplyr::lag(x, 77) + 
+      dplyr::lag(x, 78) + 
+      dplyr::lag(x, 79) + 
+      dplyr::lag(x, 80) + 
+      dplyr::lag(x, 81) + 
+      dplyr::lag(x, 82) + 
+      dplyr::lag(x, 83) + 
+      dplyr::lag(x, 84) 
+  }
+  model_data <- 
+    model_data %>%
+    arrange(date) %>%
+    group_by(oracle_number) %>%
+    mutate(rain_lag = rain_lag(precipitation)) %>%
+    ungroup
   
-  # # REMOVE THE NEVERS
-  # model_data <- model_data %>%
-  #   filter(ever_sprayed)
-  # 
+  # Create a single "protection" score which combines
+  # herd protection and individual protection
+  model_data <-
+    model_data %>%
+    # Individual protection
+    mutate(individual_protection = as.character(months_since)) %>%
+    mutate(individual_protection = ifelse(individual_protection == 'Before',
+                                          0,
+                                          ifelse(individual_protection == 'After',
+                                                 1, NA))) %>%
+    mutate(individual_protection = ifelse(individual_protection == 0, 0, weighter(individual_protection /500))) %>%
+    # Herd protection
+    mutate(herd_protection = herd) %>%
+    # Combined
+    mutate(protection = herd_protection + individual_protection) %>%
+    # Get on a smaller scale
+    mutate(protection = protection / 100)
+
+  # Make a numeric months since
+  model_data <-
+    model_data %>%
+    mutate(months_since_numeric = ifelse(months_since == 'Before',
+                                          0,
+                                          ifelse(months_since == 'After',
+                                                 1, NA))) 
+  
+  # Make monthly 
+  monthly <- 
+    model_data %>%
+    group_by(oracle_number,
+             year_month = paste0(format(date, '%Y-%m'), '-01')) %>%
+    summarise(group = dplyr::first(group),
+              precipitation = mean(precipitation, na.rm = T),
+              absences = length(which(absent)),
+              longitude_aura = dplyr::first(longitude_aura),
+              latitude_aura = dplyr::first(latitude_aura),
+              ever_sprayed = dplyr::last(ever_sprayed),
+              eligibles = n(),
+              herd = mean(herd, na.rm = TRUE),
+              protection = mean(protection, na.rm = TRUE),
+              irs = length(which(months_since == 'After')) / n(),
+              sex = dplyr::first(sex),
+              permanent_or_temporary = dplyr::first(permanent_or_temporary),
+              high_season = length(which(season == 'high')) / n() ) %>%
+    ungroup %>%
+    mutate(absent = absences / eligibles) %>%
+    arrange(year_month) %>%
+    group_by(oracle_number) %>%
+    mutate(
+      precipitation_lag0 = precipitation,
+      precipitation_lag1 = dplyr::lag(precipitation, 1),
+           precipitation_lag2 = dplyr::lag(precipitation, 2),
+           precipitation_lag3 = dplyr::lag(precipitation, 3),
+           precipitation_lag4 = dplyr::lag(precipitation, 4)) %>%
+    mutate(precipitation_lag2_3 = precipitation_lag2 + precipitation_lag3) %>% 
+    mutate(precipitation_lag1_2 = precipitation_lag1 + precipitation_lag2) %>%
+    mutate(precipitation_lag0_2 = precipitation_lag0 + precipitation_lag1 + precipitation_lag2) %>%
+    mutate(precipitation_lag0_3 = precipitation_lag0 + precipitation_lag1 + precipitation_lag2 + precipitation_lag3) %>%
+    mutate(precipitation_lag1_3 = precipitation_lag1 + precipitation_lag2 + precipitation_lag3) %>%
+    mutate(precipitation_lag1_4 = precipitation_lag1 + precipitation_lag2 + precipitation_lag3 + precipitation_lag4) %>%
+    ungroup
+
+ 
   fe_models <- list()
   sick_models <- list()
-  # Secondary analysis
   protection_models <- list()
-  groups <- sort(unique(model_data$group))
+  good_models <- list()
+  great_models <- list()
+  final_models <- list()
+  groups <- sort(unique(monthly$group))
   # library(lmerTest)
   # library(nlme)
   for (i in 1:length(groups)){
     message(i)
     this_group <- groups[i]
     message(this_group)
-    these_data <- model_data %>% filter(group == this_group)
+    these_data <- monthly %>% filter(group == this_group)
+    these_daily_data <- model_data %>% filter(group == this_group)
+    
 
-    this_model <- felm(absent ~ season*months_since + rainy_day  | oracle_number + malaria_year | 0 | 0,
-                       data = these_data)
-    this_sick_model <- felm(absent_sick ~ season*months_since + rainy_day  | oracle_number + malaria_year| 0 | 0,
-                            data = these_data)
-    this_protection_model <- felm(absent ~ season*months_since + rainy_day  | oracle_number + malaria_year | 0 | 0,
-                       data = these_data)
-    fe_models[[i]] <- this_model
-    sick_models[[i]] <- this_sick_model
+    # this_model <- felm(absent ~ season*months_since + rainy_day  | oracle_number + malaria_year | 0 | 0,
+    #                    data = these_data)
+    # this_sick_model <- felm(absent_sick ~ season*months_since + rainy_day  | oracle_number + malaria_year| 0 | 0,
+    #                         data = these_data)
+    this_protection_model <- felm(absent ~ season*months_since + rainy_day + herd  | oracle_number + malaria_year | 0 | 0,
+                       data = these_daily_data)
+    # 
+    # this_good_model <- lm(absent ~ exp(months_since_numeric) + exp(rain_lag),
+    #                       data = these_data)
+    # this_great_model <- lm(absent ~ exp(months_since_numeric) + exp(rain_lag) + exp(herd),
+    #                        data = these_data)
+    # 
+    # # this_final_model <- lm(absent ~ exp(protection) + exp(rain_lag),
+    # #                        data = these_data)
+    this_final_model <- lm(log(absent+1) ~ protection + precipitation_lag2_3, data = these_data)
+    
+    # fe_models[[i]] <- this_model
+    # sick_models[[i]] <- this_sick_model
     protection_models[[i]] <- this_protection_model
+    # good_models[[i]] <- this_good_model
+    # great_models[[i]] <- this_great_model
+    final_models[[i]] <- this_final_model
   }
-  names(fe_models) <- groups
-  names(sick_models) <- groups
+  # names(fe_models) <- groups
+  # names(sick_models) <- groups
   names(protection_models) <- groups
+  # names(good_models) <- groups
+  # names(great_models) <- groups
+  names(final_models) <- groups
+  
+  # final_model <- lm(log(absent+1) ~ protection + precipitation_lag1_3 + permanent_or_temporary, data = monthly)
+  
+  final_model <- felm(log(absent+1) ~ protection + precipitation_lag1_3 | oracle_number | 0 | 0,
+       data = monthly)
+  final_model_lm <- lm(log(absent+1) ~ protection + precipitation_lag1_3,
+                      data = monthly)
   
   # Get the herd protection score assuming that everyone nearby was protected
-  groups <- sort(unique(model_data$group))
+  groups <- sort(unique(monthly$group))
   herd_ideal <- 
-    model_data %>%
+    monthly %>%
     filter(!is.na(longitude_aura),
            !is.na(latitude_aura)) %>%
     group_by(oracle_number) %>%
@@ -332,85 +485,89 @@ if('prepared_data.RData' %in% dir()){
   herd_ideal$herd_ideal <- out
   herd_ideal <- herd_ideal@data
   # Join back to model_data
-  model_data <-
-    left_join(model_data,
+  monthly <-
+    left_join(monthly,
               herd_ideal)
+  # Get the overall protection score assuming everybody else nearby was covered
+  # AND individual was covered
+  monthly$protection_ideal <- monthly$herd_ideal + 100
   
-  # devtools::install_github('skranz/regtools')
-  library(regtools)
-  # Define function similiar to "predict" but for felm
-  predict_felm <- function(model, data,
-                           irs0 = FALSE,
-                           irs_all = FALSE,
-                           herd0 = FALSE,
-                           herd_max = FALSE){
-    
-    # Make overwrites if necessary
-    # If IRS is 0 (for prediction purposes, overwrite)
-    if(irs0){
-      data$months_since <- factor('Before', levels = c('Before', 'After'))
-    }
-    if(herd0){
-      data$herd <- 0
-    }
-    if(irs_all){
-      data$months_since <- factor('After', levels = c('Before', 'After'))
-    }
-    if(herd_max){
-      data$herd <- data$herd_ideal
-    }
-    predicted <- regtools::predict.felm(object = model,
-                                        newdata = data,
-                                        use.fe = TRUE)
-    return(predicted)
-  }
-  
-  model_data$predicted <-
-    model_data$predicted_no_irs <-
-    model_data$predicted_no_herd <- 
-    model_data$predicted_no_herd_no_irs <-
-    model_data$predicted_max_irs <- 
-    model_data$predicted_max_herd <-
-    model_data$predicted_max_herd_max_irs <- 
-    NA
-  
-  for (i in 1:length(groups)){
-    message(i)
-    this_group <- groups[i]
-    indices <- which(model_data$group == this_group)
-    model <- protection_models[[this_group]]
-    data <- model_data[indices,]  
-    model_data$predicted[indices] <- 
-      predict_felm(model = model,
-              data = data)
-    model_data$predicted_no_irs[indices] <-
-      predict_felm(model = model,
-                   data = data,
-                   irs0 = TRUE)
-    model_data$predicted_no_herd[indices] <-
-      predict_felm(model = model,
-                   data = data,
-                   herd0 = TRUE)
-    model_data$predicted_no_herd_no_irs[indices] <-
-      predict_felm(model = model,
-                   data = data,
-                   herd0 = TRUE,
-                   irs0 = TRUE)
-    model_data$predicted_max_irs[indices] <-
-      predict_felm(model = model,
-                   data = data,
-                   irs_all = TRUE)
-    model_data$predicted_max_herd[indices] <- 
-      predict_felm(model = model,
-                   data = data,
-                   herd_max = TRUE)
-    model_data$predicted_max_herd_max_irs[indices] <- 
-      predict_felm(model = model,
-                   data = data,
-                   herd_max = TRUE,
-                   irs_all = TRUE)
-  }
-  
+  # # devtools::install_github('skranz/regtools')
+  # library(regtools)
+  # # source('felm.r')
+  # # Define function similiar to "predict" but for felm
+  # predict_felm <- function(model, data,
+  #                          irs0 = FALSE,
+  #                          irs_all = FALSE,
+  #                          herd0 = FALSE,
+  #                          herd_max = FALSE){
+  #   
+  #   # Make overwrites if necessary
+  #   # If IRS is 0 (for prediction purposes, overwrite)
+  #   if(irs0){
+  #     data$months_since <- factor('Before', levels = c('Before', 'After'))
+  #   }
+  #   if(herd0){
+  #     data$herd <- 0
+  #   }
+  #   if(irs_all){
+  #     data$months_since <- factor('After', levels = c('Before', 'After'))
+  #   }
+  #   if(herd_max){
+  #     data$herd <- data$herd_ideal
+  #   }
+  #   predicted <- predict.felm(object = model,
+  #                                       newdata = data,
+  #                                       use.fe = TRUE)
+  #   return(predicted)
+  # }
+  # 
+  # model_data$predicted <-
+  #   model_data$predicted_no_irs <-
+  #   model_data$predicted_no_herd <- 
+  #   model_data$predicted_no_herd_no_irs <-
+  #   model_data$predicted_max_irs <- 
+  #   model_data$predicted_max_herd <-
+  #   model_data$predicted_max_herd_max_irs <- 
+  #   NA
+  # 
+  # for (i in 1:length(groups)){
+  #   message(i)
+  #   this_group <- groups[i]
+  #   indices <- which(model_data$group == this_group)
+  #   model <- protection_models[[this_group]]
+  #   data <- model_data[indices,]  
+  #   model_data$predicted[indices] <- 
+  #     predict_felm(model = model,
+  #             data = data)
+  #   model_data$predicted_no_irs[indices] <-
+  #     predict_felm(model = model,
+  #                  data = data,
+  #                  irs0 = TRUE)
+  #   model_data$predicted_no_herd[indices] <-
+  #     predict_felm(model = model,
+  #                  data = data,
+  #                  herd0 = TRUE)
+  #   model_data$predicted_no_herd_no_irs[indices] <-
+  #     predict_felm(model = model,
+  #                  data = data,
+  #                  herd0 = TRUE,
+  #                  irs0 = TRUE)
+  #   model_data$predicted_max_irs[indices] <-
+  #     predict_felm(model = model,
+  #                  data = data,
+  #                  irs_all = TRUE)
+  #   model_data$predicted_max_herd[indices] <- 
+  #     predict_felm(model = model,
+  #                  data = data,
+  #                  herd_max = TRUE)
+  #   model_data$predicted_max_herd_max_irs[indices] <- 
+  #     predict_felm(model = model,
+  #                  data = data,
+  #                  herd_max = TRUE,
+  #                  irs_all = TRUE)
+  # }
+  # 
   
   # Plots of maps
   # Libraries
@@ -589,6 +746,8 @@ clean_up_model <- function(x, multiplier = 100){
   x$term <- gsub('before_after', 'IRS time=', x$term)
   x$term <- gsub('time_since', 'Months after=', x$term)
   x$term <- gsub('incidence', 'Incidence', x$term)
+  x$term <- gsub('group', '', x$term)
+  x$term <- gsub('_lag2_3', '8-15 week lag', x$term)
   names(x) <- Hmisc::capitalize(names(x))
   names(x) <- gsub('.', ' ', names(x), fixed = TRUE)
   x$`P value` <- NA
@@ -645,7 +804,18 @@ make_models_table <- function(model_list, the_caption = "Models with worker fixe
   print(k)
 }
 
-make_models_table(model_list = protection_models)
+
+make_final_table <- function(model, the_caption = "Models with worker fixed effects", type = 'html', multiplier = 100){
+  cleaned_up <- clean_up_model(model)
+  
+  library(kableExtra)
+  k <- kable(cleaned_up, format = type, caption = the_caption, booktabs = T, longtable = TRUE) %>%
+    kable_styling(latex_options = c("hold_position"))#, 
+                                    # "repeat_header"))
+  print(k)
+}
+
+
 
 irs$months_since <- irs$days_since %/% 30
 
@@ -752,6 +922,3 @@ if(!'dummy_data.csv' %in% dir()){
 } else {
   dummy_data <- read_csv('dummy_data.csv')
 }
-
-# Secondary analysis
-make_models_table(model_list = protection_models)

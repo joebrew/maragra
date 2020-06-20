@@ -4,8 +4,10 @@
 \alias{generate_ihmt_presentation}
 \title{Generate IHMT presentation}
 \usage{
-generate_ihmt_presentation(output_dir = NULL,
-  output_file = "ihmt_presentation.pdf")
+generate_ihmt_presentation(
+  output_dir = NULL,
+  output_file = "ihmt_presentation.pdf"
+)
 }
 \arguments{
 \item{output_dir}{The directory to which the file should be written. If

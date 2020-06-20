@@ -1,0 +1,504 @@
+---
+title: "February 2019 - Xinavane charts reproduction"
+subtitle: "Using Maragra data"
+date: ''
+output: 
+  pdf_document:
+    keep_tex: true
+    latex_engine: xelatex
+    includes:
+      in_header: preamble.sty
+fig_width: 4
+fig_height: 2.6
+bibliography: bibliography.bib
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# csl: journal-of-health-economics.csl
+
+# Packages
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(RColorBrewer)
+library(extrafont)
+library(kableExtra)
+library(raster)
+loadfonts()
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               fig.height = 4,
+               fig.width = 5,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE,
+               dev = "cairo_pdf",
+               fig.pos="!h",
+               fig.align = 'center')
+opts_knit$set(width=75)
+options(xtable.comment = FALSE)
+```
+
+```{r, eval = TRUE}
+source('prepare_data.R')
+```
+
+
+\begin{center}
+\begin{large}
+
+Charts
+
+\end{large}
+\end{center}
+
+\vspace{5mm}
+
+\begin{center}
+\textbf{Overview}  
+\end{center}
+
+\vspace{5mm}
+\begin{center}
+\begin{changemargin}{3cm}{3cm} 
+
+This document contains charts from Maragra data, meant for comparison with Xinavane. It was created on February 5, 2019 by Joe Brew for Laia Cirera and Elisa Sicuri.
+
+\end{changemargin}
+\end{center}
+
+\vspace{20mm}
+
+\noindent\fbox{%
+    \parbox{\textwidth}{%
+        \subsection*{Action}
+        \begin{itemize}
+          \item Review charts herein
+          \item Request clarification or ask questions if applicable
+        \end{itemize}
+        \vspace{2mm}
+    }%
+}
+
+\vfill
+\null
+
+\subsection*{Desinataires}
+\textbf{Laia Cirera; Elisa Sicuri}
+
+\vspace{3mm}
+
+\newpage
+
+
+# Malaria prevalence in the region, (2013-2017), Manhiça (control)
+
+```{r}
+load('xin_bes.RData')
+
+x <- xin_bes %>%
+  filter(district %in% c('MAGUDE', 'MANHICA')) %>%
+  filter(date >= '2013-01-01',
+         date <= '2017-12-31',
+         disease == 'MALARIA') %>%
+  group_by(month = as.Date(cut(date,'month')),
+           district) %>%
+  summarise(cases = sum(cases)) %>%
+  mutate(year = as.numeric(format(month, '%Y'))) %>%
+  left_join(pop %>%
+              group_by(year, district) %>%
+              summarise(population = sum(population))) %>%
+  mutate(p = cases / population * 1000)
+
+ggplot(data = x %>% filter(district == 'MANHICA'),
+       aes(x = month,
+           y = p)) +
+  geom_line() +
+  geom_area(fill = 'darkblue', alpha = 0.2) +
+  facet_wrap(~district) +
+  labs(x = 'Month',
+       y = 'Incidence per 1,000',
+       title = 'Malaria incidence') +
+  databrew::theme_databrew()
+```
+
+# Malaria prevalence in the region, (2013-2017)
+Magude (intervention)
+
+```{r}
+ggplot(data = x %>% filter(district == 'MAGUDE'),
+       aes(x = month,
+           y = p)) +
+  geom_line() +
+  geom_area(fill = 'darkblue', alpha = 0.2) +
+  facet_wrap(~district) +
+  labs(x = 'Month',
+       y = 'Incidence per 1,000',
+       title = 'Malaria incidence') +
+  databrew::theme_databrew()
+
+```
+
+# Both locations
+
+```{r}
+ggplot(data = x,
+       aes(x = month,
+           y = p)) +
+  geom_line() +
+  geom_area(fill = 'darkblue', alpha = 0.2) +
+  facet_wrap(~district) +
+  labs(x = 'Month',
+       y = 'Incidence per 1,000',
+       title = 'Malaria incidence') +
+  databrew::theme_databrew()
+```
+
+
+## Number of workers by contract type
+
+```{r}
+library(databrew)
+plot_data <- ab_panel %>%
+  filter(date <= '2016-02-01') %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  mutate(group = department) %>%
+  # mutate(field = ifelse(department == 'Field', 
+  #                            'Field worker',
+  #                            'Not field worker')) %>%
+  # mutate(group = paste0(permanent_or_temporary, ' ',
+  #                         tolower(field))) %>%
+  group_by(group = permanent_or_temporary, year_month) %>%
+  summarise(n = length(unique(oracle_number)))
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = n,
+           color = group)) +
+  geom_line() +
+  scale_color_manual(name = '',
+                     values = databrew::make_colors(n = 3)) +
+  theme_databrew() +
+  labs(x = 'Month',
+       y = 'Workers',
+       title = 'Number of workers by month')
+```
+
+
+## Absenteeism rate by contract type
+
+
+```{r}
+library(databrew)
+plot_data <- ab_panel %>%
+  filter(date <= '2016-02-01') %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  mutate(group = department) %>%
+  # mutate(field = ifelse(department == 'Field', 
+  #                            'Field worker',
+  #                            'Not field worker')) %>%
+  # mutate(group = paste0(permanent_or_temporary, ' ',
+  #                         tolower(field))) %>%
+  group_by(group = permanent_or_temporary, year_month) %>%
+  summarise(abs = length(which(absent)),
+            denom = n()) %>%
+  ungroup %>%
+  mutate(p = abs / denom * 100)
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = p,
+           color = group)) +
+  geom_line() +
+  scale_color_manual(name = '',
+                     values = databrew::make_colors(n = 3)) +
+  theme_databrew() +
+  labs(x = 'Month',
+       y = '%',
+       title = 'Absenteeism rate by month')
+```
+
+## Permanent workers absenteeism rate and malaria incidence
+
+```{r}
+
+plot_data <- ab_panel %>%
+  filter(date <= '2016-02-01') %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+    filter(permanent_or_temporary == 'Permanent') %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  mutate(group = department) %>%
+  # mutate(field = ifelse(department == 'Field', 
+  #                            'Field worker',
+  #                            'Not field worker')) %>%
+  # mutate(group = paste0(permanent_or_temporary, ' ',
+  #                         tolower(field))) %>%
+  group_by(year_month) %>%
+  summarise(abs = length(which(absent)),
+            denom = n()) %>%
+  ungroup %>%
+  mutate(p = abs / denom * 100)
+
+
+x <- xin_bes %>%
+  filter(district %in% c('MAGUDE', 'MANHICA')) %>%
+  filter(date >= '2013-01-01',
+         date <= '2017-12-31',
+         disease == 'MALARIA') %>%
+  group_by(month = as.Date(cut(date,'month')),
+           district) %>%
+  summarise(cases = sum(cases)) %>%
+  mutate(year = as.numeric(format(month, '%Y'))) %>%
+  left_join(pop %>%
+              group_by(year, district) %>%
+              summarise(population = sum(population))) %>%
+  mutate(p = cases / population * 1000)
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = p * 3)) +
+  geom_line(color = 'darkred') +
+  theme_databrew() +
+  labs(x = 'Month',
+       y = '%',
+       title = 'Absenteeism rate by month') +
+  geom_line(data = x %>% filter(district == 'MANHICA'),
+       aes(x = month,
+           y = p),
+       color = 'blue',
+       lty = 2) +
+  labs(x = 'Month',
+       y = 'Incidence per 1,000',
+       title = 'Malaria incidence and permanent worker absenteeism',
+       subtitle = 'Red = absenteeism; blue = malaria') +
+  databrew::theme_databrew() +
+  xlim(as.Date('2013-01-01'),
+       as.Date('2016-02-01')) +
+  scale_y_continuous(sec.axis = sec_axis(~./3, name = 'Absenteeism'))
+```
+
+## Number of temporary workers by job type
+
+(Skipped due to category incompatibility)
+
+## Temporary workers absenteeism rate and malaria incidence
+
+(Modified due to category incompatability)
+
+```{r}
+
+plot_data <- ab_panel %>%
+  filter(date <= '2016-02-01') %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+    filter(permanent_or_temporary == 'Temporary') %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  mutate(group = department) %>%
+  # mutate(field = ifelse(department == 'Field', 
+  #                            'Field worker',
+  #                            'Not field worker')) %>%
+  # mutate(group = paste0(permanent_or_temporary, ' ',
+  #                         tolower(field))) %>%
+  group_by(year_month, group) %>%
+  summarise(abs = length(which(absent)),
+            denom = n()) %>%
+  ungroup %>%
+  mutate(p = abs / denom * 100)
+
+
+x <- xin_bes %>%
+  filter(district %in% c('MAGUDE', 'MANHICA')) %>%
+  filter(date >= '2013-01-01',
+         date <= '2017-12-31',
+         disease == 'MALARIA') %>%
+  group_by(month = as.Date(cut(date,'month')),
+           district) %>%
+  summarise(cases = sum(cases)) %>%
+  mutate(year = as.numeric(format(month, '%Y'))) %>%
+  left_join(pop %>%
+              group_by(year, district) %>%
+              summarise(population = sum(population))) %>%
+  mutate(p = cases / population * 1000)
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = p * 3)) +
+  geom_line(aes(color = group)) +
+  theme_databrew() +
+  labs(x = 'Month',
+       y = '%',
+       title = 'Absenteeism rate by month') +
+  geom_line(data = x %>% filter(district == 'MANHICA'),
+       aes(x = month,
+           y = p),
+       color = 'blue',
+       lty = 2) +
+  labs(x = 'Month',
+       y = 'Incidence per 1,000',
+       title = 'Malaria incidence and permanent worker absenteeism',
+       subtitle = 'Blue dotted line= malaria') +
+  databrew::theme_databrew() +
+  xlim(as.Date('2014-01-01'),
+       as.Date('2016-02-01')) +
+  scale_y_continuous(sec.axis = sec_axis(~./3, name = 'Absenteeism')) +
+  scale_color_manual(name = 'Worker type',
+                     values = databrew::make_colors(n = 3))
+```
+
+\newpage
+
+# Other miscellaneous charts
+
+## Number of workers by department
+
+```{r}
+library(databrew)
+plot_data <- ab_panel %>%
+  filter(date <= '2016-02-01') %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  mutate(group = department) %>%
+  # mutate(field = ifelse(department == 'Field', 
+  #                            'Field worker',
+  #                            'Not field worker')) %>%
+  # mutate(group = paste0(permanent_or_temporary, ' ',
+  #                         tolower(field))) %>%
+  group_by(group, year_month) %>%
+  summarise(n = length(unique(oracle_number)))
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = n,
+           color = group)) +
+  geom_line() +
+  scale_color_manual(name = '',
+                     values = databrew::make_colors(n = 3)) +
+  theme_databrew() +
+  labs(x = 'Month',
+       y = 'Workers',
+       title = 'Number of workers by month')
+```
+
+## Number of temporary workers over time
+
+```{r}
+plot_data <- ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  # mutate(group = department) %>%
+  mutate(group = ifelse(department == 'Field',
+                             'Field worker',
+                             'Not field worker')) %>%
+  # mutate(group = paste0(permanent_or_temporary, ' ',
+  #                         tolower(field))) %>%
+  group_by(group, year_month) %>%
+  summarise(n = length(unique(oracle_number)))
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = n,
+           color = group)) +
+  geom_line()
+```
+
+## Absenteeism rate over time
+
+
+```{r}
+plot_data <- ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  mutate(group = department) %>%
+  # mutate(group = ifelse(department == 'Field',
+  #                            'Field worker',
+  #                            'Not field worker')) %>%
+  # mutate(group = paste0(permanent_or_temporary, ' ',
+  #                         tolower(field))) %>%
+  group_by(group, year_month) %>%
+  summarise(abs = length(which(absent)),
+            eligibles = n()) %>%
+  mutate(ab_rate = abs / eligibles * 100)
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = ab_rate,
+           color = group)) +
+  geom_line()
+```
+
+## Absenteeism rate over time by worker type
+
+
+```{r}
+plot_data <- ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  # mutate(group = department) %>%
+  mutate(field = ifelse(department == 'Field',
+                             'Field worker',
+                             'Not field worker')) %>%
+  mutate(group = paste0(permanent_or_temporary, ' ',
+                          tolower(field))) %>%
+  group_by(group, year_month) %>%
+  summarise(abs = length(which(absent)),
+            eligibles = n()) %>%
+  mutate(ab_rate = abs / eligibles * 100)
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = ab_rate,
+           color = group)) +
+  geom_line()
+```
+
+## Number of workers over time by worker type
+
+```{r}
+plot_data <- ab_panel %>%
+  left_join(workers %>% dplyr::select(oracle_number,
+                                      department,
+                                      permanent_or_temporary)) %>%
+  mutate(year_month = as.Date(paste0(format(date, '%Y-%m'), '-01'))) %>%
+  # mutate(group = department) %>%
+  mutate(field = ifelse(department == 'Field',
+                             'Field worker',
+                             'Not field worker')) %>%
+  mutate(group = paste0(permanent_or_temporary, ' ',
+                          tolower(field))) %>%
+  group_by(group, year_month) %>%
+  summarise(n = length(unique(oracle_number)))
+
+ggplot(data = plot_data,
+       aes(x = year_month,
+           y = n,
+           color = group)) +
+  geom_line()
+```
+
+
+
+# Bibliography

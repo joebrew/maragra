@@ -4,8 +4,7 @@
 \alias{generate_paper}
 \title{Generate paper}
 \usage{
-generate_paper(date = NULL, output_dir = NULL,
-  output_file = "paper.pdf")
+generate_paper(date = NULL, output_dir = NULL, output_file = "paper.pdf")
 }
 \arguments{
 \item{date}{A date to be printed on the report. If \code{NULL} (the
