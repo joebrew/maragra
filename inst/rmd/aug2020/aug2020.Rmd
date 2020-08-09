@@ -1,0 +1,394 @@
+---
+title: "Final analysis for paper"
+date: ''
+fig_height: 2.6
+output:
+  pdf_document:
+    includes:
+      in_header: preamble.sty
+    keep_tex: yes
+    latex_engine: xelatex
+  html_document:
+    df_print: paged
+fig_width: 4
+always_allow_html: true
+subtitle: Brew, Pradhan, Sicuri
+bibliography: bibliography.bib
+---
+
+
+```{r, echo = FALSE, warning = FALSE, message = FALSE, comment = NA, error= FALSE, cache = FALSE}
+# csl: journal-of-health-economics.csl
+
+# Packages
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(RColorBrewer)
+library(extrafont)
+library(kableExtra)
+library(raster)
+library(sp)
+library(tidyverse)
+library(knitr)
+library(Hmisc)
+library(brew)
+library(maragra)
+library(knitr)
+library(RColorBrewer)
+# library(lme4)
+library(lfe)
+library(restorepoint)
+library(regtools)
+
+loadfonts()
+## Global options
+options(max.print="75")
+opts_chunk$set(echo=FALSE,
+	             cache=FALSE,
+               prompt=FALSE,
+               fig.height = 4,
+               fig.width = 5,
+               tidy=TRUE,
+               comment=NA,
+               message=FALSE,
+               warning=FALSE,
+               # dev = "cairo_pdf",
+               fig.pos="!h",
+               fig.align = 'center')
+knitr::opts_chunk$set(error = FALSE)
+
+opts_knit$set(width=75)
+options(xtable.comment = FALSE)
+source('code.R')
+```
+
+
+
+*Absences*: We observed `r nrow(ab_panel)` unique worker-days among `r length(unique(ab_panel$oracle_number))` workers. The all-period average absenteeism rate was `r round(length(which(ab_panel$absent)) / nrow(ab_panel) * 100, digits = 2)`%, though this rate varied widely as a function of worker department, sex, residence, and season (table).
+
+# Model results (one model)
+
+```{r}
+library(broom)
+broom::tidy(final_model)
+
+# Prediction based on individual stuff
+fake <- expand.grid(protection_var = seq(0, 0.7, by = 0.1),
+                                         rain_var = seq(0, 6, 1))
+fe <- getfe(final_model)
+predictions <- exp(predict(final_model_lm, newdata = fake, interval = 'confidence'))-1
+predictions <- data.frame(predictions)
+fixed_effects <- mean(fe$effect)
+fake$fit <- predictions$fit + fixed_effects
+fake$lwr <- predictions$lwr + fixed_effects
+fake$upr <- predictions$upr + fixed_effects
+
+n_cols <- length(unique(fake$protection))
+cols <- colorRampPalette(RColorBrewer::brewer.pal(n = 8, 'Spectral'))(n_cols)
+cols[2] <- 'black'
+library(maragra)
+ggplot(data = fake %>% filter(rain_var == 3) %>% mutate(protection_var = factor(protection_var)),
+       aes(x = protection_var,
+           y = fit)) +
+  geom_ribbon(aes(ymin = lwr, ymax = upr),
+              color = NA,
+              alpha = 0.15) +
+  geom_point() +
+  geom_line(alpha = 0.6) +
+  labs(x = 'Protection score',
+       title = 'Association between community protection, individual protection, and absenteeism',
+       y = 'Estimated monthly absenteeism rate\n(Average fixed effect, 3 cm of 15-60 day prior precipitation)') + theme_maragra() 
+```
+
+# Model results (segregated models)
+
+```{r}
+out_list <- list()
+worker_groups <- names(model_list)
+for(i in 1:length(worker_groups)){
+  this_group <- worker_groups[i]
+  out_list[[i]] <- broom::tidy(model_list[[i]]) %>% mutate(grp = this_group)
+}
+out <- bind_rows(out_list)
+# Get the non segrated version too
+non_seg <- broom::tidy(final_model) %>% mutate(grp = 'Non segregated')
+options(scipen =  '999')
+out <- out %>% bind_rows(non_seg) %>% dplyr::select(term, estimate, p.value, grp) %>%
+  mutate(Type = 'Distance weighted')
+out
+
+out %>% mutate(estimate = paste0(round(estimate, digits = 3),
+                                 ' (',
+               round(p.value, digits = 3), ')')) %>% dplyr::select(-p.value, -Type) %>%  tidyr::spread(key = grp, value = estimate)
+```
+
+
+```{r}
+# Also make predictions by groups
+worker_groups <- names(model_list)
+the_groups <- c(worker_groups, 'All')
+
+# Do predictions on the different groups
+fake <- expand.grid(protection_var = seq(0, 1, by = 0.1),
+                    rain_var = mean(final_data$rain_var, na.rm = TRUE),
+                    group = the_groups)
+fake_list <- list()
+for(i in 1:length(the_groups)){
+  this_worker_group <- the_groups[i]
+  if(this_worker_group == 'All'){
+    this_model <- final_model
+    this_model_lm <- final_model_lm
+    this_fake_data <- fake %>% mutate(group = 'All')
+  } else {
+      this_model <- model_list[[i]]
+    this_model_lm <- model_list_lm[[i]]
+    this_fake_data <- fake %>% dplyr::filter(group == this_worker_group)
+  }
+
+  predictions <- exp(predict(this_model_lm, newdata = this_fake_data, interval = 'confidence'))-1
+  predictions <- data.frame(predictions)
+  this_fe <- getfe(this_model)
+  fixed_effects <- mean(this_fe$effect)
+  out <- this_fake_data
+  out$fit <- predictions$fit + fixed_effects
+  out$lwr <- predictions$lwr + fixed_effects
+  out$upr <- predictions$upr + fixed_effects
+  fake_list[[i]] <- out
+}
+fake <- bind_rows(fake_list)
+
+n_cols <- length(unique(fake$protection))
+cols <- colorRampPalette(RColorBrewer::brewer.pal(n = 8, 'Spectral'))(n_cols)
+cols[2] <- 'black'
+library(maragra)
+ggplot(data = fake  %>% mutate(protection = factor(protection_var)),
+       aes(x = protection_var,
+           y = fit)) +
+  # geom_ribbon(aes(ymin = lwr, ymax = upr,
+  #                 fill = protection),
+  #             color = NA,
+  #             alpha = 0.15) +
+  geom_point() +
+  facet_wrap(~group) +
+  geom_line(alpha = 0.6) +
+  labs(x = 'Protection score',
+       title = 'Association between protection score and absenteeism',
+       y = 'Estimated monthly absenteeism rate') +    
+  theme_maragra() 
+
+```
+
+
+# Simulations
+
+```{r}
+
+# SIMULATIONS
+sim_data <- simulations
+sim_data$idx <- sim_data$oracle_number
+fe <- getfe(final_model)
+predictions <- exp(predict(final_model_lm, sim_data, interval = 'confidence'))-1
+predictions <- data.frame(predictions)
+# Add the fixed effects
+fixed_effects <- left_join(sim_data,
+                           data.frame(fe) %>% dplyr::select(idx, effect) %>%
+                             mutate(idx = as.character(idx))) %>%
+  .$effect
+fixed_effects <- as.numeric(fixed_effects)
+
+predictions$fit <- predictions$fit + fixed_effects
+predictions$lwr <- predictions$lwr + fixed_effects
+predictions$upr <- predictions$upr + fixed_effects
+
+# combine other info
+predictions <- predictions %>% bind_cols(sim_data %>% dplyr::select(date, absent, strategy, permanent_or_temporary)) %>%
+  mutate(absent = as.numeric(absent)) %>%
+  filter(!is.na(fit))
+
+simple <- predictions %>%
+  group_by(strategy) %>%
+  summarise(n = n(),
+            actual_absences = sum(absent),
+            predicted_absences = sum(fit, na.rm = TRUE),
+            actual = mean(absent, na.rm = TRUE),
+            predicted = mean(fit, na.rm = TRUE))# %>%
+  # dplyr::rename(value = predicted) %>%
+  # dplyr::select(strategy, value, predicted_absences)
+
+zero <- predictions %>%
+  filter(strategy == 'Zero') %>%
+  mutate(year = as.numeric(format(date, '%Y'))) %>%
+  group_by(year) %>%
+  summarise(n = n(),
+            actual_absences = sum(absent),
+            predicted_absences = sum(fit, na.rm = TRUE),
+            actual = mean(absent, na.rm = TRUE),
+            predicted = mean(fit, na.rm = TRUE)) %>%
+  mutate(avoided = predicted_absences - actual_absences)
+# dplyr::rename(value = predicted) %>%
+# dplyr::select(permanent_or_temporary, value, predicted_absences)
+
+simple
+# kable(simple)
+
+# Eligible working days
+sum(zero$n)
+# Absences
+sum(zero$actual_absences)
+# Actual absence rate
+sum(zero$actual_absences) / sum(zero$n)
+# Would have observed
+sum(zero$predicted_absences)
+# Predicted - observ
+sum(zero$predicted_absences) - sum(zero$actual_absences)
+  # Overall reduction from
+sum(zero$predicted_absences) / sum(zero$n)
+# To
+sum(zero$actual_absences) / sum(zero$n)
+# Number of working days permanent vs temp
+table(predictions$permanent_or_temporary[predictions$strategy=='Real'])
+# Absences avoided among permanent workers
+x = predictions %>% filter(strategy == 'Zero') %>% group_by(permanent_or_temporary) %>% summarise(n = n(),
+                                                                                              actual_absences = sum(absent),
+                                                                                              predicted_absences = sum(fit, na.rm = TRUE),
+                                                                                              actual = mean(absent, na.rm = TRUE),
+                                                                                              predicted = mean(fit, na.rm = TRUE)) %>%
+  mutate(avoided = predicted_absences - actual_absences) %>%
+  # decline due to irs
+  mutate(decline = predicted - actual)
+x
+# Weight temporary twice
+weighted <- x$
+# One absence every n days
+sum(zero$n) / sum(zero$avoided)
+# Annual reduction in absence
+mean(zero$avoided[zero$year < 2016])
+# Cost per absence avoided
+68984 / 4183
+# Percentage of absence among permanent workers
+x = predictions %>%
+  filter(strategy == 'Zero') %>%
+  # filter(date < '2016-01-01') %>%
+  group_by(permanent_or_temporary) %>%
+  summarise(absences = sum(absent),
+            predicted = sum(fit)) %>%
+  mutate(averted = predicted - absences) %>%
+  mutate(p = averted / sum(averted))
+x
+# Weighted average cost
+y = sum(c(25, 5) * x$p)
+y
+# Cost of treatment per absence
+22 / 80
+# Total savings per aversion
+0.275 + y
+# Total yearly savings
+(0.275 + y) * 4183
+# Total yearly savings
+((0.275 + y) * 4183) - 68984
+# ROI
+((0.275 + y) * 4183) / 68984
+# Additional max strategy
+simple
+47943-42131
+
+ggplot(data = simple,
+       aes(x = strategy,
+           y = value)) +
+  geom_bar(stat = 'identity',
+           alpha = 0.6,
+           color = 'black') +
+  labs(y = 'Absenteeism rate',
+       x = 'Strategy') +
+  geom_label(aes(label = round(value, digits = 3)),
+             nudge_y = -0.005)
+```
+
+# Descriptive statistics
+
+```{r}
+table(workers$sex)
+x = model_data %>% dplyr::distinct(oracle_number, .keep_all=T); prop.table(table(x$sex))
+prop.table(table(x$field))
+x = left_join(x, workers %>% dplyr::select(oracle_number, date_of_birth)) %>% mutate(age = as.numeric(date - date_of_birth) / 365.25)
+hist(x$age)
+prop.table(table(x$age >= 20 & x$age < 40))
+prop.table(table(x$permanent_or_temporary))
+```
+
+
+# Table 1
+
+```{r}
+library(table1)
+message('We observed ', nrow(model_data), ' worker-days among ', length(unique(model_data$oracle_number)), ' unique workers. Overall absence rate was ', length(which(model_data$absent)) / nrow(model_data) * 100)
+
+# Table of those absences
+vars <- list('field',
+          'permanent_or_temporary',
+           'sex')
+table1::label(model_data$field) <- 'Worker location'
+table1::label(model_data$permanent_or_temporary) <- 'Worker contract'
+table1::label(model_data$sex) <- 'Worker sex'
+model_data$year <- as.numeric(format(model_data$date, '%Y'))
+table1::label(model_data$year) <- 'Year'
+
+table1::table1(~field + permanent_or_temporary + sex | year , data = model_data)
+```
+
+# Crude effect on absences chart
+
+```{r}
+pd <- model_data %>%
+  mutate(days_since = round(days_since / 30)) %>%
+  group_by(days_since) %>%
+  summarise(absences = length(which(absent)),
+            eligibles = n()) %>%
+  ungroup %>%
+  mutate(p = absences / eligibles * 100) %>%
+  filter(days_since >= -10,
+         days_since <= 10)
+
+g1 <- ggplot(data = pd,
+       aes(x = days_since,
+           y = p)) +
+  geom_step(color = 'darkred', alpha = 0.8, size = 1) +
+  theme_maragra() +
+  labs(x = 'Months relative to administration of IRS',
+       y = 'Absenteeism rate (%)',
+       title = 'A') +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.7)
+pd2 <- model_data %>%
+  mutate(days_since = round(days_since / 30)) %>%
+  mutate(season = ifelse(rain_var >= median(rain_var, na.rm = TRUE),
+                         'Rainy season',
+                         'Dry season')) %>%
+  group_by(days_since, season) %>%
+  summarise(absences = length(which(absent)),
+            eligibles = n()) %>%
+  ungroup %>%
+  mutate(p = absences / eligibles * 100) %>%
+  filter(days_since >= -10,
+         days_since <= 10,
+         !is.na(season))
+g2 <- ggplot(data = pd2,
+       aes(x = days_since,
+           y = p)) +
+  facet_wrap(~season, ncol = 1) +
+  geom_step(color = 'darkred', alpha = 0.8, size = 1) +
+  theme_maragra() +
+  labs(x = 'Months relative to administration of IRS',
+       y = 'Absenteeism rate (%)',
+       title = 'B') +
+  geom_vline(xintercept = 0, lty = 2, alpha = 0.7)
+
+Rmisc::multiplot(g1, g2, cols = 2)
+```
+
+
+# Absences
+
+
