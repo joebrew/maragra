@@ -384,17 +384,17 @@ if('simulations.RData' %in% dir()){
   load('simulations.RData')
 } else {
   
-  # time_optimize_df <-
-  #   data.frame(date = seq(as.Date('2020-01-01'),
-  #                         as.Date('2020-12-31'), 
-  #                         by = 1)) %>%
-  #   mutate(month_day = format(date, '%m-%d'))
-  # time_optimize_df$day_number <- (1:nrow(time_optimize_df))+20
-  # time_optimize_df$the_protection <- classify_protection(time_optimize_df$day_number)
-  # time_optimize_df <- time_optimize_df %>% dplyr::select(month_day, the_protection)
+  time_optimize_df <-
+    data.frame(date = seq(as.Date('2020-01-01'),
+                          as.Date('2020-12-31'),
+                          by = 1)) %>%
+    mutate(month_day = format(date, '%m-%d'))
+  time_optimize_df$day_number <- (1:nrow(time_optimize_df))+20
+  time_optimize_df$the_protection <- classify_protection(time_optimize_df$day_number)
+  time_optimize_df <- time_optimize_df %>% dplyr::select(month_day, the_protection)
   
 
-  strategies <- c('Zero',  'Gold standard')
+  strategies <- c('Zero',  'Gold standard', 'Time-optimized')
   strategy_list <- list()
   for(s in 1:length(strategies)){
     dates <- sort(unique(final_data$date))
@@ -417,6 +417,15 @@ if('simulations.RData' %in% dir()){
         this_data <- gold_data %>%
           filter(date == this_date)
         the_protection <- this_data$protection
+      }
+      if(this_strategy == 'Time-optimized'){
+        this_data <- final_data %>%
+          filter(date == this_date)
+        this_data$month_day <- format(this_data$date, '%m-%d')
+        x <- this_data %>%
+          left_join(time_optimize_df)
+        the_protection <- x$the_protection
+        this_data$protection <- the_protection
       }
       # if(this_strategy == 'Time-optimized'){
       #   this_data <- final_data %>%
