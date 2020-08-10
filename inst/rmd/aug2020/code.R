@@ -482,8 +482,10 @@ final_data$group <- final_data$group3
 simulations$group <- simulations$group3
 
 
-# final_model <- felm(log(absent+1) ~ protection_var + (rain_var) | oracle_number | 0 | 0,
-#                     data = final_data)
+library(fixest)
+final_model_fix <- feols(data = model_data, log(absent+1) ~
+                       protection_var  +
+                       rain_var | oracle_number)
 
 
 final_model <- felm(log(absent+1) ~
@@ -505,7 +507,7 @@ final_model_radial_lm <- lm(log(absent+1) ~ #protection +
 
 # Model for each worker group
 worker_groups <- sort(unique(model_data$group))
-model_data_list <- model_list <- model_list_lm  <- 
+model_data_list <- model_list <- model_list_lm  <- model_list_fix <- 
   radial_model_data_list <- radial_model_list <- radial_model_list_lm <- list()
 for (i in 1:length(worker_groups)){
   sub_data <- model_data %>% filter(group == worker_groups[i])
@@ -513,6 +515,9 @@ for (i in 1:length(worker_groups)){
                        protection_var  +
                        rain_var | oracle_number | 0 | 0,
                      data = sub_data)
+  this_model_fix <- feols(data = sub_data, log(absent+1) ~
+                            protection_var  +
+                            rain_var | oracle_number)
   this_model_radial <- felm(log(absent+1) ~ #protection +
                               radial_herd_protection + 
                        rain_var | oracle_number | 0 | 0,
@@ -530,6 +535,7 @@ for (i in 1:length(worker_groups)){
   formatted_radial$group5 <- worker_groups[i]
   
   model_list[[i]] <- this_model
+  model_list_fix[[i]] <- this_model_fix
   model_list_lm[[i]] <- this_model_lm
   model_data_list[[i]] <- formatted
   
@@ -537,7 +543,7 @@ for (i in 1:length(worker_groups)){
   radial_model_list_lm[[i]] <- this_model_lm_radial
   radial_model_data_list[[i]] <- formatted_radial
 }
-names(model_list) <- names(model_data_list) <- names(model_list_lm) <-
+names(model_list) <- names(model_data_list) <- names(model_list_lm) <- names(model_list_fix) <- 
   names(radial_model_list) <- names(radial_model_data_list) <- names(radial_model_list_lm) <- 
   worker_groups
 

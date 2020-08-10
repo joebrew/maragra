@@ -186,27 +186,42 @@ ggplot(data = fake  %>% mutate(protection = factor(protection_var)),
 
 ```{r}
 
+# TO DO: MAKE PREDICTIONS BASED ON INDIVIDUAL MODEL TYPES
+
 # SIMULATIONS
-sim_data <- simulations
+sim_data <- simulations  %>% filter(on_site)
 sim_data$idx <- sim_data$oracle_number
-fe <- getfe(final_model)
-predictions <- exp(predict(final_model_lm, sim_data, interval = 'confidence'))-1
-predictions <- data.frame(predictions)
-# Add the fixed effects
-fixed_effects <- left_join(sim_data,
-                           data.frame(fe) %>% dplyr::select(idx, effect) %>%
-                             mutate(idx = as.character(idx))) %>%
-  .$effect
-fixed_effects <- as.numeric(fixed_effects)
+sim_data$fit <- NA
+# Multi model predictions
+for(i in 1:length(worker_groups)){
+  this_worker_group <- worker_groups[i]
+  indices <- which(sim_data$group == this_worker_group)
+  this_data <- sim_data[indices,]
+  this_model_fix <- model_list_fix[[this_worker_group]]
+  these_predictions <- exp(predict(this_model_fix, this_data))-1
+  sim_data$fit[indices] <- these_predictions
+}
+predictions <- sim_data %>% filter(!is.na(fit))
 
-predictions$fit <- predictions$fit + fixed_effects
-predictions$lwr <- predictions$lwr + fixed_effects
-predictions$upr <- predictions$upr + fixed_effects
-
-# combine other info
-predictions <- predictions %>% bind_cols(sim_data %>% dplyr::select(date, absent, strategy, permanent_or_temporary)) %>%
-  mutate(absent = as.numeric(absent)) %>%
-  filter(!is.na(fit))
+# # One model predictions
+# fe <- getfe(final_model)
+# predictions <- exp(predict(final_model_lm, sim_data, interval = 'confidence'))-1
+# predictions <- data.frame(predictions)
+# # Add the fixed effects
+# fixed_effects <- left_join(sim_data,
+#                            data.frame(fe) %>% dplyr::select(idx, effect) %>%
+#                              mutate(idx = as.character(idx))) %>%
+#   .$effect
+# fixed_effects <- as.numeric(fixed_effects)
+# 
+# predictions$fit <- predictions$fit + fixed_effects
+# predictions$lwr <- predictions$lwr + fixed_effects
+# predictions$upr <- predictions$upr + fixed_effects
+# 
+# # combine other info
+# predictions <- predictions %>% bind_cols(sim_data %>% dplyr::select(date, absent, strategy, permanent_or_temporary)) %>%
+#   mutate(absent = as.numeric(absent)) %>%
+#   filter(!is.na(fit))
 
 simple <- predictions %>%
   group_by(strategy) %>%
